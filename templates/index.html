@@ -1,0 +1,52 @@
+{% extends 'layout.html' %}
+
+{% block maincontent %}
+	<div>
+		Piscataway Township, New Jersey doesn't do a great job of publishing their meeting schedule/minutes.<br>
+		In particular, they don't really publish meeting minutes at all (as of writing 2020-01-05, they only have ~6 township council meetings listed, the rest are unavailable).
+	</div>
+
+	<h3>Recent/Upcoming Meetings</h3>
+	<table class="table table-striped table-sm">
+		<thead>
+			<tr>
+				<th scope="col">Date</th>
+				<th scope="col">Type</th>
+				<th scope="col">Minutes</th>
+				<th scope="col">Recording</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for cur in recent_meetings %}
+				<tr>
+					<td>{{ cur.date }}</td>
+					<td>{{ cur.type }}</td>
+					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
+					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h3>All Meetings</h3>
+	<table class="table table-striped table-sm">
+		<thead>
+			<tr>
+				<th scope="col">Date</th>
+				<th scope="col">Type</th>
+				<th scope="col">Minutes</th>
+				<th scope="col">Recording</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for cur in meetings %}
+				<tr>
+					<td>{{ cur.date }}</td>
+					<td>{{ cur.type }}</td>
+					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
+					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endblock %}
