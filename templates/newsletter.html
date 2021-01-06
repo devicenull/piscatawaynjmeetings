@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+
+{% block maincontent %}
+	<h3>All Newsletters</h3>
+	<table class="table table-striped table-sm">
+		<thead>
+			<tr>
+				<th scope="col">Date</th>
+				<th scope="col">Download</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for cur in newsletters %}
+				<tr>
+					<td>{{ cur.date }}</td>
+					<td><a href="/files/newsletter/{{ cur.date }}.pdf">View</a></td>
+
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<br><br>
+	<hr>
+	<div>
+		Newsletters at least are typically posted <a href="http://www.piscatawaynj.org/admin_dept/township-newsletter">here</a>.  The dates are the modification times of the files they've posted publicly, and may not correspond to what you expect within the newsletter (for example, 2020-12-16 is the 'Winter 2021' newsletter).
+	</div>	
+{% endblock %}

@@ -1,11 +1,6 @@
 {% extends 'layout.html' %}
 
 {% block maincontent %}
-	<div>
-		Piscataway Township, New Jersey doesn't do a great job of publishing their meeting schedule/minutes.<br>
-		In particular, they don't really publish meeting minutes at all (as of writing 2020-01-05, they only have ~6 township council meetings listed, the rest are unavailable).
-	</div>
-
 	<h3>Recent/Upcoming Meetings</h3>
 	<table class="table table-striped table-sm">
 		<thead>
@@ -20,14 +15,16 @@
 			{% for cur in recent_meetings %}
 				<tr>
 					<td>{{ cur.date }}</td>
-					<td>{{ cur.type }}</td>
+					<td>{{ cur.type|capitalize }}</td>
 					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
 					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
 				</tr>
 			{% endfor %}
 		</tbody>
 	</table>
+	<b>Note:</b>  During COVID-19, meeting information is posted on <a href="http://www.piscatawaynj.org">www.piscatawaynj.org</a>.  It's typically posted on the *left* column, right above the 'About Piscataway' information.  You will not see it under 'Alerts' nor posted to their Twitter/Facebook.
 
+	<br><br>
 	<h3>All Meetings</h3>
 	<table class="table table-striped table-sm">
 		<thead>
@@ -42,11 +39,38 @@
 			{% for cur in meetings %}
 				<tr>
 					<td>{{ cur.date }}</td>
-					<td>{{ cur.type }}</td>
+					<td>{{ cur.type|capitalize }}</td>
 					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
 					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
 				</tr>
 			{% endfor %}
 		</tbody>
 	</table>
+
+	<br><br>
+	<hr>
+	<div>
+		Piscataway Township, New Jersey doesn't do a great job of publishing their meeting schedule/minutes.<br>
+		In particular, they don't really publish meeting minutes at all (as of writing 2020-01-05, they only have ~6 township council meetings listed, the rest are unavailable).<br>
+		Don't see a meeting you want?<br>
+		Email <a href="mailto:oprarequests@piscatawaynj.org">oprarequests@piscatawaynj.org</a> with something like the following:<br>
+		<pre>
+Dear Piscataway Township,
+
+This is a request for public records made under OPRA and the common law right of access. I am not required to fill out an official form.
+
+Please acknowledge receipt of this message.
+
+Records requested:
+
+Meeting minutes for (INSERT TYPE HERE) on (INSERT DATE HERE)
+
+I would like these minutes to be delivered by email.
+
+Sincerly,
+(YOUR NAME)
+		</pre>
+		<br>
+		Expect their response to take several days at least.
+	</div>	
 {% endblock %}
