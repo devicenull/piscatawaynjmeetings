@@ -9,6 +9,7 @@ class Meeting extends BaseDBObject
 		'minutes_filetype',
 		'recording_available',
 		'recording_filetype',
+		'joining_information',
 	];
 
 	var $db_key = 'MEETINGID';

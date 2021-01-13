@@ -1,6 +1,7 @@
 {
     "require": {
         "twig/twig": "^3.1",
-        "adodb/adodb-php": "^5.20"
+        "adodb/adodb-php": "^5.20",
+        "phpmailer/phpmailer": "^6.2"
     }
 }

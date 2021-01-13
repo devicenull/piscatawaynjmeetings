@@ -40,7 +40,7 @@ class BaseDBObject implements ArrayAccess
 		global $db;
 		$this->error = '';
 
-		$update = [];
+		$update_fields = $update_values = [];
 		foreach ($this->fields as $field)
 		{
 			if (!isset($params[$field]) || $params[$field] == $this->record[$field])
@@ -48,12 +48,14 @@ class BaseDBObject implements ArrayAccess
 				continue;
 			}
 
-			$update[] = $field.'='.$db->qstr($params[$field]);
+			$update_fields[] = $field;
+			$update_values[] = $params[$field];
 		}
 
-		if (count($update) > 0)
+		if (count($update_fields) > 0)
 		{
-			if (!$db->Execute('update '.$this->db_table.' set '.implode(', ', $update).' where '.$this->db_key.'=?', [$this->record[$this->db_key]]))
+			$update_values[] = $this->record[$this->db_key];
+			if (!$db->Execute('update '.$this->db_table.' set '.implode('=?, ', $update_fields).'=? where '.$this->db_key.'=?', $update_values))
 			{
 				$this->error = $db->errorMsg();
 				return false;

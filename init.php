@@ -22,6 +22,11 @@ $db->connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
 session_start();
 
+function hasEditAuth(): bool
+{
+	return stripos($_SERVER['REMOTE_ADDR'], '192.168.5.') !== false;
+}
+
 function displayPage($template, $vars=[])
 {
 	global $twig;

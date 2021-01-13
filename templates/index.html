@@ -1,6 +1,9 @@
 {% extends 'layout.html' %}
 
 {% block maincontent %}
+	{% if has_edit_auth %}
+	<a class="btn btn-primary" href="/meeting_edit.php?MEETINGID=new">Add</a>
+	{% endif %}
 	<h3>Recent/Upcoming Meetings</h3>
 	<table class="table table-striped table-sm">
 		<thead>
@@ -9,6 +12,10 @@
 				<th scope="col">Type</th>
 				<th scope="col">Minutes</th>
 				<th scope="col">Recording</th>
+				<th scope="col">Join Information</th>
+				{% if has_edit_auth %}
+				<th></th>
+				{% endif %}
 			</tr>
 		</thead>
 		<tbody>
@@ -18,6 +25,10 @@
 					<td>{{ cur.type|capitalize }}</td>
 					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
 					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
+					<td>{{ cur.joining_information|nl2br }}</td>
+					{% if has_edit_auth %}
+					<td><a class="btn btn-primary" href="/meeting_edit.php?MEETINGID={{ cur.MEETINGID }}">edit</a></td>
+					{% endif %}
 				</tr>
 			{% endfor %}
 		</tbody>
@@ -33,6 +44,9 @@
 				<th scope="col">Type</th>
 				<th scope="col">Minutes</th>
 				<th scope="col">Recording</th>
+				{% if has_edit_auth %}
+				<th></th>
+				{% endif %}
 			</tr>
 		</thead>
 		<tbody>
@@ -42,6 +56,9 @@
 					<td>{{ cur.type|capitalize }}</td>
 					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
 					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
+					{% if has_edit_auth %}
+					<td><a class="btn btn-primary" href="/meeting_edit.php?MEETINGID={{ cur.MEETINGID }}">edit</a></td>
+					{% endif %}
 				</tr>
 			{% endfor %}
 		</tbody>
@@ -72,5 +89,5 @@ Sincerly,
 		</pre>
 		<br>
 		Expect their response to take several days at least.
-	</div>	
+	</div>
 {% endblock %}
