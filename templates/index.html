@@ -22,7 +22,7 @@
 		<tbody>
 			{% for cur in recent_meetings %}
 				<tr {% if cur.happensToday() %}class="font-weight-bold"{% endif %}>
-					<td>{{ cur.date }}</td>
+					<td>{{ cur.date|date('F j Y h:i A') }}</td>
 					<td>{{ cur.type|capitalize }}</td>
 					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
 					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
@@ -61,7 +61,7 @@
 		<tbody>
 			{% for cur in meetings %}
 				<tr>
-					<td>{{ cur.date }}</td>
+					<td>{{ cur.date|date('F j Y') }}</td>
 					<td>{{ cur.type|capitalize }}</td>
 					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
 					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
