@@ -9,7 +9,8 @@ class Meeting extends BaseDBObject
 		'minutes_filetype',
 		'recording_available',
 		'recording_filetype',
-		'joining_information',
+		'zoom_id',
+		'zoom_password',
 	];
 
 	var $db_key = 'MEETINGID';
@@ -46,6 +47,12 @@ class Meeting extends BaseDBObject
 		return strtotime($this['date']) < time();
 	}
 
+	public function happensToday(): bool
+	{
+		$date = explode(' ', $this['date'])[0];
+		return $date == strftime('%F');
+	}
+
 	public static function getRecent()
 	{
 		global $db;
@@ -62,5 +69,5 @@ class Meeting extends BaseDBObject
 		}
 
 		return $meetings;
-	}	
+	}
 }

@@ -22,7 +22,12 @@ if (isset($_POST['action']) && $_POST['action'] == 'update_meeting')
 	$params = [];
 	foreach ($meeting->fields as $key)
 	{
-		if (isset($_POST[$key]) && $key != 'MEETINGID')
+		if (isset($_POST[$key]) && in_array($key, ['zoom_id', 'zoom_password']))
+		{
+			// these are usually provided with spaces, which will break storing in mysql
+			$params[$key] = trim(str_replace(' ', '', $_POST[$key]));
+		}
+		else if (isset($_POST[$key]) && $key != 'MEETINGID')
 		{
 			$params[$key] = $_POST[$key];
 		}
@@ -38,7 +43,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'update_meeting')
 		}
 		else
 		{
-			displayError('Unable to add meeting');
+			displayError('Unable to add meeting: '.$meeting->error);
 		}
 	}
 	else
@@ -49,7 +54,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'update_meeting')
 		}
 		else
 		{
-			displayError('Unable to update meeting');
+			displayError('Unable to update meeting: '.$meeting->error);
 		}
 	}
 }

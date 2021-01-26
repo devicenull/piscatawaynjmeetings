@@ -1,6 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block maincontent %}
+	<b style="float: right">Call in number is always 1-646-876-9923</b>
 	{% if has_edit_auth %}
 	<a class="btn btn-primary" href="/meeting_edit.php?MEETINGID=new">Add</a>
 	{% endif %}
@@ -20,12 +21,19 @@
 		</thead>
 		<tbody>
 			{% for cur in recent_meetings %}
-				<tr>
+				<tr {% if cur.happensToday() %}class="font-weight-bold"{% endif %}>
 					<td>{{ cur.date }}</td>
 					<td>{{ cur.type|capitalize }}</td>
 					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
 					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
-					<td>{{ cur.joining_information|nl2br }}</td>
+					<td>
+						{% if cur.zoom_id > 0 %}
+						Meeting ID: {{ cur.zoom_id|number_format(0, '', ' ') }}<br>
+						Meeting Password: {{ cur.zoom_password }}<br>
+						<a href="zoommtg://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ cur.zoom_password }}">Join (computer)</a><br>
+						<a href="zoomus://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ cur.zoom_password }}">Join (iOS/Android)</a><br>
+						{% endif %}
+					</td>
 					{% if has_edit_auth %}
 					<td><a class="btn btn-primary" href="/meeting_edit.php?MEETINGID={{ cur.MEETINGID }}">edit</a></td>
 					{% endif %}
@@ -33,7 +41,8 @@
 			{% endfor %}
 		</tbody>
 	</table>
-	<b>Note:</b>  During COVID-19, meeting information is posted on <a href="http://www.piscatawaynj.org">www.piscatawaynj.org</a>.  It's typically posted on the *left* column, right above the 'About Piscataway' information.  You will not see it under 'Alerts' nor posted to their Twitter/Facebook.
+	<b>Note:</b>  During COVID-19, meeting information is posted <a href="https://piscatawaynj.org/government/meeting_schedules/index.php">here</a>. You will not see it under 'Alerts' nor posted to their Twitter/Facebook.<br><br>
+	The Council refuses to allow joining their meetings via computer, so you're forced to dial in (they cite "privacy issues", which are somehow not a problem for any other town nor even other meetings within Piscataway).
 
 	<br><br>
 	<h3>All Meetings</h3>

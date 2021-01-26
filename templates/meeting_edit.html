@@ -21,9 +21,15 @@
 		</div>
 
 		<div class="form-group">
-			<label for="name">Joining Information</label>
+			<label for="name">Zoom ID</label>
 			<br>
-			<textarea name="joining_information" style="width: 100%" rows=6>{{ meeting.joining_information }}</textarea>
+			<input type="text" name="zoom_id" value="{{ meeting.zoom_id }}">
+		</div>
+
+		<div class="form-group">
+			<label for="name">Zoom Password</label>
+			<br>
+			<input type="text" name="zoom_password" value="{{ meeting.zoom_password }}">
 		</div>
 
 		<button class="btn btn-primary">Update</button>
