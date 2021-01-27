@@ -27,7 +27,7 @@
 					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
 					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
 					<td>
-						{% if cur.zoom_id > 0 %}
+						{% if cur.zoom_id > 0 and not (cur.hasHappened() and not cur.happensToday()) %}
 						Meeting ID: {{ cur.zoom_id|number_format(0, '', ' ') }}<br>
 						Meeting Password: {{ cur.zoom_password }}<br>
 						<a href="zoommtg://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ cur.zoom_password }}">Join (computer)</a><br>
