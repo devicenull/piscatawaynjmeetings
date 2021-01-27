@@ -16,13 +16,26 @@ class Meeting extends BaseDBObject
 	var $db_key = 'MEETINGID';
 	var $db_table = 'meeting';
 
-	public function getLink(string $link_type): string
+	// link_type minutes|recording
+	public function getLink($link_type): string
 	{
-		if ($this[$link_type.'_available'] == 'no') return '';
+		$extensions = [
+			'minutes' => ['doc', 'pdf'],
+			'recording' => ['mp3', 'm4a'],
+		];
 
-		$date = explode(' ', $this['date'])[0];
+		$date = explode(' ', $this['date']);
 
-		return 'files/'.$this['type'].'/'.$date.'.'.$this[$link_type.'_filetype'];
+		$basepath = '/files/'.$this['type'].'/'.$date[0].'.';
+		foreach ($extensions[$link_type] as $ext)
+		{
+			if (file_exists(__DIR__.'/../web/'.$basepath.$ext))
+			{
+				return $basepath.$ext;
+			}
+		}
+
+		return '';
 	}
 
 	public static function getAll()

@@ -37,6 +37,11 @@ if (isset($_POST['action']) && $_POST['action'] == 'update_meeting')
 	{
 		$params['minutes_available'] = 'no';
 		$params['recording_available'] = 'no';
+		if (stripos($params['date'], '0') === -1)
+		{
+			$params['date'] .= '00:00:00';
+		}
+
 		if ($meeting->add($params))
 		{
 			displaySuccess('Meeting Added', '/');

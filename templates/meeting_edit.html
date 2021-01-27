@@ -23,13 +23,13 @@
 		<div class="form-group">
 			<label for="name">Zoom ID</label>
 			<br>
-			<input type="text" name="zoom_id" value="{{ meeting.zoom_id }}">
+			<input type="text" name="zoom_id" value="{{ meeting.zoom_id|default(0) }}">
 		</div>
 
 		<div class="form-group">
 			<label for="name">Zoom Password</label>
 			<br>
-			<input type="text" name="zoom_password" value="{{ meeting.zoom_password }}">
+			<input type="text" name="zoom_password" value="{{ meeting.zoom_password|default(0) }}">
 		</div>
 
 		<button class="btn btn-primary">Update</button>

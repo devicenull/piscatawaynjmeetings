@@ -2,3 +2,7 @@
 .profile
 .viminfo
 piscataway.sql
+web/files/
+.cache
+.config
+.local
