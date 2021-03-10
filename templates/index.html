@@ -29,12 +29,12 @@
 					<td>
 						{% if cur.zoom_id > 0 and not (cur.hasHappened() and not cur.happensToday()) %}
 							Meeting ID: {{ cur.zoom_id|number_format(0, '', ' ') }}<br>
-							Meeting Password: {{ cur.zoom_password }}<br>
+							Meeting Password: {{ "%06s"|format(cur.zoom_password) }}<br>
 							{% if cur.type == 'council' %}
 								The council does not allow joining via computer with audio.  You need to dial in.  (If you connect via computer you can only see who's connected, you can't speak or use video)
 							{% else %}
-								<a href="zoommtg://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ cur.zoom_password }}">Join (computer)</a><br>
-								<a href="zoomus://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ cur.zoom_password }}">Join (iOS/Android)</a><br>
+								<a href="zoommtg://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (computer)</a><br>
+								<a href="zoomus://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (iOS/Android)</a><br>
 							{% endif %}
 						{% endif %}
 					</td>
