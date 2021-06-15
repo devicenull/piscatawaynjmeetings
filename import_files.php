@@ -48,6 +48,36 @@ foreach (getDirContents(__DIR__.'/web/files') as $cur)
 		continue;
 	}
 
+	$fileinfo = explode('/', $cleanpath);
+	if (in_array($fileinfo[2], array_keys(MiscFile::TYPE_DESCRIPTION)))
+	{
+		$details = pathinfo($cleanpath);
+		$date = $details['filename'];
+		$extension = $details['extension'];
+
+		if (!preg_match_all('/^[0-9]+\\-[0-9]+\\-[0-9]+$/i', $date))
+		{
+			echo "Invalid file format: $cleanpath\n";
+			continue;
+		}
+
+		$miscfile = new MiscFile([
+			'type' => $fileinfo[2],
+			'date' => $date,
+		]);
+
+		if (!$miscfile->isInitialized())
+		{
+			$miscfile->add([
+				'type'      => $fileinfo[2],
+				'date'      => $date,
+				'extension' => $extension,
+			]);
+		}
+
+		continue;
+	}
+
 	if (!in_array($cleanpath, $known_files))
 	{
 		echo "Missing meeting: {$cleanpath}\n";

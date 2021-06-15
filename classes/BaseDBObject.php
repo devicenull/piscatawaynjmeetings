@@ -7,6 +7,8 @@ class BaseDBObject implements ArrayAccess
 	var $db_table = '';
 	// Full list of all DB fields (including primary key)
 	var $fields = [];
+	// Fields that don't exist in the database, but can be generated at runtime
+	var $virtual_fields = [];
 
 	// last error message encountered
 	var $error = '';
@@ -120,11 +122,16 @@ class BaseDBObject implements ArrayAccess
 
 	public function offsetExists($offset)
 	{
-		return in_array($offset, $this->fields);
+		return in_array($offset, $this->fields) || in_array($offset, $this->virtual_fields);
 	}
 
 	public function offsetGet($offset)
 	{
+		if (in_array($offset, $this->virtual_fields))
+		{
+			return $this->get($offset);
+		}
+
 		return $this->record[$offset] ?? '';
 	}
 
@@ -136,5 +143,10 @@ class BaseDBObject implements ArrayAccess
 	public function offsetUnset ($offset)
 	{
 		throw new Exception('not implemented');
+	}
+
+	public function get($offset)
+	{
+		return 'unimplemented';
 	}
 }

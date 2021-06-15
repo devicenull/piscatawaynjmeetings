@@ -1,0 +1,30 @@
+{% extends 'layout.html' %}
+
+{% block maincontent %}
+	<h3>Other Content</h3>
+	<table class="table table-striped table-sm">
+		<thead>
+			<tr>
+				<th scope="col">Type</th>
+				<th scope="col">Date</th>
+				<th scope="col">Download</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for cur in misc_files %}
+				<tr>
+					<td>{{ cur.type_description }}</td>
+					<td>{{ cur.date }}</td>
+					<td><a href="/files/{{ cur.type }}/{{ cur.date }}.{{ cur.extension }}">View</a></td>
+
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<br><br>
+	<hr>
+	<div>
+		These are various files that have been posted by the town in the past.  Dates listed here are estimates (for example, 2020 budget might show up as 2020-01-01, even if it was released later)
+	</div>	
+{% endblock %}
