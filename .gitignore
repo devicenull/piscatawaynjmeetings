@@ -6,3 +6,4 @@ web/files/
 .cache
 .config
 .local
+config.php
