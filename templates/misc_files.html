@@ -7,6 +7,7 @@
 			<tr>
 				<th scope="col">Type</th>
 				<th scope="col">Date</th>
+				<th scope="col">Notes</th>
 				<th scope="col">Download</th>
 			</tr>
 		</thead>
@@ -15,8 +16,8 @@
 				<tr>
 					<td>{{ cur.type_description }}</td>
 					<td>{{ cur.date }}</td>
+					<td>{{ cur.notes }}</td>
 					<td><a href="/files/{{ cur.type }}/{{ cur.date }}.{{ cur.extension }}">View</a></td>
-
 				</tr>
 			{% endfor %}
 		</tbody>

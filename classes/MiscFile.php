@@ -6,6 +6,7 @@ class MiscFile extends BaseDBObject
 		'type',
 		'date',
 		'extension',
+		'notes',
 	];
 
 	var $db_key = 'FILEID';
