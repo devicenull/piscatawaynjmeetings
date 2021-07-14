@@ -1,0 +1,19 @@
+{% extends 'layout.html' %}
+
+{% block maincontent %}
+	<h3>Bids</h3>
+	<table class="table table-striped table-sm">
+		<thead>
+			<tr>
+				<th scope="col">Bid</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for cur in bids %}
+				<tr>
+					<td><a href="/files/bids/{{ cur.filename }}">{{ cur.filename }}</a></td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endblock %}

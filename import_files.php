@@ -43,8 +43,20 @@ foreach (Meeting::getAll() as $cur)
 foreach (getDirContents(__DIR__.'/web/files') as $cur)
 {
 	$cleanpath = str_replace(__DIR__.'/web', '', $cur);
-	if (stripos($cleanpath, 'newsletter') != '')
+	if (stripos($cleanpath, 'newsletter') != 0)
 	{
+		continue;
+	}
+
+	if (stripos($cleanpath, 'bids/') != 0)
+	{
+		$bid = new Bid(['filename' => basename($cleanpath)]);
+		if (!$bid->isInitialized())
+		{
+			$bid->add([
+				'filename' => basename($cleanpath),
+			]);
+		}
 		continue;
 	}
 
