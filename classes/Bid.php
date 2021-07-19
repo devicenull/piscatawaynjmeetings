@@ -16,7 +16,7 @@ class Bid extends BaseDBObject
 		if (isset($params['filename']))
 		{
 			$this->db_key = 'filename';
-			parent::__construct($params['filename']);
+			parent::__construct($params);
 			$this->db_key = 'BIDID';
 			return;
 		}
