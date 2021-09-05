@@ -15,6 +15,7 @@ require_once(__DIR__.'/classes/Meeting.php');
 require_once(__DIR__.'/classes/Newsletter.php');
 require_once(__DIR__.'/classes/MiscFile.php');
 require_once(__DIR__.'/classes/Bid.php');
+require_once(__DIR__.'/classes/Tweet.php');
 
 require_once(__DIR__.'/config.php');
 
@@ -43,11 +44,6 @@ function displayPage($template, $vars=[])
 	{
 		$vars['error_message'] = $_SESSION['error_message'];
 		unset($_SESSION['error_message']);
-	}
-
-	if (($_SESSION['barcode_mode'] ?? '') == 'add')
-	{
-		$vars['barcode_mode'] = 'In beer add mode, all newly scanned beers will be added';
 	}
 
 	echo $twig->render($template, $vars);

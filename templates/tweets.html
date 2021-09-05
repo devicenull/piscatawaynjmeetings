@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+
+{% block maincontent %}
+	<h3>All Tweets</h3>
+	<table class="table table-striped table-sm">
+		<thead>
+			<tr>
+				<th scope="col">Date</th>
+				<th scope="col">Tweet</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for cur in tweets %}
+				<tr>
+					<td>
+						{{ cur.date }}<br>
+						<a href="{{ cur.archive_url }}">Internet Archive</a>
+					</td>
+					<td>{{ cur.embed_html|raw }}</td>
+
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<br><br>
+	<hr>
+	<div>
+		In the event that a tweet is deleted (so it doesn't show up in the Tweet column), click the "Internet Archive" link next to it and select the date that has a blue circle around it.
+	</div>	
+{% endblock %}
