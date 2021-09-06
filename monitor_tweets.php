@@ -3,7 +3,39 @@ require(__DIR__.'/init.php');
 
 use Spatie\TwitterStreamingApi\PublicStream;
 
-define('PISCATAWAY_UID', '1596769944');
+/**
+*	Start by backfilling any tweets we missed since last run (up to 100, didn't bother with paging)...
+* 100 is around a weeks worth of tweets anyway
+*/
+$res = $db->Execute('select max(TWEETID) from tweet');
+$max_known_id = $res->fields['max(TWEETID)'];
+
+$c = curl_init('https://api.twitter.com/2/users/'.PISCATAWAY_UID.'/tweets?tweet.fields=created_at&since_id='.$max_known_id.'&max_results=100');
+curl_setopt_array($c, [
+	CURLOPT_RETURNTRANSFER => true,
+	CURLOPT_HTTPHEADER     => [
+		'Authorization: Bearer '.TWITTER_BEARER,
+	],
+]);
+
+$data = json_decode(curl_exec($c), true);
+if (!isset($data['data']))
+{
+	echo "No old tweets found\n";
+}
+else
+{
+	foreach ($data['data'] as $tweet)
+	{
+		echo $tweet['id']."\n";
+		$tw = new Tweet();
+		$tw->add([
+			'TWEETID'     => $tweet['id'],
+			'date'        => strftime('%F %T', strtotime($tweet['created_at'])),
+			'content'     => $tweet['text'],
+		]);
+	}
+}
 
 $db->debug = true;
 PublicStream::create(
@@ -25,24 +57,14 @@ PublicStream::create(
   ["matching_rules"]=>
 */
 	var_dump($tweet);
-	$url = 'https://twitter.com/PWAYNJ/status/'.$tweet['data']['id'];
-	$archive_url = 'http://web.archive.org/save/'.$archive_url;
-	system('/usr/bin/wget '.escapeshellarg($url).' -O /dev/null > /dev/null 2>&1');
-
-	$c = curl_init('https://publish.twitter.com/oembed?url='.$url);
-	curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
-	$data = json_decode(curl_exec($c), true);
 
 	// Reconnect to avoid mysql has gone away errors
-	$db = null;
-	$db = newAdoConnection('mysqli');
-	$db->connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+	$GLOBALS['db'] = newAdoConnection('mysqli');
+	$GLOBALS['db']->connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 	$tw = new Tweet();
 	$tw->add([
 		'TWEETID'     => $tweet['data']['id'],
 		'date'        => strftime('%F %T'),
 		'content'     => $tweet['data']['text'],
-		'archive_url' => 'https://web.archive.org/web/*/'.$url,
-		'embed_html'  => $data['html'],
 	]);
 })->startListening();
