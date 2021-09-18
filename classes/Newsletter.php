@@ -6,8 +6,20 @@ class Newsletter extends BaseDBObject
 		'date',
 	];
 
-	var $db_key = 'MEETINGID';
-	var $db_table = 'meeting';
+	var $db_key = 'NEWSLETTER';
+	var $db_table = 'newsletter';
+
+	public function __construct(array $params)
+	{
+		if (isset($params['date']))
+		{
+			$this->db_key = 'date';
+			parent::__construct($params);
+			$this->db_key = 'BIDID';
+			return;
+		}
+		parent::__construct($params);
+	}
 
 	public static function getAll()
 	{

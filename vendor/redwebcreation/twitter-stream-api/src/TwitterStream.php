@@ -40,6 +40,10 @@ class TwitterStream
 
         while ($shouldKeepListening()) {
             $char  = $this->streamConnection->read(1);
+            if ($char === '')
+	    {
+		exit('streamConnection returned blank');
+            }
             $tweet = $char;
 
             while ($char !== "\n" && $tweet[-1] !== "\r") {
