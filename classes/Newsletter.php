@@ -3,7 +3,7 @@ class Newsletter extends BaseDBObject
 {
 	var $fields = [
 		'NEWSLETTERID',
-		'date',
+		'filename',
 	];
 
 	var $db_key = 'NEWSLETTER';
@@ -11,11 +11,11 @@ class Newsletter extends BaseDBObject
 
 	public function __construct(array $params)
 	{
-		if (isset($params['date']))
+		if (isset($params['filename']))
 		{
-			$this->db_key = 'date';
+			$this->db_key = 'filename';
 			parent::__construct($params);
-			$this->db_key = 'BIDID';
+			$this->db_key = 'NEWSLETTERID';
 			return;
 		}
 		parent::__construct($params);
@@ -27,7 +27,7 @@ class Newsletter extends BaseDBObject
 		$res = $db->Execute('
 			select *
 			from newsletter
-			order by date DESC
+			order by filename DESC
 		');
 		$meetings = [];
 		foreach ($res as $cur)

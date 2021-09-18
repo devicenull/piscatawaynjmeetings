@@ -12,8 +12,8 @@
 		<tbody>
 			{% for cur in newsletters %}
 				<tr>
-					<td>{{ cur.date }}</td>
-					<td><a href="/files/newsletter/{{ cur.date }}.pdf">View</a></td>
+					<td>{{ cur.filename }}</td>
+					<td><a href="/files/newsletter/{{ cur.filename }}">View</a></td>
 
 				</tr>
 			{% endfor %}

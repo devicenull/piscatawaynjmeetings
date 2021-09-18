@@ -45,15 +45,12 @@ foreach (getDirContents(__DIR__.'/web/files') as $cur)
 	$cleanpath = str_replace(__DIR__.'/web', '', $cur);
 	if (stripos($cleanpath, 'newsletter') != 0)
 	{
-		if (preg_match('/([0-9]{4}-[0-9]{2}-[0-9]{2})/i', basename($cleanpath), $matches))
+		$newsletter = new Newsletter(['filename' => basename($cleanpath)]);
+		if (!$newsletter->isInitialized())
 		{
-			$newsletter = new Newsletter(['date' => $matches[1]]);
-			if (!$newsletter->isInitialized())
-			{
-				$newsletter->add([
-					'date' => $matches[1]
-				]);
-			}
+			$newsletter->add([
+				'filename' => basename($cleanpath),
+			]);
 		}
 		continue;
 	}
