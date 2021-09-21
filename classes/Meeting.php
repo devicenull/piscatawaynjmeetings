@@ -83,4 +83,22 @@ class Meeting extends BaseDBObject
 
 		return $meetings;
 	}
+
+	public static function getFutureAndToday()
+	{
+		global $db;
+		$res = $db->Execute('
+			select *
+			from meeting
+			where date >= date_sub(now(), interval 1 day)
+			order by date ASC, type
+		');
+		$meetings = [];
+		foreach ($res as $cur)
+		{
+			$meetings[] = new Meeting(['record' => $cur]);
+		}
+
+		return $meetings;
+	}
 }
