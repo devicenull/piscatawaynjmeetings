@@ -20,7 +20,7 @@ foreach (Meeting::getFutureAndToday() as $cur)
 	$event = new Event($uid);
 
 	$event->setOccurrence(new TimeSpan($start, $end));
-	$event->setSummary('Piscataway '.ucfirst($cur['type']).' Meeting');
+	$event->setSummary('PNJ ' .ucfirst($cur['type']).' Meeting');
 
 	if ($cur['zoom_id'] != 0)
 	{
