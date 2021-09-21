@@ -7,14 +7,13 @@ use Eluceo\iCal\Domain\Entity\Event;
 use Eluceo\iCal\Domain\ValueObject\UniqueIdentifier;
 
 define('MYSQL_DATE_FORMAT', 'Y-m-d H:i:s');
+$timezone = new DateTimeZone('America/New_York');
 
 $events = [];
 foreach (Meeting::getFutureAndToday() as $cur)
 {
-
-
-	$start = new DateTime(DateTimeImmutable::createFromFormat(MYSQL_DATE_FORMAT, $cur['date']), false);
-	$end = new DateTime(DateTimeImmutable::createFromFormat(MYSQL_DATE_FORMAT, strftime('%F %T', strtotime($cur['date']) + (3 * 60 * 60))), false);
+	$start = new DateTime(DateTimeImmutable::createFromFormat(MYSQL_DATE_FORMAT, $cur['date'], $timezone), false);
+	$end = new DateTime(DateTimeImmutable::createFromFormat(MYSQL_DATE_FORMAT, strftime('%F %T', strtotime($cur['date']) + (3 * 60 * 60)), $timezone), false);
 
 	$uid = new UniqueIdentifier('piscatawaynjmeetings.com/meeting/'.$cur['MEETINGID']);
 	$event = new Event($uid);
