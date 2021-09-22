@@ -4,6 +4,9 @@ class Newsletter extends BaseDBObject
 	var $fields = [
 		'NEWSLETTERID',
 		'filename',
+		'season',
+		'year',
+		'notes',
 	];
 
 	var $db_key = 'NEWSLETTER';
@@ -21,13 +24,37 @@ class Newsletter extends BaseDBObject
 		parent::__construct($params);
 	}
 
+	public function add($params): bool
+	{
+		$data = explode(' ', str_replace('.pdf', '', $params['filename']));
+		if (!in_array($data[0], ['Spring', 'Summer', 'Winter', 'Fall']))
+		{
+			$this->error[] = 'Invalid Season';
+			return false;
+		}
+		$params['season'] = $data[0];
+
+		if ($data[1] > date('Y') || $data[1] < 2000)
+		{
+			$this->error[] = 'Year is invalid';
+			return false;
+		}
+		$params['year'] = $data[1];
+		return parent::add($params);
+	}
+
 	public static function getAll()
 	{
 		global $db;
 		$res = $db->Execute('
-			select *
+			select *, case season
+				when "Spring" then 2
+				when "Summer" then 3
+				when "Fall" then 4
+				when "Winter" then 1
+				end as sortorder
 			from newsletter
-			order by filename DESC
+			order by year desc, sortorder desc
 		');
 		$meetings = [];
 		foreach ($res as $cur)
