@@ -5,6 +5,8 @@ use Eluceo\iCal\Domain\ValueObject\TimeSpan;
 use Eluceo\iCal\Domain\ValueObject\DateTime;
 use Eluceo\iCal\Domain\Entity\Event;
 use Eluceo\iCal\Domain\ValueObject\UniqueIdentifier;
+use Eluceo\iCal\Domain\Entity\TimeZone;
+use DateTimeZone as PhpDateTimeZone;
 
 define('MYSQL_DATE_FORMAT', 'Y-m-d H:i:s');
 $timezone = new DateTimeZone('America/New_York');
@@ -12,6 +14,7 @@ $timezone = new DateTimeZone('America/New_York');
 $events = [];
 foreach (Meeting::getFutureAndToday() as $cur)
 {
+	// FIXME: timezones are still wrong
 	$start = new DateTime(DateTimeImmutable::createFromFormat(MYSQL_DATE_FORMAT, $cur['date'], $timezone), false);
 	$end = new DateTime(DateTimeImmutable::createFromFormat(MYSQL_DATE_FORMAT, strftime('%F %T', strtotime($cur['date']) + (3 * 60 * 60)), $timezone), false);
 
@@ -30,6 +33,7 @@ foreach (Meeting::getFutureAndToday() as $cur)
 }
 
 $calendar = new \Eluceo\iCal\Domain\Entity\Calendar($events);
+$calendar->addTimeZone(TimeZone::createFromPhpDateTimeZone(new PhpDateTimeZone('America/New_York')));
 
 header('Content-Type: text/calendar; charset=utf-8');
 header('Content-Disposition: attachment; filename="piscatawaymeetings.ics"');
