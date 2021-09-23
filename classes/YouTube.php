@@ -21,4 +21,21 @@ class YouTube extends BaseDBObject
 		$videodate = explode(' ', $this['published'])[0];
 		return 'files/youtube/'.$videodate.'/'.$this['filename'];
 	}
+
+	public static function getAll()
+	{
+		global $db;
+		$res = $db->Execute('
+			select *
+			from youtube
+			order by published desc
+		');
+		$videos = [];
+		foreach ($res as $cur)
+		{
+			$videos[] = new YouTube(['record' => $cur]);
+		}
+
+		return $videos;
+	}
 }
