@@ -96,7 +96,10 @@ class BaseDBObject implements ArrayAccess
 			}
 
 			$this->record = $params;
-			$this->record[$this->db_key] = $db->insert_Id();
+			if ($db->insert_Id() > 0)
+			{
+				$this->record[$this->db_key] = $db->insert_Id();
+			}
 
 			return true;
 		}
