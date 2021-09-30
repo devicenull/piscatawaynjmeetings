@@ -8,4 +8,4 @@ ssh root@www.piscatawaynjmeetings.com 'mysql piscataway < piscataway.sql'
 
 echo "Doing S3 backup"
 cd /home/piscataway/web/files
-rclone --config=/home/piscataway/.config/rclone/rclone.conf sync . vultr_ewr1:piscataway
+rclone -L --config=/home/piscataway/.config/rclone/rclone.conf sync . vultr_ewr1:piscataway

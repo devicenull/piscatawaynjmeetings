@@ -5,6 +5,7 @@ class Tweet extends BaseDBObject
 		'TWEETID',
 		'date',
 		'content',
+		'archive_job_id',
 		'archive_url',
 		'embed_html',
 	];
@@ -15,12 +16,10 @@ class Tweet extends BaseDBObject
 	public function add($params): bool
 	{
 		$url = 'https://twitter.com/PWAYNJ/status/'.$params['TWEETID'];
-		$archive_url = 'http://web.archive.org/save/'.$url;
-
-		// why wget?  it's easier then screwing around with curl_multi, and we don't actually
-		// care what archive.org has to say!
-		system('/usr/bin/wget '.escapeshellarg($archive_url).' -O /dev/null > /dev/null 2>&1 &');
-		$params['archive_url'] = 'https://web.archive.org/web/*/'.$url;
+		$job_id = ArchiveOrg::archiveURL($url);
+		$params['archive_job_id'] = $job_id;
+		// We'll mangle this later when the archive job is done
+		$params['archive_url'] = $url;
 
 		$c = curl_init('https://publish.twitter.com/oembed?url='.$url);
 		curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
@@ -28,6 +27,27 @@ class Tweet extends BaseDBObject
 		$params['embed_html'] = $data['html'];
 
 		return parent::add($params);
+	}
+
+	/**
+	*	Retrieve a list of tweets we're waiting for archive.org to process
+	*/
+	public static function getPendingArchive()
+	{
+		global $db;
+		$res = $db->Execute('
+			select *
+			from tweet
+			where archive_job_id != ""
+			order by date DESC
+		');
+		$tweets = [];
+		foreach ($res as $cur)
+		{
+			$tweets[] = new Tweet(['record' => $cur]);
+		}
+
+		return $tweets;
 	}
 
 	public static function getAll()

@@ -1,5 +1,5 @@
 <?php
-require(__DIR__.'/init.php');
+require(__DIR__.'/../init.php');
 
 $c = curl_init('https://www.youtube.com/feeds/videos.xml?channel_id=UClvOfAfDVKKd8T-becTCVow');
 curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
