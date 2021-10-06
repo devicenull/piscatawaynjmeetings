@@ -4,28 +4,34 @@ class ArchiveOrg
 	/**
 	*	Returns an archive.org job status ID
 	*/
-	public static function archiveURL(string $url): string
+	public static function archiveURL(string $url): ?string
 	{
-		$c = self::initCurl();
-		curl_setopt_array($c, [
-			CURLOPT_POSTFIELDS => [
-				'url' => 'http://www.piscatawaynjmeetings.com',
-				'skip_first_archive' => 1,
-				'email_result'       => 0,
-			],
-		]);
+		for ($tries=0; $tries<5;$tries++)
+		{
+			$c = self::initCurl();
+			curl_setopt_array($c, [
+				CURLOPT_POSTFIELDS => [
+					'url'                => $url,
+					'skip_first_archive' => 1,
+					'email_result'       => 0,
+				],
+			]);
 
-		$result = curl_exec($c);
-		if (curl_getinfo($c, CURLINFO_HTTP_CODE) == 200)
-		{
-			$data = json_decode($result, true);
-			return $data['job_id'];
+			$result = curl_exec($c);
+			if (curl_getinfo($c, CURLINFO_HTTP_CODE) == 200)
+			{
+				$data = json_decode($result, true);
+				return $data['job_id'];
+			}
+			else
+			{
+				echo "Curl request failed\n";
+				var_dump(curl_getinfo($c));
+				sleep(10);
+				continue;
+			}
 		}
-		else
-		{
-			echo "Curl request failed\n";
-			var_dump(curl_getinfo($c));
-		}
+		return null;
 	}
 
 	/**
@@ -46,6 +52,7 @@ class ArchiveOrg
 			if ($data['status'] == 'success')
 			{
 				$timestamp = $data['timestamp'];
+				return true;
 			}
 			return false;
 		}

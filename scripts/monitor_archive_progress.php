@@ -3,6 +3,7 @@ require(__DIR__.'/../init.php');
 
 foreach (Tweet::getPendingArchive() as $tweet)
 {
+	$timestamp = '';
 	if (ArchiveOrg::isComplete($tweet['archive_job_id'], $timestamp))
 	{
 		$tweet->set([
