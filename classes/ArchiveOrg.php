@@ -12,8 +12,6 @@ class ArchiveOrg
 			curl_setopt_array($c, [
 				CURLOPT_POSTFIELDS => [
 					'url'                => $url,
-					'skip_first_archive' => 1,
-					'email_result'       => 0,
 				],
 			]);
 
@@ -66,7 +64,7 @@ class ArchiveOrg
 
 	private static function initCurl()
 	{
-		$c = curl_init('https://web.archive.org/save');
+		$c = curl_init('https://web.archive.org/save?email_result=0&skip_first_archive=1');
 		curl_setopt_array($c, [
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_HTTPHEADER      => [
