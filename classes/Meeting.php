@@ -38,13 +38,32 @@ class Meeting extends BaseDBObject
 		return '';
 	}
 
+	public static function getUpcomingAndOlder()
+	{
+		global $db;
+		$res = $db->Execute('
+			select *
+			from meeting
+			where date < ?
+			order by date ASC, type
+		', [strftime('%F %T', strtotime('+30 days'))]
+		);
+		$meetings = [];
+		foreach ($res as $cur)
+		{
+			$meetings[] = new Meeting(['record' => $cur]);
+		}
+
+		return $meetings;
+	}
+
 	public static function getAll()
 	{
 		global $db;
 		$res = $db->Execute('
 			select *
 			from meeting
-			order by date ASC, type
+			order by date desc, type
 		');
 		$meetings = [];
 		foreach ($res as $cur)

@@ -1,6 +1,14 @@
 {% extends 'layout.html' %}
 
 {% block maincontent %}
+	<script>
+		$(document).ready(function () {
+			$('#allmeetings').DataTable({
+				"order": [[ 0, "desc" ]],
+				"pageLength": 10
+			});
+		});
+	</script>
 	<b style="float: right">Call in number is always 1-646-876-9923</b>
 	{% if has_edit_auth %}
 	<a class="btn btn-primary" href="/meeting_edit.php?MEETINGID=new">Add</a>
@@ -49,8 +57,8 @@
 	The Council refuses to allow joining their meetings via computer, so you're forced to dial in (they cite "privacy issues", which are somehow not a problem for any other town nor even other meetings within Piscataway).
 
 	<br><br>
-	<h3>All Meetings</h3>
-	<table class="table table-striped table-sm">
+	<h3>Upcoming/Historical Meetings (<a href="/all_meetings.php">See All Meetings</a>)</h3>
+	<table class="table table-striped table-sm" id="allmeetings">
 		<thead>
 			<tr>
 				<th scope="col">Date</th>
@@ -65,7 +73,7 @@
 		<tbody>
 			{% for cur in meetings %}
 				<tr>
-					<td>{{ cur.date|date('F j Y') }}</td>
+					<td data-order="{{ cur.date|date('U') }}">{{ cur.date|date('F j Y') }}</td>
 					<td>{{ cur.type|capitalize }}</td>
 					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
 					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>

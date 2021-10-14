@@ -43,6 +43,8 @@ foreach (Meeting::getAll() as $cur)
 foreach (getDirContents(__DIR__.'/web/files') as $cur)
 {
 	$cleanpath = str_replace(__DIR__.'/web', '', $cur);
+	if (stripos($cleanpath, 'piscataway_youtube') != 0) continue;
+
 	if (stripos($cleanpath, 'newsletter') != 0)
 	{
 		$newsletter = new Newsletter(['filename' => basename($cleanpath)]);
