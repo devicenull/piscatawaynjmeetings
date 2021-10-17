@@ -6,18 +6,17 @@
 		<thead>
 			<tr>
 				<th scope="col">Date</th>
-				<th scope="col">Type</th>
-				<th scope="col">Minutes</th>
-				<th scope="col">Recording</th>
+				<th scope="col">Artifacts</th>
 			</tr>
 		</thead>
 		<tbody>
 			{% for cur in meetings %}
 				<tr>
 					<td data-order="{{ cur.date|date('U') }}">{{ cur.date|date('F j Y') }}</td>
-					<td>{{ cur.type|capitalize }}</td>
-					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
-					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
+					<td>
+						{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.type|capitalize }} Board Meeting Minutes</a><br>{% endif %}
+						{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.type|capitalize }} Board Meeting Recording</a>{% endif %}
+					</td>
 				</tr>
 			{% endfor %}
 		</tbody>

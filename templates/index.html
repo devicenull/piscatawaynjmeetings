@@ -54,7 +54,6 @@
 		</tbody>
 	</table>
 	<b>Note:</b>  During COVID-19, meeting information is posted <a href="https://piscatawaynj.org/government/meeting_schedules/index.php">here</a>. You will not see it under 'Alerts' nor posted to their Twitter/Facebook.<br><br>
-	The Council refuses to allow joining their meetings via computer, so you're forced to dial in (they cite "privacy issues", which are somehow not a problem for any other town nor even other meetings within Piscataway).
 
 	<br><br>
 	<h3>Upcoming/Historical Meetings (<a href="/all_meetings.php">See All Meetings</a>)</h3>
@@ -62,9 +61,7 @@
 		<thead>
 			<tr>
 				<th scope="col">Date</th>
-				<th scope="col">Type</th>
-				<th scope="col">Minutes</th>
-				<th scope="col">Recording</th>
+				<th scope="col">Artifacts</th>
 				{% if has_edit_auth %}
 				<th></th>
 				{% endif %}
@@ -74,9 +71,10 @@
 			{% for cur in meetings %}
 				<tr>
 					<td data-order="{{ cur.date|date('U') }}">{{ cur.date|date('F j Y') }}</td>
-					<td>{{ cur.type|capitalize }}</td>
-					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
-					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
+					<td>
+						{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.type|capitalize }} Board Minutes</a><br>{% endif %}
+						{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.type|capitalize }} Board Recording</a>{% endif %}
+					</td>
 					{% if has_edit_auth %}
 					<td><a class="btn btn-primary" href="/meeting_edit.php?MEETINGID={{ cur.MEETINGID }}">edit</a></td>
 					{% endif %}
@@ -91,25 +89,5 @@
 	<div>
 		Piscataway Township, New Jersey doesn't do a great job of publishing their meeting schedule/minutes.<br>
 		In particular, they don't really publish meeting minutes at all (as of writing 2020-01-05, they only have ~6 township council meetings listed, the rest are unavailable).<br>
-		Don't see a meeting you want?<br>
-		Email <a href="mailto:oprarequests@piscatawaynj.org">oprarequests@piscatawaynj.org</a> with something like the following:<br>
-		<pre>
-Dear Piscataway Township,
-
-This is a request for public records made under OPRA and the common law right of access. I am not required to fill out an official form.
-
-Please acknowledge receipt of this message.
-
-Records requested:
-
-Meeting minutes for (INSERT TYPE HERE) on (INSERT DATE HERE)
-
-I would like these minutes to be delivered by email.
-
-Sincerly,
-(YOUR NAME)
-		</pre>
-		<br>
-		Expect their response to take several days at least.
 	</div>
 {% endblock %}
