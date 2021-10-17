@@ -38,6 +38,8 @@ function displayPage($template, $vars=[])
 {
 	global $twig;
 
+	$vars['has_edit_auth'] = hasEditAuth();
+
 	if (isset($_SESSION['success_message']))
 	{
 		$vars['success_message'] = $_SESSION['success_message'];
