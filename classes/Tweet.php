@@ -10,8 +10,8 @@ class Tweet extends BaseDBObject
 		'embed_html',
 	];
 
-	var $db_key = 'TWEETID';
-	var $db_table = 'tweet';
+	const DB_KEY = 'TWEETID';
+	const DB_TABLE = 'tweet';
 
 	public function add($params): bool
 	{

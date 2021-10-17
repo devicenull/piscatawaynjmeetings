@@ -2,9 +2,9 @@
 class BaseDBObject implements ArrayAccess
 {
 	// Name of the primary key
-	var $db_key = '';
+	const DB_KEY = '';
 	// Name of the database table
-	var $db_table = '';
+	const DB_TABLE = '';
 	// Full list of all DB fields (including primary key)
 	var $fields = [];
 	// Fields that don't exist in the database, but can be generated at runtime
@@ -21,20 +21,28 @@ class BaseDBObject implements ArrayAccess
 		{
 			$this->record = $params['record'];
 		}
-		else if (isset($params[$this->db_key]))
+		else if (isset($params[static::DB_KEY]))
 		{
-			global $db;
-			$res = $db->Execute('select * from '.$this->db_table.' where '.$this->db_key.'=?', [$params[$this->db_key]]);
-			if ($res->RecordCount() == 1)
-			{
-				$this->record = $res->fields;
-			}
+			$this->construct_by_column(static::DB_KEY, $params[static::DB_KEY]);
 		}
+	}
+
+	public function construct_by_column($column, $data): bool
+	{
+		global $db;
+		$res = $db->Execute('select * from '.static::DB_TABLE.' where ?=?', [$column, $data]);
+		if ($res->RecordCount() == 1)
+		{
+			$this->record = $res->fields;
+			return true;
+		}
+
+		return false;
 	}
 
 	public function isInitialized(): bool
 	{
-		return isset($this->record[$this->db_key]);
+		return isset($this->record[static::DB_KEY]);
 	}
 
 	public function set(array $params): bool
@@ -56,8 +64,8 @@ class BaseDBObject implements ArrayAccess
 
 		if (count($update_fields) > 0)
 		{
-			$update_values[] = $this->record[$this->db_key];
-			if (!$db->Execute('update '.$this->db_table.' set '.implode('=?, ', $update_fields).'=? where '.$this->db_key.'=?', $update_values))
+			$update_values[] = $this->record[static::DB_KEY];
+			if (!$db->Execute('update '.static::DB_TABLE.' set '.implode('=?, ', $update_fields).'=? where '.static::DB_KEY.'=?', $update_values))
 			{
 				$this->error = $db->errorMsg();
 				return false;
@@ -89,7 +97,7 @@ class BaseDBObject implements ArrayAccess
 
 		if (count($add_cols) > 0)
 		{
-			if (!$db->Execute('insert into '.$this->db_table.'('.implode(',', $add_cols).') values('.implode(', ', $add_vals).')'))
+			if (!$db->Execute('insert into '.static::DB_TABLE.'('.implode(',', $add_cols).') values('.implode(', ', $add_vals).')'))
 			{
 				$this->error = $db->ErrorMsg();
 				return false;
@@ -98,7 +106,7 @@ class BaseDBObject implements ArrayAccess
 			$this->record = $params;
 			if ($db->insert_Id() > 0)
 			{
-				$this->record[$this->db_key] = $db->insert_Id();
+				$this->record[static::DB_KEY] = $db->insert_Id();
 			}
 
 			return true;
@@ -114,7 +122,7 @@ class BaseDBObject implements ArrayAccess
 		global $db;
 		$this->error = '';
 
-		if (!$db->Execute('delete from '.$this->db_table.' WHERE '.$this->db_key.'=?', [$this->record[$this->db_key]]))
+		if (!$db->Execute('delete from '.static::DB_TABLE.' WHERE '.static::DB_KEY.'=?', [$this->record[static::DB_KEY]]))
 		{
 			$this->error = $db->ErrorMsg();
 			return false;

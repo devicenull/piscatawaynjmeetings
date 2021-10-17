@@ -9,8 +9,8 @@ class MiscFile extends BaseDBObject
 		'notes',
 	];
 
-	var $db_key = 'FILEID';
-	var $db_table = 'misc_files';
+	const DB_KEY = 'FILEID';
+	const DB_TABLE = 'misc_files';
 	var $virtual_fields = ['type_description'];
 
 	const TYPE_DESCRIPTION = [

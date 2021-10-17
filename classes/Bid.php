@@ -7,17 +7,17 @@ class Bid extends BaseDBObject
 		'filename',
 	];
 
-	var $db_key = 'BIDID';
-	var $db_table = 'bid';
+	const DB_KEY = 'BIDID';
+	const DB_TABLE = 'bid';
 
 
 	public function __construct(array $params)
 	{
+		global $db;
+
 		if (isset($params['filename']))
 		{
-			$this->db_key = 'filename';
-			parent::__construct($params);
-			$this->db_key = 'BIDID';
+			$this->construct_by_column('filename', $params['filename']);
 			return;
 		}
 		parent::__construct($params);

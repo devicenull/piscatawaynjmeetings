@@ -13,8 +13,32 @@ class Meeting extends BaseDBObject
 		'zoom_password',
 	];
 
-	var $db_key = 'MEETINGID';
-	var $db_table = 'meeting';
+	const DB_KEY = 'MEETINGID';
+	const DB_TABLE = 'meeting';
+
+	public function __construct($params=[])
+	{
+		if (isset($params['type']) && isset($params['date']))
+		{
+			global $db;
+			$res = $db->Execute('
+				select *
+				from meeting
+				where type=? and date between ? and ?',
+				[
+					$params['type'],
+					strftime('%F 00:00:00', strtotime($params['date'])),
+					strftime('%F 23:59:59', strtotime($params['date'])),
+				]
+			);
+			if ($res->RecordCount() == 1)
+			{
+				$this->record = $res->fields;
+				return;
+			}
+		}
+		parent::__construct($params);
+	}
 
 	// link_type minutes|recording
 	public function getLink($link_type): string
@@ -85,7 +109,7 @@ class Meeting extends BaseDBObject
 		return $date == strftime('%F');
 	}
 
-	public static function getRecent()
+	public static function getRecent(): iterable
 	{
 		global $db;
 		$res = $db->Execute('
@@ -103,7 +127,7 @@ class Meeting extends BaseDBObject
 		return $meetings;
 	}
 
-	public static function getFutureAndToday()
+	public static function getFutureAndToday(): iterable
 	{
 		global $db;
 		$res = $db->Execute('
@@ -119,5 +143,20 @@ class Meeting extends BaseDBObject
 		}
 
 		return $meetings;
+	}
+
+	public static function getTypes(): iterable
+	{
+		global $db;
+		$res = $db->Execute('
+			select distinct(type) as type
+			from meeting
+		');
+		$types = [];
+		foreach ($res as $cur)
+		{
+			$types[] = $cur['type'];
+		}
+		return $types;
 	}
 }

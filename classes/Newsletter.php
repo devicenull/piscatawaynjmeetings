@@ -9,16 +9,14 @@ class Newsletter extends BaseDBObject
 		'notes',
 	];
 
-	var $db_key = 'NEWSLETTER';
-	var $db_table = 'newsletter';
+	const DB_KEY = 'NEWSLETTER';
+	const DB_TABLE = 'newsletter';
 
 	public function __construct(array $params)
 	{
 		if (isset($params['filename']))
 		{
-			$this->db_key = 'filename';
-			parent::__construct($params);
-			$this->db_key = 'NEWSLETTERID';
+			$this->construct_by_column('filename', $params['filename']);
 			return;
 		}
 		parent::__construct($params);

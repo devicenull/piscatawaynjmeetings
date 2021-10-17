@@ -8,8 +8,8 @@ class YouTube extends BaseDBObject
 		'filename',
 	];
 
-	var $db_key = 'video_id';
-	var $db_table = 'youtube';
+	const DB_KEY = 'video_id';
+	const DB_TABLE = 'youtube';
 
 	public function getLink(): string
 	{
