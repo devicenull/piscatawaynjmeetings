@@ -16,6 +16,9 @@
 					<td>
 						{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.type|capitalize }} Board Meeting Minutes</a><br>{% endif %}
 						{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.type|capitalize }} Board Meeting Recording</a>{% endif %}
+						{% if cur.minutes_available == 'no' and cur.recording_available == 'no' %}
+						Nothing available for {{ cur.date|date('F j Y') }} Piscataway {{ cur.type|capitalize }} Board Meeting
+						{%endif %}
 					</td>
 				</tr>
 			{% endfor %}
