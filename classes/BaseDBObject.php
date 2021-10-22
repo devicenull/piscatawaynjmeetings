@@ -30,7 +30,9 @@ class BaseDBObject implements ArrayAccess
 	public function construct_by_column($column, $data): bool
 	{
 		global $db;
-		$res = $db->Execute('select * from '.static::DB_TABLE.' where ?=?', [$column, $data]);
+		if (!in_array($column, $this->fields)) return false;
+
+		$res = $db->Execute('select * from '.static::DB_TABLE.' where '.$column.'=?', [$data]);
 		if ($res->RecordCount() == 1)
 		{
 			$this->record = $res->fields;
