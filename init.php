@@ -10,14 +10,14 @@ $twig = new \Twig\Environment($loader, [
 	'autoescape' => 'html',
 ]);
 
-require_once(__DIR__.'/classes/BaseDBObject.php');
-require_once(__DIR__.'/classes/Meeting.php');
-require_once(__DIR__.'/classes/Newsletter.php');
-require_once(__DIR__.'/classes/MiscFile.php');
-require_once(__DIR__.'/classes/Bid.php');
-require_once(__DIR__.'/classes/Tweet.php');
-require_once(__DIR__.'/classes/YouTube.php');
-require_once(__DIR__.'/classes/ArchiveOrg.php');
+spl_autoload_register(function ($class_name) {
+	$class_name = basename($class_name);
+	$path = __DIR__.'/classes/'.$class_name.'.php';
+	if (file_exists($path))
+	{
+		require_once($path);
+	}
+});
 
 require_once(__DIR__.'/config.php');
 

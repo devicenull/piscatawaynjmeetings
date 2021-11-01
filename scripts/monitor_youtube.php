@@ -28,7 +28,7 @@ foreach ($xml->entry as $item)
 		echo "Downloading ".$ytid."\n";
 		$videodate = explode(' ', $params['published'])[0];
 
-		$basepath = __DIR__.'/web/files/youtube/'.$videodate.'/';
+		$basepath = __DIR__.'/../web/files/youtube/'.$videodate.'/';
 		passthru('/usr/bin/python3 '.__DIR__.'/youtube-dl -o "'.$basepath.'%(id)s" '.escapeshellarg('https://www.youtube.com/watch?v='.$ytid));
 
 		if (file_exists($basepath.$ytid.'.mp4'))

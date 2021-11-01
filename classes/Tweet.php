@@ -3,6 +3,7 @@ class Tweet extends BaseDBObject
 {
 	var $fields = [
 		'TWEETID',
+		'TWITTERUID',
 		'date',
 		'content',
 		'archive_job_id',
@@ -15,7 +16,9 @@ class Tweet extends BaseDBObject
 
 	public function add($params): bool
 	{
-		$url = 'https://twitter.com/PWAYNJ/status/'.$params['TWEETID'];
+		$twitteruser = new TwitterUser(['TWITTERUID' => $params['TWITTERUID']]);
+
+		$url = 'https://twitter.com/'.$twitteruser['username'].'/status/'.$params['TWEETID'];
 		$job_id = ArchiveOrg::archiveURL($url);
 		$params['archive_job_id'] = $job_id;
 		// We'll mangle this later when the archive job is done
