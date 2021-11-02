@@ -4,17 +4,23 @@ class TwitterUser extends BaseDBObject
 	var $fields = [
 		'TWITTERUID',
 		'username',
+		'hidden', // yes|no
 	];
 
 	const DB_KEY = 'TWITTERUID';
 	const DB_TABLE = 'twitter_user';
 
-	public static function getAll()
+	public static function getAll($include_hidden=true)
 	{
 		global $db;
+		if (!$include_hidden)
+		{
+			$extra_sql = 'where hidden="no"';
+		}
 		$res = $db->Execute('
 			select *
 			from twitter_user
+			'.$extra_sql.'
 			order by username DESC
 		');
 		$tweets = [];

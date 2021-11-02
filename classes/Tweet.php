@@ -53,12 +53,18 @@ class Tweet extends BaseDBObject
 		return $tweets;
 	}
 
-	public static function getAll()
+	public static function getAll($include_hidden_users=true)
 	{
 		global $db;
+		if (!$include_hidden_users)
+		{
+			$extra_sql = 'where hidden="no"';
+		}
 		$res = $db->Execute('
 			select *
 			from tweet
+			left join twitter_user using (TWITTERUID)
+			'.$extra_sql.'
 			order by date DESC
 		');
 		$tweets = [];
