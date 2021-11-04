@@ -37,7 +37,7 @@ it('can add a rule', function () {
     Rule::useHttpClient($client);
 
     $rule = new Rule('cats has:images', 'cats with images');
-    $response = $rule->add();
+    $response = $rule->save();
     /** @var Request $sentRequest */
     $sentRequest = $requestsSent[0]['request'];
 
@@ -73,7 +73,7 @@ it('can delete a rule', function () {
     Rule::useHttpClient($client);
 
     $rule = new Rule('cats has:images', 'cats with images');
-    $rule->add();
+    $rule->save();
     $rule->delete();
     /** @var Request $sentRequest */
     $sentRequest = $requestsSent[1]['request'];

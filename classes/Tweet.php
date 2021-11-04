@@ -56,6 +56,7 @@ class Tweet extends BaseDBObject
 	public static function getAll($include_hidden_users=true)
 	{
 		global $db;
+		$extra_sql = '';
 		if (!$include_hidden_users)
 		{
 			$extra_sql = 'where hidden="no"';

@@ -13,6 +13,7 @@ class TwitterUser extends BaseDBObject
 	public static function getAll($include_hidden=true)
 	{
 		global $db;
+		$extra_sql = '';
 		if (!$include_hidden)
 		{
 			$extra_sql = 'where hidden="no"';

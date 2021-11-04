@@ -75,7 +75,7 @@ Rule::all();
 use RWC\TwitterStream\Rule;
 
 $rule = new Rule('cat has:image', 'cats with images');
-$rule->add();
+$rule->save();
 ```
 
 If no tag is provided, the fallback is the rule content itself.

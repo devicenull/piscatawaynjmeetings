@@ -1,7 +1,12 @@
 <?php
 require(__DIR__.'/../init.php');
+ini_set('display_errors', 1);
 
-use Spatie\TwitterStreamingApi\PublicStream;
+use RWC\TwitterStream\Rule;
+use RWC\TwitterStream\RuleBuilder;
+use RWC\TwitterStream\Fieldset;
+use RWC\TwitterStream\Sets;
+use RWC\TwitterStream\TwitterStream;
 
 /**
 *	Start by backfilling any tweets we missed since last run (up to 100, didn't bother with paging)...
@@ -61,18 +66,33 @@ foreach (TwitterUser::getAll() as $user)
 	}
 }
 
-$stream = PublicStream::create(
-		TWITTER_BEARER,
-		TWITTER_API_KEY,
-		TWITTER_API_SECRET
-);
+sleep(5);
+
+$stream = new TwitterStream(TWITTER_BEARER, TWITTER_API_KEY, TWITTER_API_SECRET);
+$rule = RuleBuilder::create();
+
+$i = 0;
 foreach (TwitterUser::getAll() as $user)
 {
 	echo "Listening for tweets from {$user['username']}\n";
-	$stream->whenTweets($user['TWITTERUID'], 'handleTweet');
+	if ($i++ > 0)
+	{
+		$rule->or();
+	}
+	$rule->from($user['TWITTERUID']);
 }
-//->whenHears('test', function (array $tweet) {
-$stream->startListening();
+
+Rule::deleteBulk(...Rule::all());
+$rule->save();
+
+$sets = new Sets(
+    new Fieldset('tweet.fields', 'author_id', 'id','text')
+);
+
+foreach ($stream->filteredTweets($sets) as $tweet)
+{
+	handleTweet($tweet);
+}
 
 /**
  * tweet is:
@@ -99,8 +119,7 @@ $stream->startListening();
 function handleTweet($tweet)
 {
 	var_dump($tweet);
-
-	$uid = explode(':', $tweet['matching_rules'][0]['tag'])[1];
+	if (isset($tweet['errors'])) return;
 
 	// Reconnect to avoid mysql has gone away errors
 	$GLOBALS['db'] = newAdoConnection('mysqli');
@@ -108,7 +127,7 @@ function handleTweet($tweet)
 	$tw = new Tweet();
 	$tw->add([
 		'TWEETID'     => $tweet['data']['id'],
-		'TWITTERUID'  => $uid,
+		'TWITTERUID'  => $tweet['data']['author_id'],
 		'date'        => strftime('%F %T'),
 		'content'     => $tweet['data']['text'],
 	]);

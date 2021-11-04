@@ -10,3 +10,4 @@ config.php
 .vimrc
 .ssh
 .selected_editor
+php_error.log
