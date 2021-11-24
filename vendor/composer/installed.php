@@ -5,7 +5,7 @@
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => '540168a6b33ac3c117af6b099dac967b67f4b36d',
+        'reference' => '73c668722361856dbf324241cf1004d32c16481b',
         'name' => '__root__',
         'dev' => true,
     ),
@@ -16,7 +16,7 @@
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => '540168a6b33ac3c117af6b099dac967b67f4b36d',
+            'reference' => '73c668722361856dbf324241cf1004d32c16481b',
             'dev_requirement' => false,
         ),
         'adodb/adodb-php' => array(
@@ -128,12 +128,14 @@
             'dev_requirement' => false,
         ),
         'redwebcreation/twitter-stream-api' => array(
-            'pretty_version' => '0.3.1',
-            'version' => '0.3.1.0',
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
             'type' => 'library',
             'install_path' => __DIR__ . '/../redwebcreation/twitter-stream-api',
-            'aliases' => array(),
-            'reference' => '49a6580b43674331285552ff23df1a0bde4590f9',
+            'aliases' => array(
+                0 => '9999999-dev',
+            ),
+            'reference' => '62795cbcc77dac93534cea4f5ac3b9b7b212ce46',
             'dev_requirement' => false,
         ),
         'symfony/deprecation-contracts' => array(

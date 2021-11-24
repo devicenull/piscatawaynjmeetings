@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "08ee2d81d49947a1b35e95d2f949aa61",
+    "content-hash": "5a017ca9b03eaf0718e9145a7cb4af35",
     "packages": [
         {
             "name": "adodb/adodb-php",
@@ -719,16 +719,16 @@
         },
         {
             "name": "redwebcreation/twitter-stream-api",
-            "version": "0.3.1",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/redwebcreation/twitter-stream-api.git",
-                "reference": "49a6580b43674331285552ff23df1a0bde4590f9"
+                "reference": "62795cbcc77dac93534cea4f5ac3b9b7b212ce46"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/redwebcreation/twitter-stream-api/zipball/49a6580b43674331285552ff23df1a0bde4590f9",
-                "reference": "49a6580b43674331285552ff23df1a0bde4590f9",
+                "url": "https://api.github.com/repos/redwebcreation/twitter-stream-api/zipball/62795cbcc77dac93534cea4f5ac3b9b7b212ce46",
+                "reference": "62795cbcc77dac93534cea4f5ac3b9b7b212ce46",
                 "shasum": ""
             },
             "require": {
@@ -738,10 +738,11 @@
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^3",
                 "pestphp/pest": "^1.1",
-                "phpstan/phpstan": "^0.12.85",
+                "phpstan/phpstan": "^1",
                 "symfony/var-dumper": "^5.2",
                 "vlucas/phpdotenv": "^5.3"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -772,9 +773,9 @@
             ],
             "support": {
                 "issues": "https://github.com/redwebcreation/twitter-stream-api/issues",
-                "source": "https://github.com/redwebcreation/twitter-stream-api/tree/0.3.1"
+                "source": "https://github.com/redwebcreation/twitter-stream-api/tree/master"
             },
-            "time": "2021-05-30T12:46:48+00:00"
+            "time": "2021-11-08T14:39:51+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -1033,7 +1034,7 @@
     ],
     "packages-dev": [],
     "aliases": [],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,

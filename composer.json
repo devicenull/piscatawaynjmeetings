@@ -4,6 +4,7 @@
         "adodb/adodb-php": "^5.20",
         "phpmailer/phpmailer": "^6.2",
         "eluceo/ical": "^2.3",
-        "redwebcreation/twitter-stream-api": "^0.3.1"
-    }
+        "redwebcreation/twitter-stream-api": "master"
+    },
+    "minimum-stability": "dev"
 }

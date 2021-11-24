@@ -33,7 +33,7 @@
     "lint": "php-cs-fixer fix -v",
     "test:unit": "pest",
     "test:lint": "php-cs-fixer fix -v --dry-run",
-    "test:types": "phpstan analyse --ansi --memory-limit=0",
+    "test:types": "phpstan analyse --ansi --memory-limit=-1",
     "test": [
       "@test:lint",
       "@test:types",
@@ -44,7 +44,7 @@
     "symfony/var-dumper": "^5.2",
     "pestphp/pest": "^1.1",
     "friendsofphp/php-cs-fixer": "^3",
-    "phpstan/phpstan": "^0.12.85",
+    "phpstan/phpstan": "^1",
     "vlucas/phpdotenv": "^5.3"
   }
 }

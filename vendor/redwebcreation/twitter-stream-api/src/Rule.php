@@ -47,7 +47,7 @@ class Rule
         return $this;
     }
 
-    public static function useHttpClient(TwitterClient | Client $client): void
+    public static function useHttpClient(TwitterClient|Client $client): void
     {
         if ($client instanceof Client) {
             $client = new TwitterClient($client);

@@ -82,3 +82,4 @@ it('can delete a rule', function () {
     expect((string)$sentRequest->getUri())->toBe('https://api.twitter.com/2/tweets/search/stream/rules');
     expect($sentRequest->getBody()->getContents())->toBe(json_encode(['delete' => ['ids' => ['1390687625925824521']]]));
 });
+

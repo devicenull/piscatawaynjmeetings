@@ -83,16 +83,16 @@ class RuleBuilder
         return $this;
     }
 
-    public function from(string | array $users): static
+    public function from(string|array $users): static
     {
         $this->from = $users;
 
         return $this;
     }
 
-    public function to(string | array $users): static
+    public function to(string|array $users): static
     {
-        $this->from = $users;
+        $this->to = $users;
 
         return $this;
     }
@@ -140,14 +140,14 @@ class RuleBuilder
         return $this;
     }
 
-    public function retweetsOf(string | array $users): static
+    public function retweetsOf(string|array $users): static
     {
         $this->retweets_of = $users;
 
         return $this;
     }
 
-    public function context(string | array $context): static
+    public function context(string|array $context): static
     {
         $this->context = $context;
 
@@ -217,28 +217,28 @@ class RuleBuilder
         return $this;
     }
 
-    public function url(string | array $urls): static
+    public function url(string|array $urls): static
     {
         $this->url = $urls;
 
         return $this;
     }
 
-    public function entity(string | array $entities): static
+    public function entity(string|array $entities): static
     {
         $this->entity = $entities;
 
         return $this;
     }
 
-    public function conversation(string | array $conversations): static
+    public function conversation(string|array $conversations): static
     {
         $this->conversation_id = $conversations;
 
         return $this;
     }
 
-    public function bio(string | array $bios): static
+    public function bio(string|array $bios): static
     {
         $this->bio = $bios;
 
@@ -284,28 +284,28 @@ class RuleBuilder
         return $this;
     }
 
-    public function bioName(string | array $bioNames): static
+    public function bioName(string|array $bioNames): static
     {
         $this->bio_name = $bioNames;
 
         return $this;
     }
 
-    public function bioLocation(string | array $bioLocations): static
+    public function bioLocation(string|array $bioLocations): static
     {
         $this->bio_location = $bioLocations;
 
         return $this;
     }
 
-    public function place(string | array $places): static
+    public function place(string|array $places): static
     {
         $this->place = $places;
 
         return $this;
     }
 
-    public function placeCountry(string | array $placesCountry): static
+    public function placeCountry(string|array $placesCountry): static
     {
         $this->place_country = $placesCountry;
 

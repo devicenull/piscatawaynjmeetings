@@ -16,14 +16,14 @@ class TwitterClient
         $this->httpClient = $httpClient;
     }
 
-    public function stream(string $method, UriInterface | string $uri = '', array $options = []): ResponseInterface
+    public function stream(string $method, UriInterface|string $uri = '', array $options = []): ResponseInterface
     {
         $options['stream'] = true;
 
         return $this->httpClient->request($method, $uri, $options);
     }
 
-    public function request(string $method, UriInterface | string $uri = '', array $options = []): array
+    public function request(string $method, UriInterface|string $uri = '', array $options = []): array
     {
         $response = $this->httpClient->request($method, $uri, $options);
 
