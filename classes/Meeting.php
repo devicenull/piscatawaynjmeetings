@@ -11,6 +11,8 @@ class Meeting extends BaseDBObject
 		'recording_filetype',
 		'zoom_id',
 		'zoom_password',
+		'revai_jobid',
+		'transcript_available',
 	];
 
 	const DB_KEY = 'MEETINGID';
@@ -40,13 +42,20 @@ class Meeting extends BaseDBObject
 		parent::__construct($params);
 	}
 
-	// link_type minutes|recording
-	public function getLink($link_type): string
+	// link_type minutes|recording|transcript
+	// destination true|false - if true, return the path where this file *should* go
+	public function getLink($link_type, $destination=false): string
 	{
 		$extensions = [
 			'minutes' => ['doc', 'pdf'],
 			'recording' => ['mp3', 'm4a'],
+			'transcript' => ['txt'],
 		];
+
+		if ($destination && count($extensions[$link_type]) > 1)
+		{
+			return '';
+		}
 
 		$date = explode(' ', $this['date']);
 
@@ -57,9 +66,18 @@ class Meeting extends BaseDBObject
 			{
 				return $basepath.$ext;
 			}
+			else if ($destination)
+			{
+				return $basepath.$ext;
+			}
 		}
 
 		return '';
+	}
+
+	public function getTranscript(): string
+	{
+		return file_get_contents(__DIR__.'/../web/'.$this->getLink('transcript'));
 	}
 
 	public static function getUpcomingAndOlder()
@@ -158,5 +176,23 @@ class Meeting extends BaseDBObject
 			$types[] = $cur['type'];
 		}
 		return $types;
+	}
+
+	public static function getUntranscribed()
+	{
+		global $db;
+		$res = $db->Execute('
+			select *
+			from meeting
+			where revai_jobid = "" and recording_available = "yes"
+			order by date desc, type
+		');
+		$meetings = [];
+		foreach ($res as $cur)
+		{
+			$meetings[] = new Meeting(['record' => $cur]);
+		}
+
+		return $meetings;
 	}
 }
