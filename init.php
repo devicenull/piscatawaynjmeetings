@@ -22,6 +22,7 @@ spl_autoload_register(function ($class_name) {
 require_once(__DIR__.'/config.php');
 
 define('PISCATAWAY_UID', '1596769944');
+define('DICTIONARY_FILE', __DIR__.'/vocabulary.txt');
 
 require_once(__DIR__.'/vendor/adodb/adodb-php/adodb.inc.php');
 $db = newAdoConnection('mysqli');

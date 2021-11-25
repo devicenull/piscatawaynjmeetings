@@ -1,6 +1,19 @@
 <?php
 require(__DIR__.'/../init.php');
 
+$f = fopen(DICTIONARY_FILE, 'r');
+while (!feof($f))
+{
+	$line = trim(fgets($f));
+	if (substr($line, 0, 1) == '#' || empty($line))
+	{
+		continue;
+	}
+
+	$phrases[] = $line;
+}
+
+$i = 0;
 foreach (Meeting::getUntranscribed() as $meeting)
 {
 	$c = curl_init('https://piscatawaynjmeetings.com'.$meeting->getLink('recording'));
@@ -18,8 +31,13 @@ foreach (Meeting::getUntranscribed() as $meeting)
 	}
 
 	$params = [
-		'media_url' => 'https://piscatawaynjmeetings.com/'.$meeting->getLink('recording'),
-		'metadata'  => $meeting['type'].' '.$meeting['date'],
+		'media_url'           => 'https://piscatawaynjmeetings.com/'.$meeting->getLink('recording'),
+		'metadata'            => $meeting['type'].' '.$meeting['date'],
+		'remove_disfluencies' => true,
+		// array of objects, yay
+		'custom_vocabularies' => [ [
+			'phrases' => $phrases,
+		] ],
 	];
 
 	$c = curl_init('https://api.rev.ai/speechtotext/v1/jobs');
@@ -40,5 +58,10 @@ foreach (Meeting::getUntranscribed() as $meeting)
 	{
 		$meeting->set(['revai_jobid' => $json['id']]);
 	}
-	die();
+	else
+	{
+		var_dump($json);
+	}
+	$i++;
+	if ($i > 1) die("hit transcribe limit\n");
 }

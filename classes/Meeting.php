@@ -15,6 +15,10 @@ class Meeting extends BaseDBObject
 		'transcript_available',
 	];
 
+	var $virtual_fields = [
+		'board_type',
+	];
+
 	const DB_KEY = 'MEETINGID';
 	const DB_TABLE = 'meeting';
 
@@ -125,6 +129,22 @@ class Meeting extends BaseDBObject
 	{
 		$date = explode(' ', $this['date'])[0];
 		return $date == strftime('%F');
+	}
+
+	public function get($key)
+	{
+		if ($key == 'board_type')
+		{
+			$descriptions = [
+				'zoning'   => 'Zoning Board',
+				'planning' => 'Planning Board',
+				'council'  => 'Township Council',
+			];
+
+			return $descriptions[$this['type']] ?? $this['type'];
+		}
+
+		return parent::get($key);
 	}
 
 	public static function getRecent(): iterable

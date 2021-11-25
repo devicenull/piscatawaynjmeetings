@@ -33,12 +33,16 @@ foreach ($res as $cur)
 	{
 		curl_setopt($c, CURLOPT_URL, 'https://api.rev.ai/speechtotext/v1/jobs/'.$cur['revai_jobid'].'/transcript');
 		curl_setopt($c, CURLOPT_HTTPHEADER, array_merge($baseheaders, ['Accept: text/plain']));
-		curl_setopt($c, CURLOPT_VERBOSE, true);
 		$transcript = curl_exec($c);
 		if (curl_getinfo($c, CURLINFO_HTTP_CODE) == 200)
 		{
 			file_put_contents(__DIR__.'/../web/'.$meeting->getLink('transcript', true), $transcript);
 			$meeting->set(['transcript_available' => 'yes']);
 		}
+	}
+	else if ($json['status'] == 'failed')
+	{
+		echo "ERROR: Job {$cur['revai_jobid']} failed: {$json['failure_detail']}\n";
+		$meeting->set(['revai_jobid' => '']);
 	}
 }

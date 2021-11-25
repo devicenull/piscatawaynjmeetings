@@ -1,5 +1,9 @@
 {% extends 'layout.html' %}
 
+{% block title %}
+
+{% endblock %}
+
 {% block maincontent %}
 	<h3>All Meetings</h3>
 	<table class="table table-striped table-sm">
@@ -14,8 +18,9 @@
 				<tr>
 					<td data-order="{{ cur.date|date('U') }}">{{ cur.date|date('F j Y') }}</td>
 					<td>
-						{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.type|capitalize }} Board Meeting Minutes</a><br>{% endif %}
-						{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.type|capitalize }} Board Meeting Recording</a>{% endif %}
+						{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.board_type }} Minutes</a><br>{% endif %}
+						{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.board_type }} Recording</a><br>{% endif %}
+						{% if cur.transcript_available == 'yes' %}<a href="/transcript.php?MEETINGID={{ cur.MEETINGID }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.board_type }} Transcript</a>{% endif %}
 						{% if cur.minutes_available == 'no' and cur.recording_available == 'no' %}
 						Nothing available for {{ cur.date|date('F j Y') }} Piscataway {{ cur.type|capitalize }} Board Meeting
 						{%endif %}
