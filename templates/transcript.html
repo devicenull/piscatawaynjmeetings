@@ -1,5 +1,7 @@
 {% extends 'layout.html' %}
 
+{% block title %}Transcript for Piscataway {{ meeting.type|capitalize }} meeting on {{ meeting.date|date('F j Y') }}{% endblock %}
+
 {% block maincontent %}
 	<h3>Transcript for Piscataway {{ meeting.type|capitalize }} meeting on {{ meeting.date|date('F j Y') }}</h3>
 	<br>
