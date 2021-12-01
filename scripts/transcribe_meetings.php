@@ -63,5 +63,5 @@ foreach (Meeting::getUntranscribed() as $meeting)
 		var_dump($json);
 	}
 	$i++;
-	if ($i > 1) die("hit transcribe limit\n");
+	if ($i > 10) die("hit transcribe limit\n");
 }
