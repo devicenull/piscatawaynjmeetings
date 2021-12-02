@@ -81,7 +81,22 @@ class Meeting extends BaseDBObject
 
 	public function getTranscript(): string
 	{
-		return file_get_contents(__DIR__.'/../web/'.$this->getLink('transcript'));
+		$transcript = file_get_contents(__DIR__.'/../web/'.$this->getLink('transcript'));
+		$output = '';
+		foreach (explode("\n", $transcript) as $line)
+		{
+			if (preg_match('/(Speaker [0-9]+\s+)([0-9\:]+)(\s+)(.*)$/', $line, $matches))
+			{
+				sscanf($matches[2], '%d:%d:%d', $hours, $minutes, $seconds);
+				$timestamp = ($hours * 60 * 60)+($minutes * 60)+$seconds;
+				$output .= $matches[1].'<a href="javascript:changePlayerTime('.$timestamp.');">'.$matches[2].'</a>'.$matches[3].$matches[4]."\n";
+			}
+			else
+			{
+				$output .= htmlspecialchars($line)."\n";
+			}
+		}
+		return $output;
 	}
 
 	public static function getUpcomingAndOlder()
