@@ -89,7 +89,7 @@ class Meeting extends BaseDBObject
 			{
 				sscanf($matches[2], '%d:%d:%d', $hours, $minutes, $seconds);
 				$timestamp = ($hours * 60 * 60)+($minutes * 60)+$seconds;
-				$output .= $matches[1].'<a href="javascript:changePlayerTime('.$timestamp.');">'.$matches[2].'</a>'.$matches[3].$matches[4]."\n";
+				$output .= str_pad(trim($matches[1]), 14).'<a href="javascript:changePlayerTime('.$timestamp.');">'.$matches[2].'</a>'.$matches[3].$matches[4]."\n";
 			}
 			else
 			{
