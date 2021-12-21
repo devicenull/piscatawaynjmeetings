@@ -9,7 +9,7 @@ class Newsletter extends BaseDBObject
 		'notes',
 	];
 
-	const DB_KEY = 'NEWSLETTER';
+	const DB_KEY = 'NEWSLETTERID';
 	const DB_TABLE = 'newsletter';
 
 	public function __construct(array $params)
@@ -32,9 +32,9 @@ class Newsletter extends BaseDBObject
 		}
 		$params['season'] = $data[0];
 
-		if ($data[1] > date('Y') || $data[1] < 2000)
+		if ($data[1] > (date('Y')+1) || $data[1] < 2000)
 		{
-			$this->error[] = 'Year is invalid';
+			$this->error = 'Year is invalid';
 			return false;
 		}
 		$params['year'] = $data[1];
@@ -54,12 +54,12 @@ class Newsletter extends BaseDBObject
 			from newsletter
 			order by year desc, sortorder desc
 		');
-		$meetings = [];
+		$return = [];
 		foreach ($res as $cur)
 		{
-			$meetings[] = new Newsletter(['record' => $cur]);
+			$return[] = new Newsletter(['record' => $cur]);
 		}
 
-		return $meetings;
+		return $return;
 	}
 }

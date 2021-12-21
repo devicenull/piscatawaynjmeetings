@@ -44,6 +44,10 @@ class BaseDBObject implements ArrayAccess
 
 	public function isInitialized(): bool
 	{
+		if (!in_array(static::DB_KEY, $this->fields))
+		{
+			die('Invalid primary key specified');
+		}
 		return isset($this->record[static::DB_KEY]);
 	}
 

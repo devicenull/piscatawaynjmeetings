@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__.'/../init.php');
+
 /**
 *	Import files into the relevant object types
 */
@@ -17,6 +18,7 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 	$date = $details['filename'];
 	$extension = $details['extension'];
 
+	echo $cleanpath."\n";
 	switch ($parentdirectory)
 	{
 		case 'newsletter':
