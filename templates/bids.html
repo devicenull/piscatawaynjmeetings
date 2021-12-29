@@ -13,7 +13,7 @@
 		<tbody>
 			{% for cur in bids %}
 				<tr>
-					<td><a href="/files/bids/{{ cur.filename }}">{{ cur.filename }}</a></td>
+					<td><a href="/files/bids/{{ cur.filename|url_encode }}">{{ cur.filename }}</a></td>
 				</tr>
 			{% endfor %}
 		</tbody>
