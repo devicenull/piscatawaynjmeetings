@@ -38,12 +38,8 @@
 						{% if cur.zoom_id > 0 and not (cur.hasHappened() and not cur.happensToday()) %}
 							Meeting ID: {{ cur.zoom_id|number_format(0, '', ' ') }}<br>
 							Meeting Password: {{ "%06s"|format(cur.zoom_password) }}<br>
-							{% if cur.type == 'council' %}
-								The council does not allow joining via computer with audio.  You need to dial in.  (If you connect via computer you can only see who's connected, you can't speak or use video)
-							{% else %}
-								<a href="zoommtg://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (computer)</a><br>
-								<a href="zoomus://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (iOS/Android)</a><br>
-							{% endif %}
+							<a href="zoommtg://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (computer)</a><br>
+							<a href="zoomus://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (iOS/Android)</a><br>
 						{% endif %}
 					</td>
 					{% if has_edit_auth %}
@@ -88,11 +84,4 @@
 		</tbody>
 	</table>
 	Your web browser should be able to play most of the recordings - if it's not, I'd suggest installing <a href="https://www.videolan.org/vlc/index.html">VLC</a>.
-
-	<br><br>
-	<hr>
-	<div>
-		Piscataway Township, New Jersey doesn't do a great job of publishing their meeting schedule/minutes.<br>
-		In particular, they don't really publish meeting minutes at all (as of writing 2020-01-05, they only have ~6 township council meetings listed, the rest are unavailable).<br>
-	</div>
 {% endblock %}
