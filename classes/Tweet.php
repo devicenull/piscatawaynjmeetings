@@ -67,6 +67,7 @@ class Tweet extends BaseDBObject
 			left join twitter_user using (TWITTERUID)
 			'.$extra_sql.'
 			order by date DESC
+			limit 100
 		');
 		$tweets = [];
 		foreach ($res as $cur)
