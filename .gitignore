@@ -11,3 +11,5 @@ config.php
 .ssh
 .selected_editor
 php_error.log
+webchanges.log
+scripts/yt-dlp
