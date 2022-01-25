@@ -19,7 +19,7 @@ class Tweet extends BaseDBObject
 		$twitteruser = new TwitterUser(['TWITTERUID' => $params['TWITTERUID']]);
 
 		$url = 'https://twitter.com/'.$twitteruser['username'].'/status/'.$params['TWEETID'];
-		$job_id = ArchiveOrg::archiveURL($url);
+		$job_id = ArchiveOrg::archiveURL($url, 'tweet');
 		$params['archive_job_id'] = $job_id;
 		// We'll mangle this later when the archive job is done
 		$params['archive_url'] = $url;

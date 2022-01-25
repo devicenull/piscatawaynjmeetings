@@ -1,6 +1,6 @@
 <?php
 require(__DIR__.'/../init.php');
-/*
+
 foreach (Tweet::getPendingArchive() as $tweet)
 {
 	$timestamp = '';
@@ -12,7 +12,6 @@ foreach (Tweet::getPendingArchive() as $tweet)
 		]);
 	}
 }
-*/
 
 foreach (SavePageNowJob::getPending() as $spn)
 {

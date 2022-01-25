@@ -6,7 +6,7 @@ class SavePageNowJob extends BaseDBObject
 		'date_created',
 		'status',
 		'url',
-		'archive_type',     // page|outlink
+		'archive_type',     // page|outlink|tweet
 	];
 
 	const DB_KEY = 'SPNID';
