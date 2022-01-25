@@ -29,7 +29,7 @@ foreach ($xml->entry as $item)
 		$videodate = explode(' ', $params['published'])[0];
 
 		$basepath = __DIR__.'/../web/files/youtube/'.$videodate.'/';
-		passthru('/usr/bin/python3 '.__DIR__.'/youtube-dl -o "'.$basepath.'%(id)s" '.escapeshellarg('https://www.youtube.com/watch?v='.$ytid));
+		passthru('/usr/bin/python3 '.__DIR__.'/yt-dlp -o "'.$basepath.'%(id)s" '.escapeshellarg('https://www.youtube.com/watch?v='.$ytid));
 
 		if (file_exists($basepath.$ytid.'.mp4'))
 		{
@@ -38,6 +38,10 @@ foreach ($xml->entry as $item)
 		elseif (file_exists($basepath.$ytid.'.mkv'))
 		{
 			$params['filename'] = $ytid.'.mkv';
+		}
+		elseif (file_exists($basepath.$ytid.'.webm'))
+		{
+			$params['filename'] = $ytid.'.webm';
 		}
 		else
 		{

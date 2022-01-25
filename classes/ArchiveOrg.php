@@ -4,7 +4,7 @@ class ArchiveOrg
 	/**
 	*	Returns an archive.org job status ID
 	*/
-	public static function archiveURL(string $url): ?string
+	public static function archiveURL(string $url, string $archive_type='page'): ?string
 	{
 		for ($tries=0; $tries<5;$tries++)
 		{
@@ -19,6 +19,14 @@ class ArchiveOrg
 			if (curl_getinfo($c, CURLINFO_HTTP_CODE) == 200)
 			{
 				$data = json_decode($result, true);
+
+				$spn = new SavePageNowJob();
+				$spn->add([
+					'url'          => $url,
+					'SPNID'        => $data['job_id'],
+					'status'       => 'new',
+					'archive_type' => $archive_type,
+				]);
 				return $data['job_id'];
 			}
 			else
@@ -35,7 +43,7 @@ class ArchiveOrg
 	/**
 	*	Returns true if archive.org has successfully processed this job
 	*/
-	public static function isComplete(string $job_id, string &$timestamp): bool
+	public static function isComplete(string $job_id, string &$timestamp=null): bool
 	{
 		$c = self::initCurl();
 		curl_setopt_array($c, [
@@ -59,6 +67,31 @@ class ArchiveOrg
 			echo "Curl request failed\n";
 			var_dump(curl_getinfo($c));
 			return false;
+		}
+	}
+
+	/**
+	*	Return a list of links that archive.org found within this job
+	*/
+	public static function getOutlinks(string $job_id): array
+	{
+		$c = self::initCurl();
+		curl_setopt_array($c, [
+			CURLOPT_URL => 'https://web.archive.org/save/status/'.$job_id,
+		]);
+
+		$result = curl_exec($c);
+		if (curl_getinfo($c, CURLINFO_HTTP_CODE) == 200)
+		{
+			$data = json_decode($result, true);
+			var_dump($data);
+			return $data['outlinks'] ?? [];
+		}
+		else
+		{
+			echo "Curl request failed\n";
+			var_dump(curl_getinfo($c));
+			return [];
 		}
 	}
 
