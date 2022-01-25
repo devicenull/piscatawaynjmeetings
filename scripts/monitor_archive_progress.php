@@ -38,7 +38,7 @@ foreach (SavePageNowJob::getPending() as $spn)
 		}
 	}
 
-	//$spn->set(['status' => 'success']);
+	$spn->set(['status' => 'success']);
 }
 
 echo "done\n";
