@@ -118,8 +118,10 @@ foreach ($stream->filteredTweets($sets) as $tweet)
 */
 function handleTweet($tweet)
 {
-	var_dump($tweet);
-	if (isset($tweet['errors'])) return;
+	if (isset($tweet['errors']))
+	{
+		return;
+	}
 
 	// Reconnect to avoid mysql has gone away errors
 	$GLOBALS['db'] = newAdoConnection('mysqli');

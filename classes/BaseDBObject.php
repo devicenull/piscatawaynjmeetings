@@ -30,7 +30,10 @@ class BaseDBObject implements ArrayAccess
 	public function construct_by_column($column, $data): bool
 	{
 		global $db;
-		if (!in_array($column, $this->fields)) return false;
+		if (!in_array($column, $this->fields))
+		{
+			return false;
+		}
 
 		$res = $db->Execute('select * from '.static::DB_TABLE.' where '.$column.'=?', [$data]);
 		if ($res->RecordCount() == 1)
@@ -68,7 +71,7 @@ class BaseDBObject implements ArrayAccess
 			$update_values[] = $params[$field];
 		}
 
-		if (count($update_fields) > 0)
+		if (!empty($update_fields))
 		{
 			$update_values[] = $this->record[static::DB_KEY];
 			if (!$db->Execute('update '.static::DB_TABLE.' set '.implode('=?, ', $update_fields).'=? where '.static::DB_KEY.'=?', $update_values))
@@ -101,7 +104,7 @@ class BaseDBObject implements ArrayAccess
 			$add_vals[] = $db->qstr($params[$field]);
 		}
 
-		if (count($add_cols) > 0)
+		if (!empty($add_cols))
 		{
 			if (!$db->Execute('insert into '.static::DB_TABLE.'('.implode(',', $add_cols).') values('.implode(', ', $add_vals).')'))
 			{
@@ -154,12 +157,12 @@ class BaseDBObject implements ArrayAccess
 
 	public function offsetSet($offset, $value)
 	{
-		throw new Exception('not implemented');
+		throw new BadFunctionCallException('not implemented');
 	}
 
 	public function offsetUnset ($offset)
 	{
-		throw new Exception('not implemented');
+		throw new BadFunctionCallException('not implemented');
 	}
 
 	public function get($offset)

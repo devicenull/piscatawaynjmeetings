@@ -9,7 +9,10 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 	$cleanpath = str_replace(__DIR__.'/../web', '', $cur);
 
 	// these are imported elsewhere
-	if (stripos($cleanpath, 'piscataway_youtube') !== false) continue;
+	if (stripos($cleanpath, 'piscataway_youtube') !== false)
+	{
+		continue;
+	}
 
 	$fileinfo = explode('/', $cleanpath);
 	$details = pathinfo($cleanpath);
@@ -72,7 +75,10 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				}
 			}
 
-			if (!$meeting->hasHappened()) continue 2;
+			if (!$meeting->hasHappened())
+			{
+				continue 2;
+			}
 
 			echo $meeting['type']."\t".$meeting['date']."\t";
 
@@ -142,7 +148,7 @@ function getDirContents($dir, &$results = array())
 {
     $files = scandir($dir);
 
-    foreach ($files as $key => $value)
+    foreach ($files as $value)
     {
         $path = realpath($dir . DIRECTORY_SEPARATOR . $value);
         if (!is_dir($path))

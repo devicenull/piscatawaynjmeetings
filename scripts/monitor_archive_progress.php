@@ -15,7 +15,10 @@ foreach (Tweet::getPendingArchive() as $tweet)
 
 foreach (SavePageNowJob::getPending() as $spn)
 {
-	if (!ArchiveOrg::isComplete($spn['SPNID'])) continue;
+	if (!ArchiveOrg::isComplete($spn['SPNID']))
+	{
+		continue;
+	}
 
 	foreach (ArchiveOrg::getOutlinks($spn['SPNID']) as $outlink)
 	{

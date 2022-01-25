@@ -66,11 +66,7 @@ class Meeting extends BaseDBObject
 		$basepath = '/files/'.$this['type'].'/'.$date[0].'.';
 		foreach ($extensions[$link_type] as $ext)
 		{
-			if (file_exists(__DIR__.'/../web/'.$basepath.$ext))
-			{
-				return $basepath.$ext;
-			}
-			else if ($destination)
+			if (file_exists(__DIR__.'/../web/'.$basepath.$ext) || $destination)
 			{
 				return $basepath.$ext;
 			}
