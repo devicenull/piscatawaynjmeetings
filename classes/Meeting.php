@@ -147,9 +147,10 @@ class Meeting extends BaseDBObject
 		if ($key == 'board_type')
 		{
 			$descriptions = [
-				'zoning'   => 'Zoning Board',
-				'planning' => 'Planning Board',
-				'council'  => 'Township Council',
+				'zoning'     => 'Zoning Board',
+				'planning'   => 'Planning Board',
+				'council'    => 'Township Council',
+				're-warding' => 'Re-warding Commission'
 			];
 
 			return $descriptions[$this['type']] ?? $this['type'];
