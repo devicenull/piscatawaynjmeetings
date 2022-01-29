@@ -150,7 +150,8 @@ class Meeting extends BaseDBObject
 				'zoning'     => 'Zoning Board',
 				'planning'   => 'Planning Board',
 				'council'    => 'Township Council',
-				're-warding' => 'Re-warding Commission'
+				're-warding' => 'Re-warding Commission',
+				'ems'        => 'EMS Advisory Council',
 			];
 
 			return $descriptions[$this['type']] ?? $this['type'];

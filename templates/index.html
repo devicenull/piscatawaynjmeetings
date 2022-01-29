@@ -9,21 +9,23 @@
 			});
 		});
 	</script>
-	<b style="float: right">Call in number is always 1-646-876-9923</b>
+	<strong style="float: right">Call in number is always 1-646-876-9923</strong>
 	{% if has_edit_auth %}
 	<a class="btn btn-primary" href="/meeting_edit.php?MEETINGID=new">Add</a>
 	{% endif %}
 	<h3 style="display: inline">Recent/Upcoming Meetings</h3> <a href="calendar_instructions.php">Add all meetings to calendar</a>
 	<table class="table table-striped table-sm">
+		<caption>Upcoming public meetings in Piscataway, New Jersey</caption>
 		<thead>
 			<tr>
 				<th scope="col">Date</th>
 				<th scope="col">Type</th>
 				<th scope="col">Minutes</th>
 				<th scope="col">Recording</th>
+				<th scope="col">Transcript</th>
 				<th scope="col">Join Information</th>
 				{% if has_edit_auth %}
-				<th></th>
+				<th scope="col"></th>
 				{% endif %}
 			</tr>
 		</thead>
@@ -34,6 +36,7 @@
 					<td>{{ cur.type|capitalize }}</td>
 					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
 					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
+					<td>{% if cur.transcript_available == 'yes' %}<a href="/transcript.php?MEETINGID={{ cur.MEETINGID }}">YES</a>{% endif %}</td>
 					<td>
 						{% if cur.zoom_id > 0 and not (cur.hasHappened() and not cur.happensToday()) %}
 							Meeting ID: {{ cur.zoom_id|number_format(0, '', ' ') }}<br>
@@ -49,17 +52,18 @@
 			{% endfor %}
 		</tbody>
 	</table>
-	<b>Note:</b>  During COVID-19, meeting information is posted <a href="https://piscatawaynj.org/government/meeting_schedules/index.php">here</a>. You will not see it under 'Alerts' nor posted to their Twitter/Facebook.<br><br>
+	<strong>Note:</strong>  During COVID-19, meeting information is posted <a href="https://piscatawaynj.org/government/meeting_schedules/index.php">here</a>. You will not see it under 'Alerts' nor posted to their Twitter/Facebook.<br><br>
 
 	<br><br>
 	<h3>Upcoming/Historical Meetings (<a href="/all_meetings.php">See All Meetings</a>)</h3>
 	<table class="table table-striped table-sm" id="allmeetings">
+		<caption>Recent public meetings in Piscataway, New Jersey</caption>
 		<thead>
 			<tr>
 				<th scope="col">Date</th>
 				<th scope="col">Artifacts</th>
 				{% if has_edit_auth %}
-				<th></th>
+				<th scope="col"></th>
 				{% endif %}
 			</tr>
 		</thead>
