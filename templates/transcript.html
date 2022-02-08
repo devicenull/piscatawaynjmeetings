@@ -22,7 +22,10 @@
 {{ meeting.getTranscript()|raw }}
 	</pre>
 
-	{% if meeting.minutes_available == 'yes' %}
-		<iframe title="Transcript for Piscataway {{ meeting.type|capitalize }} meeting on {{ meeting.date|date('F j Y') }}" src="{{ meeting.getLink('minutes') }}" style="width: 100%; min-height: 800px"></iframe>
+	{% if meeting.minutes_available == 'yes' and meeting.minutes_filetype == 'pdf' %}
+		<iframe title="Minutes for Piscataway {{ meeting.type|capitalize }} meeting on {{ meeting.date|date('F j Y') }}" src="{{ meeting.getLink('minutes') }}" style="width: 100%; min-height: 800px"></iframe>
+	{% elseif meeting.minutes_available == 'yes' %}
+		<a href="{{ meeting.getLink('minutes') }}">Minutes for Piscataway {{ meeting.type|capitalize }} meeting on {{ meeting.date|date('F j Y') }}</a>
 	{% endif %}
+	<br><br>
 {% endblock %}

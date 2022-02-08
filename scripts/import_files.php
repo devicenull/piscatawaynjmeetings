@@ -48,6 +48,7 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 		case 'planning':
 		case 'zoning':
 		case 're-warding':
+		case 'ems':
 			if (!preg_match_all('/^[0-9]+\\-[0-9]+\\-[0-9]+$/i', $date))
 			{
 				echo "Invalid file format: $cleanpath\n";
