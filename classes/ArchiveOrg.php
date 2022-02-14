@@ -43,7 +43,7 @@ class ArchiveOrg
 	/**
 	*	Returns true if archive.org has successfully processed this job
 	*/
-	public static function isComplete(string $job_id, string &$timestamp=null): bool
+	public static function isComplete(string $job_id, string &$timestamp=null, $debug = false): bool
 	{
 		$c = self::initCurl();
 		curl_setopt_array($c, [
@@ -54,6 +54,10 @@ class ArchiveOrg
 		if (curl_getinfo($c, CURLINFO_HTTP_CODE) == 200)
 		{
 			$data = json_decode($result, true);
+			if ($debug)
+			{
+				var_dump($data);
+			}
 
 			if ($data['status'] == 'success')
 			{
