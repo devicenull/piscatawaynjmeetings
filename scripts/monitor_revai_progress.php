@@ -46,3 +46,5 @@ foreach ($res as $cur)
 		$meeting->set(['revai_jobid' => '']);
 	}
 }
+
+echo "Done\n";
