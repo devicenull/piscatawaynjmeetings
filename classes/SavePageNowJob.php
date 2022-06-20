@@ -9,6 +9,8 @@ class SavePageNowJob extends BaseDBObject
 		'archive_type',     // page|outlink|tweet
 	];
 
+	var $insert_ignore = true;
+
 	const DB_KEY = 'SPNID';
 	const DB_TABLE = 'save_page_now';
 

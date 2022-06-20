@@ -10,6 +10,9 @@ class BaseDBObject implements ArrayAccess
 	// Fields that don't exist in the database, but can be generated at runtime
 	var $virtual_fields = [];
 
+	// should we do INSERT IGNORE instead of INSERT
+	var $insert_ignore = false;
+
 	// last error message encountered
 	var $error = '';
 
@@ -106,7 +109,8 @@ class BaseDBObject implements ArrayAccess
 
 		if (!empty($add_cols))
 		{
-			if (!$db->Execute('insert into '.static::DB_TABLE.'('.implode(',', $add_cols).') values('.implode(', ', $add_vals).')'))
+			$ignore = $this->insert_ignore ? ' ignore ' : '';
+			if (!$db->Execute('insert '.$ignore.' into '.static::DB_TABLE.'('.implode(',', $add_cols).') values('.implode(', ', $add_vals).')'))
 			{
 				$this->error = $db->ErrorMsg();
 				return false;
@@ -140,12 +144,12 @@ class BaseDBObject implements ArrayAccess
 		return true;
 	}
 
-	public function offsetExists($offset)
+	public function offsetExists(mixed $offset): bool
 	{
 		return in_array($offset, $this->fields) || in_array($offset, $this->virtual_fields);
 	}
 
-	public function offsetGet($offset)
+	public function offsetGet(mixed $offset): mixed
 	{
 		if (in_array($offset, $this->virtual_fields))
 		{
@@ -155,12 +159,12 @@ class BaseDBObject implements ArrayAccess
 		return $this->record[$offset] ?? '';
 	}
 
-	public function offsetSet($offset, $value)
+	public function offsetSet(mixed $offset, mixed $value): void
 	{
 		throw new BadFunctionCallException('not implemented');
 	}
 
-	public function offsetUnset ($offset)
+	public function offsetUnset (mixed $offset): void
 	{
 		throw new BadFunctionCallException('not implemented');
 	}
