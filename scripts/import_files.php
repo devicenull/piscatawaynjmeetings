@@ -16,12 +16,21 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 
 	$fileinfo = explode('/', $cleanpath);
 	$details = pathinfo($cleanpath);
-	$parentdirectory = basename($details['dirname']);
+	// campaign files are currently stored in year subdirectories,
+	// make sure they get handled properly
+	// ex: /home/piscataway/web/files/campaign/2021/PDO Report 2021-04-14 R-3.pdf
+	if (count($fileinfo) == 8)
+	{
+		$parentdirectory = basename($fileinfo[5]);
+	}
+	else
+	{
+		$parentdirectory = basename($details['dirname']);
+	}
 
-	$date = $details['filename'];
+	$filebasename = $details['filename'];
 	$extension = $details['extension'];
 
-	echo $cleanpath."\n";
 	switch ($parentdirectory)
 	{
 		case 'newsletter':
@@ -49,7 +58,7 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 		case 'zoning':
 		case 're-warding':
 		case 'ems':
-			if (!preg_match_all('/^[0-9]+\\-[0-9]+\\-[0-9]+$/i', $date))
+			if (!preg_match_all('/^[0-9]+\\-[0-9]+\\-[0-9]+$/i', $filebasename))
 			{
 				echo "Invalid file format: $cleanpath\n";
 				continue 2;
@@ -57,13 +66,13 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 
 			$meeting = new Meeting([
 				'type' => $parentdirectory,
-				'date' => $date,
+				'date' => $filebasename,
 			]);
 			if (!$meeting->isInitialized())
 			{
 				if (!$meeting->add([
 					'type' => $parentdirectory,
-					'date' => $date,
+					'date' => $filebasename,
 				]))
 				{
 					echo "Unable to add meeting: ".$meeting->error()."\n";
@@ -108,13 +117,34 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				echo "recording: no\n";
 				$meeting->set(['recording_filetype' => 'no']);
 			}
+		break;
 
+		case 'campaign':
+			if (count($fileinfo) == 7)
+			{
+				// these are some scratch files
+				continue 2;
+			}
+			$GLOBALS['db']->debug = true;
+			$campaignfile = new CampaignFile([
+				'type'     => 'finance_statement',
+				'filename' => $filebasename.'.'.$extension,
+			]);
+
+			if (!$campaignfile->isInitialized())
+			{
+				$campaignfile->add([
+					'type'     => 'finance_statement',
+					'year'     => basename($fileinfo[6]),
+					'filename' => $filebasename.'.'.$extension,
+				]);
+			}
 		break;
 
 		default:
 			if (in_array($parentdirectory, array_keys(MiscFile::TYPE_DESCRIPTION)))
 			{
-				if (!preg_match_all('/^[0-9]+\\-[0-9]+\\-[0-9]+$/i', $date))
+				if (!preg_match_all('/^[0-9]+\\-[0-9]+\\-[0-9]+$/i', $filebasename))
 				{
 					echo "Invalid file format: $cleanpath\n";
 					continue 2;
@@ -122,14 +152,14 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 
 				$miscfile = new MiscFile([
 					'type' => $fileinfo[2],
-					'date' => $date,
+					'date' => $filebasename,
 				]);
 
 				if (!$miscfile->isInitialized())
 				{
 					$miscfile->add([
 						'type'      => $fileinfo[2],
-						'date'      => $date,
+						'date'      => $filebasename,
 						'extension' => $extension,
 					]);
 				}
