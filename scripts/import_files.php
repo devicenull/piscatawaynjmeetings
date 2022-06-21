@@ -125,7 +125,6 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				// these are some scratch files
 				continue 2;
 			}
-			$GLOBALS['db']->debug = true;
 			$campaignfile = new CampaignFile([
 				'type'     => 'finance_statement',
 				'filename' => $filebasename.'.'.$extension,
