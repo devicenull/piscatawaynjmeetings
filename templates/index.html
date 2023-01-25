@@ -43,6 +43,8 @@
 							Meeting Password: {{ "%06s"|format(cur.zoom_password) }}<br>
 							<a href="zoommtg://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (computer)</a><br>
 							<a href="zoomus://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (iOS/Android)</a><br>
+						{% elseif cur.zoom_joinurl != '' and not (cur.hasHappened() and not cur.happensToday()) %}
+							<a href="{{ cur.zoom_joinurl }}">Join</a><br>
 						{% endif %}
 					</td>
 					{% if has_edit_auth %}

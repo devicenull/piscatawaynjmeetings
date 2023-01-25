@@ -7,6 +7,7 @@ rsync -rt --exclude=web/files/youtube .git classes config.php init.php templates
 
 echo "Importing files"
 php scripts/import_files.php
+php scripts/monitor_revai_progress.php
 
 mysqldump --add-drop-table piscataway > piscataway.sql
 scp piscataway.sql root@www.piscatawaynjmeetings.com:/root/

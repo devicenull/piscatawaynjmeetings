@@ -11,6 +11,7 @@ class Meeting extends BaseDBObject
 		'recording_filetype',
 		'zoom_id',
 		'zoom_password',
+		'zoom_joinurl',
 		'revai_jobid',
 		'transcript_available',
 	];

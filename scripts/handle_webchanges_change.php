@@ -40,13 +40,17 @@ foreach ($output as $line)
 			CURLOPT_FILE           => fopen($destname, 'w'),
 			CURLOPT_TIMEOUT        => 60,
 			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_USERAGENT      => 'www.piscatawaynjmeetings.com',
 		]);
 		curl_exec($c);
 		if (curl_getinfo($c, CURLINFO_HTTP_CODE) != 200)
 		{
+			$f = fopen('/home/piscataway/urlwatch.log', 'a');
+			fwrite($f, strftime('%F %T')."\tFailed to download: {$url}\n");
+			fwrite($f, print_r(curl_getinfo($c), true));
+			fclose($f);
 //			echo "Failed to download\n";
 //			var_dump(curl_getinfo($c));
 		}
 	}
 }
-echo "done\n";

@@ -31,9 +31,9 @@ class ArchiveOrg
 			}
 			else
 			{
-				echo "Curl request failed\n";
-				var_dump(curl_getinfo($c));
-				sleep(10);
+				//echo "Curl request failed\n";
+				//var_dump(curl_getinfo($c));
+				//sleep(10);
 				continue;
 			}
 		}
@@ -68,8 +68,8 @@ class ArchiveOrg
 		}
 		else
 		{
-			echo "Curl request failed\n";
-			var_dump(curl_getinfo($c));
+			//echo "Curl request failed\n";
+			//var_dump(curl_getinfo($c));
 			return false;
 		}
 	}
@@ -88,13 +88,12 @@ class ArchiveOrg
 		if (curl_getinfo($c, CURLINFO_HTTP_CODE) == 200)
 		{
 			$data = json_decode($result, true);
-			var_dump($data);
 			return $data['outlinks'] ?? [];
 		}
 		else
 		{
-			echo "Curl request failed\n";
-			var_dump(curl_getinfo($c));
+			//echo "Curl request failed\n";
+			//var_dump(curl_getinfo($c));
 			return [];
 		}
 	}
