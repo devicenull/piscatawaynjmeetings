@@ -20,7 +20,7 @@
 					<td>{{ cur.type_description }}</td>
 					<td>{{ cur.date }}</td>
 					<td>{{ cur.notes }}</td>
-					<td><a href="/files/{{ cur.type }}/{{ cur.date }}.{{ cur.extension }}">View</a></td>
+					<td><a href="{{ cur.getLink() }}">View</a></td>
 				</tr>
 			{% endfor %}
 		</tbody>

@@ -41,6 +41,11 @@ class Newsletter extends BaseDBObject
 		return parent::add($params);
 	}
 
+	public function getLink(): string
+	{
+		return "/files/newsletter/".$this['filename'];
+	}
+
 	public static function getAll()
 	{
 		global $db;

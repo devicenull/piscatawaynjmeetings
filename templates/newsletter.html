@@ -17,7 +17,7 @@
 			{% for cur in newsletters %}
 				<tr>
 					<td>{{ cur.filename }}{% if cur.notes != '' %}<br><strong>{{ cur.notes|raw }}</strong>{% endif %}</td>
-					<td><a href="/files/newsletter/{{ cur.filename }}">View</a></td>
+					<td><a href="{{ cur.getLink() }}">View</a></td>
 				</tr>
 			{% endfor %}
 		</tbody>

@@ -13,3 +13,8 @@ config.php
 php_error.log
 webchanges.log
 scripts/yt-dlp
+urlwatch.log
+urlwatch_log
+revapi_log
+downloaded
+bids_nopublish

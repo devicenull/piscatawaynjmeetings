@@ -12,7 +12,6 @@ class CampaignFile extends BaseDBObject
 	const DB_TABLE = 'campaign_files';
 	var $virtual_fields = [
 		'type_description',
-		'file_path',
 	];
 
 	const TYPE_DESCRIPTION = [
@@ -40,11 +39,12 @@ class CampaignFile extends BaseDBObject
 		{
 			return self::TYPE_DESCRIPTION[$this['type']];
 		}
-		else if ($offset == 'file_path')
-		{
-			return '/files/campaign/'.$this['year'].'/'.$this['filename'];
-		}
 		return parent::get($offset);
+	}
+
+	public function getLink(): string
+	{
+		return '/files/campaign/'.$this['year'].'/'.$this['filename'];
 	}
 
 	public static function getAll()

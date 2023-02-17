@@ -14,6 +14,7 @@ class Meeting extends BaseDBObject
 		'zoom_joinurl',
 		'revai_jobid',
 		'transcript_available',
+		'last_updated',
 	];
 
 	var $virtual_fields = [
@@ -143,6 +144,18 @@ class Meeting extends BaseDBObject
 		return $date == strftime('%F');
 	}
 
+	public function add(array $params): bool
+	{
+		$params['last_updated'] = 'NOW()';
+		return parent::add($params);
+	}
+
+	public function set(array $params): bool
+	{
+		$params['last_updated'] = 'NOW()';
+		return parent::set($params);
+	}
+
 	public function get($key)
 	{
 		if ($key == 'board_type')
@@ -153,6 +166,7 @@ class Meeting extends BaseDBObject
 				'council'    => 'Township Council',
 				're-warding' => 'Re-warding Commission',
 				'ems'        => 'EMS Advisory Council',
+				'library'    => 'Library',
 			];
 
 			return $descriptions[$this['type']] ?? $this['type'];

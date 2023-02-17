@@ -44,6 +44,10 @@ class MiscFile extends BaseDBObject
 		return parent::get($offset);
 	}
 
+	public function getLink(): string
+	{
+		return '/files/'.$this['type'].'/'.$this['date'].'.'.$this['extension'];
+	}
 
 	public static function getAll()
 	{

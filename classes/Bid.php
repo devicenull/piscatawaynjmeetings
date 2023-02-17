@@ -29,7 +29,7 @@ class Bid extends BaseDBObject
 		return parent::add($params);
 	}
 
-	public function getLink($link_type): string
+	public function getLink(): string
 	{
 		return '/files/bids/'.basename($this['filename']);
 	}

@@ -18,7 +18,7 @@
 				<tr>
 					<td>{{ cur.type_description }}</td>
 					<td>{{ cur.year }}</td>
-					<td><a href="{{ cur.file_path }}">{{ cur.filename }}</a></td>
+					<td><a href="{{ cur.getLink() }}">{{ cur.filename }}</a></td>
 				</tr>
 			{% endfor %}
 		</tbody>
@@ -27,6 +27,6 @@
 	<br><br>
 	<hr>
 	<div>
-		These are campaign finance statements from the <a href="https://www.elec.state.nj.us/ELECReport">New Jersey Election Law Enforcement Commission</a>.  Their website is fairly hard to use, so they're mirroed here
+		These are campaign finance statements from the <a href="https://www.elec.state.nj.us/ELECReport">New Jersey Election Law Enforcement Commission</a>.  Their website is fairly hard to use, so they're mirrored here
 	</div>	
 {% endblock %}
