@@ -37,9 +37,11 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 			$newsletter = new Newsletter(['filename' => basename($cleanpath)]);
 			if (!$newsletter->isInitialized())
 			{
+				echo "Adding newsletter {$cleanpath}\n";
 				$newsletter->add([
 					'filename' => basename($cleanpath),
 				]);
+				setExifMetadata($cleanpath, $newsletter->getExifTitle());
 			}
 		break;
 
@@ -47,9 +49,11 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 			$bid = new Bid(['filename' => basename($cleanpath)]);
 			if (!$bid->isInitialized())
 			{
+				echo "Adding bid {$cleanpath}\n";
 				$bid->add([
 					'filename' => basename($cleanpath),
 				]);
+				setExifMetadata($cleanpath, $bid->getExifTitle());
 			}
 		break;
 
@@ -91,31 +95,22 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				continue 2;
 			}
 
-			echo $meeting['type']."\t".$meeting['date']."\t";
-
 			$link = $meeting->getLink('minutes');
-			if ($link != '')
+			if ($link != '' && $meeting['minutes_available'] == 'no')
 			{
-				$meeting->set(['minutes_available' => 'yes', 'minutes_filetype' => pathinfo(__DIR__.'/web/'.$link, PATHINFO_EXTENSION)]);
-				echo "minutes: yes\t";
-			}
-			else
-			{
-				echo "minutes: no\t";
-				$meeting->set(['minutes_available' => 'no']);
+				$meeting->set(['minutes_available' => 'yes', 'minutes_filetype' => pathinfo(__DIR__.'/../web/'.$link, PATHINFO_EXTENSION)]);
+				echo $meeting['type']."\t".$meeting['date']."\t"."minutes: yes\t";
+
+				setExifMetadata(__DIR__.'/../web/'.$link, $meeting->getExifTitle('minutes'));
 			}
 
 			$link = $meeting->getLink('recording');
-			if ($link != '')
+			if ($link != '' && $meeting['recording_available'] == 'no')
 			{
-				$meeting->set(['recording_available' => 'yes', 'recording_filetype' => pathinfo($link, PATHINFO_EXTENSION)]);
-				echo "recording: yes\n";
+				$meeting->set(['recording_available' => 'yes', 'recording_filetype' => pathinfo(__DIR__.'/../web/'.$link, PATHINFO_EXTENSION)]);
+				echo $meeting['type']."\t".$meeting['date']."\t"."recording: yes\n";
 				$known_files[] = $link;
-			}
-			else
-			{
-				echo "recording: no\n";
-				$meeting->set(['recording_filetype' => 'no']);
+				setMP3Metadata(__DIR__.'/../web/'.$link, $meeting->getExifTitle('recording'));
 			}
 		break;
 
@@ -193,4 +188,16 @@ function getDirContents($dir, &$results = array())
     }
 
     return $results;
+}
+// this is a little slow, only call if necessary
+function setExifMetadata(string $filename, string $title)
+{
+	// exiftool doesn't support updating doc files :(
+	if (pathinfo($filename, PATHINFO_EXTENSION) == 'doc') return;
+	system('/usr/bin/exiftool -overwrite_original -Title='.escapeshellarg($title).' '.escapeshellarg($filename));
+}
+
+function setMP3Metadata(string $filename, string $title)
+{
+	system('/usr/bin/id3v2 -t '.escapeshellarg($title).' '.escapeshellarg($filename));
 }

@@ -34,6 +34,11 @@ class Bid extends BaseDBObject
 		return '/files/bids/'.basename($this['filename']);
 	}
 
+	public function getExifTitle(): string
+	{
+		return 'Piscataway, New Jersey bid request '.str_replace('.pdf', '', $this['file']);
+	}
+
 	public static function getAll()
 	{
 		global $db;

@@ -77,6 +77,11 @@ class Meeting extends BaseDBObject
 		return '';
 	}
 
+	public function getExifTitle(string $type): string
+	{
+		return 'Piscataway, New Jersey '.$this['type'].' meeting '.$type.' for '.explode(' ', $this['date'])[0];
+	}
+
 	public function getTranscript(): string
 	{
 		$transcript = file_get_contents(__DIR__.'/../web/'.$this->getLink('transcript'));
@@ -146,13 +151,13 @@ class Meeting extends BaseDBObject
 
 	public function add(array $params): bool
 	{
-		$params['last_updated'] = 'NOW()';
+		$params['last_updated'] = strftime('%F %T');
 		return parent::add($params);
 	}
 
 	public function set(array $params): bool
 	{
-		$params['last_updated'] = 'NOW()';
+		$params['last_updated'] = strftime('%F %T');
 		return parent::set($params);
 	}
 

@@ -5,4 +5,4 @@ User-agent: barkrowler
 Disallow: /
 
 User-agent: *
-Sitemap: https://www.piscatawaynjmeetings.com/sitemap.php
+Sitemap: https://piscatawaynjmeetings.com/sitemap.php

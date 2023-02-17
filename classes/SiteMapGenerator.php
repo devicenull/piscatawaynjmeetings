@@ -19,7 +19,7 @@ class SiteMapGenerator
 		$this->xml->writeElement('loc', $location);
 		if ($lastmod != '')
 		{
-			$this->xml->writeElement('lastmod', $lastmod);
+			$this->xml->writeElement('lastmod', explode(' ', $lastmod)[0]);
 		}
 		$this->xml->endElement();
 	}

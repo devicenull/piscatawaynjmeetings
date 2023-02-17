@@ -3,7 +3,7 @@ require(__DIR__.'/../init.php');
 
 Header('Content-Type: text/plain');
 
-define('BASEURL', 'https://www.piscatawaynjmeetings.com');
+define('BASEURL', 'https://piscatawaynjmeetings.com');
 
 $sitemap = new SiteMapGenerator();
 $sitemap->addEntry(BASEURL.'/');

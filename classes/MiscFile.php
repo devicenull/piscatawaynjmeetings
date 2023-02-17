@@ -14,10 +14,10 @@ class MiscFile extends BaseDBObject
 	var $virtual_fields = ['type_description'];
 
 	const TYPE_DESCRIPTION = [
-		'budget'               => 'Budget',
-		'audits'               => 'Audit',
-		'debt_statements'      => 'Debt Statement',
-		'financial_statements' => 'Financial Statement',
+		'budget'                => 'Budget',
+		'audits'                => 'Audit',
+		'debt_statements'       => 'Debt Statement',
+		'financial_statements'  => 'Financial Statement',
 	];
 
 	public function __construct($params=[])

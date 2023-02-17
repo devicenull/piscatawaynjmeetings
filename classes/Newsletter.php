@@ -46,6 +46,11 @@ class Newsletter extends BaseDBObject
 		return "/files/newsletter/".$this['filename'];
 	}
 
+	public function getExifTitle(): string
+	{
+		return 'Piscataway, New Jersey '.$this['season'].' '.$this['year'].' Newsletter';
+	}
+
 	public static function getAll()
 	{
 		global $db;
