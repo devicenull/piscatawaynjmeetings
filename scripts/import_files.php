@@ -145,7 +145,7 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 			{
 				if (!preg_match_all('/^[0-9]+\\-[0-9]+\\-[0-9]+$/i', $filebasename))
 				{
-					echo "Invalid file format: $cleanpath\n";
+					echo "Invalid file name format: $cleanpath\n";
 					continue 2;
 				}
 
