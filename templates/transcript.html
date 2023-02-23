@@ -4,6 +4,9 @@
 {% block title %}Transcript for Piscataway {{ meeting.type|capitalize }} meeting on {{ meeting.date|date('F j Y') }}{% endblock %}
 
 {% block maincontent %}
+	<script type="application/ld+json">
+		{{ json_ld|raw }}
+	</script>
 	<script src="/js/htmlMediaElementsTracker.min.js"></script>
 	<script>
 		function changePlayerTime(seconds)
