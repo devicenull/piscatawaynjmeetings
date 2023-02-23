@@ -3,7 +3,7 @@
 /*
  * This file is part of the eluceo/iCal package.
  *
- * (c) 2021 Markus Poerschke <markus@poerschke.nrw>
+ * (c) 2023 Markus Poerschke <markus@poerschke.nrw>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -11,8 +11,10 @@
 
 namespace Eluceo\iCal\Domain\Entity;
 
+use Eluceo\iCal\Domain\Enum\EventStatus;
 use Eluceo\iCal\Domain\ValueObject\Alarm;
 use Eluceo\iCal\Domain\ValueObject\Attachment;
+use Eluceo\iCal\Domain\ValueObject\Category;
 use Eluceo\iCal\Domain\ValueObject\Location;
 use Eluceo\iCal\Domain\ValueObject\Occurrence;
 use Eluceo\iCal\Domain\ValueObject\Organizer;
@@ -31,6 +33,12 @@ class Event
     private ?Location $location = null;
     private ?Organizer $organizer = null;
     private ?Timestamp $lastModified = null;
+    private ?EventStatus $status = null;
+
+    /**
+     * @var array<Attendee>
+     */
+    private array $attendees = [];
 
     /**
      * @var array<Alarm>
@@ -41,6 +49,11 @@ class Event
      * @var array<Attachment>
      */
     private array $attachments = [];
+
+    /**
+     * @var array<Category>
+     */
+    private array $categories = [];
 
     public function __construct(?UniqueIdentifier $uniqueIdentifier = null)
     {
@@ -245,6 +258,92 @@ class Event
     public function setLastModified(?Timestamp $lastModified): self
     {
         $this->lastModified = $lastModified;
+
+        return $this;
+    }
+
+    public function hasAttendee(): bool
+    {
+        return !empty($this->attendees);
+    }
+
+    public function addAttendee(Attendee $attendee): self
+    {
+        $this->attendees[] = $attendee;
+
+        return $this;
+    }
+
+    /**
+     * @param Attendee[] $attendees
+     */
+    public function setAttendees(array $attendees): self
+    {
+        $this->attendees = $attendees;
+
+        return $this;
+    }
+
+    /**
+     * @return Attendee[]
+     */
+    public function getAttendees(): array
+    {
+        return $this->attendees;
+    }
+
+    public function hasCategories(): bool
+    {
+        return !empty($this->categories);
+    }
+
+    public function addCategory(Category $category): self
+    {
+        $this->categories[] = $category;
+
+        return $this;
+    }
+
+    /**
+     * @param Category[] $categories
+     */
+    public function setCategories(array $categories): self
+    {
+        $this->categories = $categories;
+
+        return $this;
+    }
+
+    /**
+     * @return Category[]
+     */
+    public function getCategories(): array
+    {
+        return $this->categories;
+    }
+
+    public function getStatus(): EventStatus
+    {
+        assert($this->status !== null);
+
+        return $this->status;
+    }
+
+    public function hasStatus(): bool
+    {
+        return $this->status !== null;
+    }
+
+    public function setStatus(EventStatus $status): self
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    public function unsetStatus(): self
+    {
+        $this->status = null;
 
         return $this;
     }

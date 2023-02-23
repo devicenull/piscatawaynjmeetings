@@ -1,5 +1,6 @@
 <?php
 require(__DIR__.'/../init.php');
+ini_set('memory_limit', '1G');
 
 use Eluceo\iCal\Domain\ValueObject\TimeSpan;
 use Eluceo\iCal\Domain\ValueObject\DateTime;
@@ -33,7 +34,6 @@ foreach (Meeting::getFutureAndToday() as $cur)
 }
 
 $calendar = new \Eluceo\iCal\Domain\Entity\Calendar($events);
-$calendar->addTimeZone(TimeZone::createFromPhpDateTimeZone(new PhpDateTimeZone('America/New_York')));
 
 header('Content-Type: text/calendar; charset=utf-8');
 header('Content-Disposition: attachment; filename="piscatawaymeetings.ics"');

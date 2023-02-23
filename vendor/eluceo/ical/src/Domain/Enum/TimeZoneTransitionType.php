@@ -3,7 +3,7 @@
 /*
  * This file is part of the eluceo/iCal package.
  *
- * (c) 2021 Markus Poerschke <markus@poerschke.nrw>
+ * (c) 2023 Markus Poerschke <markus@poerschke.nrw>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -18,11 +18,11 @@ final class TimeZoneTransitionType
 
     public static function DAYLIGHT(): self
     {
-        return self::$daylight = self::$daylight ?? new TimeZoneTransitionType();
+        return self::$daylight ??= new TimeZoneTransitionType();
     }
 
     public static function STANDARD(): self
     {
-        return self::$standard = self::$standard ?? new TimeZoneTransitionType();
+        return self::$standard ??= new TimeZoneTransitionType();
     }
 }

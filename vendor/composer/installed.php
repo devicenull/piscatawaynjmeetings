@@ -5,7 +5,7 @@
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => '73c668722361856dbf324241cf1004d32c16481b',
+        'reference' => '6ecdd30d8417c80982b482c36693a752b8de7dd8',
         'name' => '__root__',
         'dev' => true,
     ),
@@ -16,7 +16,7 @@
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => '73c668722361856dbf324241cf1004d32c16481b',
+            'reference' => '6ecdd30d8417c80982b482c36693a752b8de7dd8',
             'dev_requirement' => false,
         ),
         'adodb/adodb-php' => array(
@@ -29,12 +29,12 @@
             'dev_requirement' => false,
         ),
         'eluceo/ical' => array(
-            'pretty_version' => '2.3.0',
-            'version' => '2.3.0.0',
+            'pretty_version' => '2.x-dev',
+            'version' => '2.9999999.9999999.9999999-dev',
             'type' => 'library',
             'install_path' => __DIR__ . '/../eluceo/ical',
             'aliases' => array(),
-            'reference' => 'e23129e95a363c37c077a5930f06e67a9476585c',
+            'reference' => '30f7277757024debcb839ad033ca73a0b6e3d30e',
             'dev_requirement' => false,
         ),
         'guzzlehttp/guzzle' => array(
