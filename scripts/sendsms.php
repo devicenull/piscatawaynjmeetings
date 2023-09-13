@@ -24,4 +24,5 @@ foreach ($res as $meeting)
 	$time = explode(' ', $meeting['date'])[1];
 
 	$response = $voipms->sendSMS(SMS_FROM, SMS_TO, $meeting['type'].' meeting starts at '.$time);
+	var_dump($response);
 }

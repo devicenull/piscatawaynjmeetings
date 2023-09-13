@@ -44,8 +44,7 @@ foreach (Meeting::getUntranscribed() as $meeting)
 			'phrases' => $phrases,
 		] ],
 	];
-	var_dump($params);
-	continue;
+
 	$c = curl_init('https://api.rev.ai/speechtotext/v1/jobs');
 	curl_setopt_array($c, [
 		CURLOPT_HTTPHEADER     => [

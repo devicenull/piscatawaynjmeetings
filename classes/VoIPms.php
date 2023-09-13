@@ -18,7 +18,7 @@ class VoIPms{
                 'uri'           => "urn://voip.ms",
                 'soap_version'  => SOAP_1_2,
                 'trace'         => 1,
-		'stream_context'=> stream_context_create(array('ssl'=> array('verify_peer'=>false,'verify_peer_name'=>false)))
+		'stream_context'=> stream_context_create(array('ssl'=> array('verify_peer'=>false,'verify_peer_name'=>false), 'socket' => ['bindto' => '0:0']))
             )
         );
     }
