@@ -28,7 +28,7 @@ final class ContentLine
         $lines = [];
 
         while (strlen($string) > static::LINE_LENGTH) {
-            $lines[] = mb_strcut($string, 0, static::LINE_LENGTH, 'utf-8');
+            $lines[] = \mb_strcut($string, 0, static::LINE_LENGTH, 'utf-8');
             $string = ' ' . mb_strcut($string, static::LINE_LENGTH, strlen($string), 'utf-8');
         }
         $lines[] = $string;

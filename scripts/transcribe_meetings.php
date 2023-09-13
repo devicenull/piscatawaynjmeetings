@@ -16,6 +16,11 @@ while (!feof($f))
 $i = 0;
 foreach (Meeting::getUntranscribed() as $meeting)
 {
+	if ($meeting->getLink('recording') == '' || !file_exists(__DIR__.'/../web/'.$meeting->getLink('recording')))
+	{
+		continue;
+	}
+
 	$c = curl_init('https://piscatawaynjmeetings.com'.$meeting->getLink('recording'));
 	curl_setopt($c, CURLOPT_NOBODY, true);
 	$data = curl_exec($c);
@@ -39,7 +44,8 @@ foreach (Meeting::getUntranscribed() as $meeting)
 			'phrases' => $phrases,
 		] ],
 	];
-
+	var_dump($params);
+	continue;
 	$c = curl_init('https://api.rev.ai/speechtotext/v1/jobs');
 	curl_setopt_array($c, [
 		CURLOPT_HTTPHEADER     => [

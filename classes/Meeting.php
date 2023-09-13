@@ -66,11 +66,23 @@ class Meeting extends BaseDBObject
 		$date = explode(' ', $this['date']);
 
 		$basepath = '/files/'.$this['type'].'/'.$date[0].'.';
-		foreach ($extensions[$link_type] as $ext)
+
+		/**
+		*	Transcripts are small enough to store locally, everything else is not
+		*/
+		if (!$destination && $link_type != 'transcript' && $this[$link_type.'_filetype'] != '')
 		{
-			if (file_exists(__DIR__.'/../web/'.$basepath.$ext) || $destination)
+			return $basepath.$this[$link_type.'_filetype'];
+		}
+		else
+		{
+			// this is dumb... why did I do it this way?
+			foreach ($extensions[$link_type] as $ext)
 			{
-				return $basepath.$ext;
+				if (file_exists(__DIR__.'/../web/'.$basepath.$ext) || $destination)
+				{
+					return $basepath.$ext;
+				}
 			}
 		}
 

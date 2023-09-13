@@ -64,12 +64,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/markuspoerschke/iCal.git",
-                "reference": "30f7277757024debcb839ad033ca73a0b6e3d30e"
+                "reference": "2d01ccad48ec30384205d4f48159302096a1a1c8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/markuspoerschke/iCal/zipball/30f7277757024debcb839ad033ca73a0b6e3d30e",
-                "reference": "30f7277757024debcb839ad033ca73a0b6e3d30e",
+                "url": "https://api.github.com/repos/markuspoerschke/iCal/zipball/2d01ccad48ec30384205d4f48159302096a1a1c8",
+                "reference": "2d01ccad48ec30384205d4f48159302096a1a1c8",
                 "shasum": ""
             },
             "require": {
@@ -88,7 +88,7 @@
                 "phpunit/phpunit": "^9.5",
                 "vimeo/psalm": "^4.8 || ^5.0"
             },
-            "time": "2023-02-03T18:39:37+00:00",
+            "time": "2023-04-10T12:13:45+00:00",
             "default-branch": true,
             "type": "library",
             "installation-source": "dist",
