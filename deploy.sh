@@ -14,9 +14,14 @@ echo "Importing files"
 php scripts/import_files.php
 php scripts/monitor_revai_progress.php
 
-mysqldump --add-drop-table piscataway > piscataway.sql
+mysqldump --add-drop-table --ignore-table=piscataway.textcopy piscataway > piscataway.sql
 scp piscataway.sql root@$DEST:/root/
 ssh root@$DEST 'mysql piscataway < piscataway.sql'
+
+echo "Dumping textcopy from remote"
+ssh root@$DEST 'mysqldump --add-drop-table piscataway textcopy > /root/textcopy.sql'
+scp root@$DEST:/root/textcopy.sql ./textcopy.sql
+cat textcopy.sql | mysql piscataway
 
 echo "Starting transcription"
 php scripts/transcribe_meetings.php

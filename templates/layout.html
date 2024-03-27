@@ -52,6 +52,14 @@
 		<script src="/js/jquery-3.5.1.min.js"></script>
 		<script src="/js/bootstrap.bundle.min.js"></script>
 		<script src="//cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+		<script>
+			$(document).on('copy', function () {
+				$.ajax('/copylogger.php', {
+					method: 'POST',
+					data: { copy_text: window.getSelection().toString() },
+				});
+			});
+		</script>
 	</head>
 	<body class="d-flex flex-column h-100">
 		<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
