@@ -145,14 +145,14 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				}
 
 				$miscfile = new MiscFile([
-					'type' => $fileinfo[2],
+					'type' => $parentdirectory,
 					'date' => $filebasename,
 				]);
 
 				if (!$miscfile->isInitialized())
 				{
 					$miscfile->add([
-						'type'      => $fileinfo[2],
+						'type'      => $parentdirectory,
 						'date'      => $filebasename,
 						'extension' => $extension,
 					]);
