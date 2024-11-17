@@ -18,6 +18,7 @@ class MiscFile extends BaseDBObject
 		'audits'                => 'Audit',
 		'debt_statements'       => 'Debt Statement',
 		'financial_statements'  => 'Financial Statement',
+		'other'                 => 'Other Files',
 	];
 
 	public function __construct($params=[])

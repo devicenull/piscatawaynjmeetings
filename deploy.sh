@@ -23,8 +23,8 @@ ssh root@$DEST 'mysqldump --add-drop-table piscataway textcopy > /root/textcopy.
 scp root@$DEST:/root/textcopy.sql ./textcopy.sql
 cat textcopy.sql | mysql piscataway
 
+echo "Done with mail file sync, syncing to S3"
+rclone -v --delete-excluded --exclude=**youtube** --fast-list -L --config=/home/piscataway/.config/rclone/rclone.conf sync web/files/ cloudflare:piscataway
+
 echo "Starting transcription"
 php scripts/transcribe_meetings.php
-
-echo "Done with file sync, backing up to S3"
-rclone -v --delete-excluded --exclude=**youtube** --fast-list -L --config=/home/piscataway/.config/rclone/rclone.conf sync web/files/ cloudflare:piscataway

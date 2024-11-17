@@ -41,6 +41,10 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				$newsletter->add([
 					'filename' => basename($cleanpath),
 				]);
+				if ($extension == 'pdf')
+				{
+					ocrPDF($cur);
+				}
 				setExifMetadata($cleanpath, $newsletter->getExifTitle());
 			}
 		break;
@@ -53,6 +57,12 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				$bid->add([
 					'filename' => basename($cleanpath),
 				]);
+
+				if ($extension == 'pdf')
+				{
+					ocrPDF($cur);
+				}
+
 				setExifMetadata($cleanpath, $bid->getExifTitle());
 			}
 		break;
@@ -101,6 +111,11 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				$meeting->set(['minutes_available' => 'yes', 'minutes_filetype' => pathinfo(__DIR__.'/../web/'.$link, PATHINFO_EXTENSION)]);
 				echo $meeting['type']."\t".$meeting['date']."\t"."minutes: yes\t";
 
+				if (str_ends_with($link, '.pdf'))
+				{
+					ocrPDF(__DIR__.'/../web/'.$link);
+				}
+
 				setExifMetadata(__DIR__.'/../web/'.$link, $meeting->getExifTitle('minutes'));
 			}
 
@@ -132,6 +147,11 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 					'year'     => basename($fileinfo[6]),
 					'filename' => $filebasename.'.'.$extension,
 				]);
+
+				if ($extension == 'pdf')
+				{
+					ocrPDF($cur);
+				}
 			}
 		break;
 
@@ -156,6 +176,10 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 						'date'      => $filebasename,
 						'extension' => $extension,
 					]);
+					if ($extension == 'pdf')
+					{
+						ocrPDF($cur);
+					}
 				}
 
 				continue 2;
@@ -188,6 +212,16 @@ function getDirContents($dir, &$results = array())
     }
 
     return $results;
+}
+function ocrPDF(string $filename)
+{
+	// most posted documents have no text layer... they're printed and scanned back in.  Fix that
+	passthru('ocrmypdf --deskew --clean-final --user-words '.escapeshellarg(DICTIONARY_FILE).' '.escapeshellarg($filename).' /tmp/ocr.pdf', $exit_code);
+	if ($exit_code == 0)
+	{
+		copy('/tmp/ocr.pdf', $filename);
+		unlink('/tmp/ocr.pdf');
+	}
 }
 // this is a little slow, only call if necessary
 function setExifMetadata(string $filename, string $title)

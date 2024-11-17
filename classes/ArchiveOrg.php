@@ -31,6 +31,7 @@ class ArchiveOrg
 			}
 			else
 			{
+				error_log($result);
 				//echo "Curl request failed\n";
 				//var_dump(curl_getinfo($c));
 				//sleep(10);

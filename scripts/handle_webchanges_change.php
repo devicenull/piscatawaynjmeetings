@@ -4,8 +4,11 @@ error_reporting(E_ALL);
 echo file_get_contents('php://stdin');
 
 $url = getenv('URLWATCH_JOB_LOCATION');
+
+$jobid = ArchiveOrg::archiveURL($url);
+
 $f = fopen('/home/piscataway/urlwatch.log', 'a');
-fwrite($f, strftime('%F %T')."\t".$url."\n");
+fwrite($f, strftime('%F %T')."\t".$url."\tarchive.org jobid: ".$jobid."\n");
 fclose($f);
 
 $user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36';
@@ -17,7 +20,7 @@ $user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHT
 *	lynx had an issue where it wasn't outputting relative links properly.
 */
 $output = '';
-exec('/usr/bin/mech-dump --links --absolute --agent='.escapeshellarg($user_agent).' '.escapeshellarg($url), $output);
+exec('/usr/bin/mech-dump --links --agent='.escapeshellarg($user_agent).' '.escapeshellarg($url), $output);
 /**
 References
 
@@ -35,9 +38,11 @@ foreach ($output as $url)
 
 	$urlinfo = parse_url($url);
 	$destname = __DIR__.'/../downloaded/'.basename(urldecode($urlinfo['path']));
-	if (preg_match('/\.(doc|docx|pdf)$/i', $urlinfo['path']) && in_array($urlinfo['scheme'], ['http','https']) && !file_exists($destname))
+	if (preg_match('/\.(doc|docx|pdf)$/i', $urlinfo['path']) && !file_exists($destname) && !str_contains($url, 'http://') && !str_contains($url, 'https://'))
 	{
-		$dlurl = 'https://cms9files.revize.com/piscatawaynj/'.rawurlencode(basename(urldecode($urlinfo['path'])));
+		// urls are a mess here - they're in the HTML as relative URLS (ex 'Document_Center/Government/Zoning Board/Zoning Minutes/Zoning Board minutes 10.10.24.pdf')
+		// but they're actually relative to piscatawaynj.org/, not the directory they're in
+		$dlurl = 'https://piscatawaynj.org/'.rawurlencode($urlinfo['path']);
 		//echo "Downloading {$dlurl}\n";
 		$c = curl_init($dlurl);
 		curl_setopt_array($c, [
