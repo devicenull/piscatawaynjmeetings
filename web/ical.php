@@ -1,6 +1,7 @@
 <?php
 require(__DIR__.'/../init.php');
 ini_set('memory_limit', '1G');
+ini_set('date.timezone', 'UTC');
 
 use Eluceo\iCal\Domain\ValueObject\TimeSpan;
 use Eluceo\iCal\Domain\ValueObject\DateTime;
