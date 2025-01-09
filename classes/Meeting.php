@@ -15,6 +15,7 @@ class Meeting extends BaseDBObject
 		'revai_jobid',
 		'transcript_available',
 		'last_updated',
+		'bluesky_posts',
 	];
 
 	var $virtual_fields = [

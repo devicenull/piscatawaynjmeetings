@@ -26,6 +26,9 @@ define('PISCATAWAY_UID', '1596769944');
 define('DICTIONARY_FILE', __DIR__.'/vocabulary.txt');
 define('BASE_FILE_PATH', __DIR__.'/web/files/');
 
+define('ONE_HOUR', 60 * 60);
+define('ONE_DAY', 24 * ONE_HOUR);
+
 require_once(__DIR__.'/vendor/adodb/adodb-php/adodb.inc.php');
 $db = newAdoConnection('mysqli');
 $db->connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
