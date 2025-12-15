@@ -21,7 +21,7 @@ foreach (Meeting::getUntranscribed() as $meeting)
 		continue;
 	}
 
-	$c = curl_init('https://piscatawaynjmeetings.com'.$meeting->getLink('recording'));
+	$c = curl_init($meeting->getPublicLink('recording'));
 	curl_setopt($c, CURLOPT_NOBODY, true);
 	$data = curl_exec($c);
 
@@ -36,7 +36,7 @@ foreach (Meeting::getUntranscribed() as $meeting)
 	}
 
 	$params = [
-		'media_url'           => 'https://piscatawaynjmeetings.com/'.$meeting->getLink('recording'),
+		'media_url'           => $meeting->getPublicLink('recording'),
 		'metadata'            => $meeting['type'].' '.$meeting['date'],
 		'remove_disfluencies' => true,
 		// array of objects, yay

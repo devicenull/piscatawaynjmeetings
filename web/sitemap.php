@@ -15,6 +15,8 @@ foreach (glob(__DIR__.'/../web/*.php') as $file)
 		'transcript.php',
 		'sitemap.php',
 		'index.php',
+		'copylogger.php',
+		'sendsms.php',
 	]))
 	{
 		continue;

@@ -21,9 +21,11 @@ ssh root@$DEST 'mysql piscataway < piscataway.sql'
 echo "Dumping textcopy from remote"
 ssh root@$DEST 'mysqldump --add-drop-table piscataway textcopy > /root/textcopy.sql'
 scp root@$DEST:/root/textcopy.sql ./textcopy.sql
+rsync -a root@$DEST:/root/pway_visiting_site ./
+rsync -a root@$DEST:/var/log/nginx ./access_logs
 cat textcopy.sql | mysql piscataway
 
-echo "Done with mail file sync, syncing to S3"
+echo "Done with main file sync, syncing to S3"
 rclone -v --delete-excluded --exclude=**youtube** --fast-list -L --config=/home/piscataway/.config/rclone/rclone.conf sync web/files/ cloudflare:piscataway
 
 echo "Starting transcription"

@@ -34,8 +34,8 @@
 				<tr {% if cur.happensToday() %}class="font-weight-bold"{% endif %} itemscope itemtype="https://schema.org/Event">
 					<td itemprop="startDate" content="{{ cur.date }}">{{ cur.date|date('F j Y h:i A') }}</td>
 					<td itemprop="name" content="Piscataway, New Jersey {{ cur.type }} meeting">{{ cur.type|capitalize }}</td>
-					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">YES</a>{% endif %}</td>
-					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">YES</a>{% endif %}</td>
+					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getPublicLink('minutes') }}">YES</a>{% endif %}</td>
+					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getPublicLink('recording') }}">YES</a>{% endif %}</td>
 					<td>{% if cur.transcript_available == 'yes' %}<a href="/transcript.php?MEETINGID={{ cur.MEETINGID }}">YES</a>{% endif %}</td>
 					<td itemprop="location" content="VirtualLocation">
 						{% if cur.zoom_id > 0 and not (cur.hasHappened() and not cur.happensToday()) %}
@@ -76,8 +76,8 @@
 					<td>
 						<strong itemprop="name" >Piscataway, New Jersey {{ cur.type|capitalize }} Meeting</strong><br>
 						<span itemprop="location" content="VirtualLocation"/>
-						{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getLink('minutes') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.board_type }} Minutes</a><br>{% endif %}
-						{% if cur.recording_available == 'yes' %}<a href="{{ cur.getLink('recording') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.board_type }} Recording</a><br>{% endif %}
+						{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getPublicLink('minutes') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.board_type }} Minutes</a><br>{% endif %}
+						{% if cur.recording_available == 'yes' %}<a href="{{ cur.getPublicLink('recording') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.board_type }} Recording</a><br>{% endif %}
 						{% if cur.transcript_available == 'yes' %}<a href="/transcript.php?MEETINGID={{ cur.MEETINGID }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.board_type }} Transcript</a>{% endif %}
 						{% if cur.minutes_available == 'no' and cur.recording_available == 'no' and cur.transcript_available == 'no' %}
 						Nothing available for {{ cur.date|date('F j Y') }} Piscataway {{ cur.type|capitalize }} Board Meeting

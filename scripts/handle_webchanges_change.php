@@ -7,9 +7,13 @@ $url = getenv('URLWATCH_JOB_LOCATION');
 
 $jobid = ArchiveOrg::archiveURL($url);
 
-$f = fopen('/home/piscataway/urlwatch.log', 'a');
-fwrite($f, strftime('%F %T')."\t".$url."\tarchive.org jobid: ".$jobid."\n");
-fclose($f);
+function l($message)
+{
+	$f = fopen('/home/piscataway/urlwatch.log', 'a');
+	fwrite($f, strftime('%F %T')."\t".$message."\n");
+	fclose($f);
+}
+l($url."\tarchive.org jobid: ".$jobid);
 
 $user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36';
 
@@ -34,16 +38,21 @@ foreach ($output as $url)
 {
 	$url = trim($url);
 	if (empty($url)) continue;
-	//echo $url."\n";
+	//l($url);
 
 	$urlinfo = parse_url($url);
 	$destname = __DIR__.'/../downloaded/'.basename(urldecode($urlinfo['path']));
-	if (preg_match('/\.(doc|docx|pdf)$/i', $urlinfo['path']) && !file_exists($destname) && !str_contains($url, 'http://') && !str_contains($url, 'https://'))
+	if ($urlinfo['path'] === null)
+	{
+		error_log('invalid urlinfo-path for '.$url);
+	}
+	else if (preg_match('/\.(doc|docx|pdf)$/i', $urlinfo['path']) && !file_exists($destname) && !str_contains($url, 'http://') && !str_contains($url, 'https://'))
 	{
 		// urls are a mess here - they're in the HTML as relative URLS (ex 'Document_Center/Government/Zoning Board/Zoning Minutes/Zoning Board minutes 10.10.24.pdf')
 		// but they're actually relative to piscatawaynj.org/, not the directory they're in
-		$dlurl = 'https://piscatawaynj.org/'.rawurlencode($urlinfo['path']);
-		//echo "Downloading {$dlurl}\n";
+		// gotta keep playing games with urlencode - rawurlencode was working until their 2025 update, now it's back to regular urlencode
+		$dlurl = 'https://piscatawaynj.org/'.str_replace(' ', '%20', $urlinfo['path']);
+		//l("Downloading {$dlurl}");
 		$c = curl_init($dlurl);
 		curl_setopt_array($c, [
 			CURLOPT_FILE           => fopen($destname, 'w'),
@@ -54,10 +63,8 @@ foreach ($output as $url)
 		curl_exec($c);
 		if (curl_getinfo($c, CURLINFO_HTTP_CODE) != 200)
 		{
-			$f = fopen('/home/piscataway/urlwatch.log', 'a');
-			fwrite($f, strftime('%F %T')."\tFailed to download: {$url}\n");
-			fwrite($f, print_r(curl_getinfo($c), true));
-			fclose($f);
+			l("Failed to download: {$url}");
+			l(print_r(curl_getinfo($c), true));
 			unlink($destname);
 			//echo "Failed to download\n";
 			//var_dump(curl_getinfo($c));

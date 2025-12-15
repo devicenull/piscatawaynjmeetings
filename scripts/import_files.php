@@ -96,7 +96,7 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				{
 					echo "auto-added ".$meeting['MEETINGID'];
 
-					$meeting = new Meeting(['MEETINGID' => $meeting]);
+					$meeting = new Meeting(['MEETINGID' => $meeting['MEETINGID']]);
 				}
 			}
 

@@ -54,7 +54,7 @@ class Meeting extends BaseDBObject
 	public function getLink($link_type, $destination=false): string
 	{
 		$extensions = [
-			'minutes' => ['doc', 'pdf'],
+			'minutes' => ['doc', 'pdf', 'docx'],
 			'recording' => ['mp3', 'm4a'],
 			'transcript' => ['txt'],
 		];
@@ -88,6 +88,15 @@ class Meeting extends BaseDBObject
 		}
 
 		return '';
+	}
+
+	public function getPublicLink($link_type) {
+		if (hasEditAuth() && false) {
+			return $this->getLink($link_type);
+		}
+
+		$baselink = str_replace('/files/', '', $this->getLink($link_type));
+		return 'https://files.piscatawaynjmeetings.com/' . $baselink;
 	}
 
 	public function getExifTitle(string $type): string
