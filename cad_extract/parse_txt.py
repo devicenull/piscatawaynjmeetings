@@ -29,7 +29,7 @@ with open(sys.argv[1], 'r') as f:
 		if line == "":
 			continue
 
-		res = re.search('([0-9]+)\s([0-9\/]+)\s([0-9\:]+)\s(.+)\s\s\s(.+)', line)
+		res = re.search('([0-9]+)\s+([0-9\/]+)\s+([0-9\:]+)\s(.+)\s\s\s+(.+)', line)
 		if not res:
 			print("NO MATCH: %s" % line)
 			continue
