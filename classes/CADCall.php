@@ -33,9 +33,11 @@ class CADCall extends BaseDBObject
 	public static function getAll()
 	{
 		global $db;
+		// only have full cad logs going back to oct 2025, don't taint the data with older records from just two addresses
 		$res = $db->Execute('
 			select *
 			from cad_call
+			where call_time > "2025-10-01"
 			order by incident
 		');
 		$calls = [];

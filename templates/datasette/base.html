@@ -1,0 +1,65 @@
+{% import "_crumbs.html" as crumbs with context %}<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ urls.static('app.css') }}?{{ app_css_hash }}">
+    <link href="/css/bootstrap.min.css" rel="stylesheet">    
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+{% for url in extra_css_urls %}
+    <link rel="stylesheet" href="{{ url.url }}"{% if url.sri %} integrity="{{ url.sri }}" crossorigin="anonymous"{% endif %}>
+{% endfor %}
+{% for url in extra_js_urls %}
+    <script {% if url.module %}type="module" {% endif %}src="{{ url.url }}"{% if url.sri %} integrity="{{ url.sri }}" crossorigin="anonymous"{% endif %}></script>
+{% endfor %}
+{%- if alternate_url_json -%}
+    <link rel="alternate" type="application/json+datasette" href="{{ alternate_url_json }}">
+{%- endif -%}
+{%- block extra_head %}{% endblock -%}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+        <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+          <h5 class="my-0 mr-md-auto font-weight-normal" style="text-decoration: none;">Piscataway, New Jersey CAD (EMS/Fire/Police) Calls</h5>
+          <nav class="my-2 my-md-0 mr-md-3">
+            <a class="p-2 text-dark" href="/">Recent Meetings</a>
+            <a class="p-2 text-dark" href="/all_meetings.php">All Meetings</a>
+            <a class="p-2 text-dark" href="/bids.php">Bids</a>
+            <a class="p-2 text-dark" href="/newsletter.php">Newsletter</a>
+            <a class="p-2 text-dark" href="/tweets.php">Tweets</a>
+            <a class="p-2 text-dark" href="/youtube.php">Youtube</a>
+            <a class="p-2 text-dark" href="/campaign_files.php">Piscataway Democratic Organization Finance</a>
+            <a class="p-2 text-dark" href="/misc_files.php">Other Content</a>
+          </nav>
+        </div>
+<div class="not-footer">
+
+
+{% block messages %}
+{% if show_messages %}
+    {% for message, message_type in show_messages() %}
+        <p class="message-{% if message_type == 1 %}info{% elif message_type == 2 %}warning{% elif message_type == 3 %}error{% endif %}">{{ message }}</p>
+    {% endfor %}
+{% endif %}
+{% endblock %}
+
+<section class="content">
+{% block content %}
+{% endblock %}
+</section>
+</div>
+
+{% include "_close_open_menus.html" %}
+
+{% for body_script in body_scripts %}
+    <script{% if body_script.module %} type="module"{% endif %}>{{ body_script.script }}</script>
+{% endfor %}
+    <div class="footer mt-auto py-3">
+        <div class="container" data-nosnippet style="float: left">
+            {% include "_footer.html" %}<br>
+            <span class="text-muted">Not affiliated with or endorsed by Piscataway Township, NJ.  Questions?  Email admin AT piscatawaynjmeetings.com</span>
+        </div>
+    </div>
+
+{% if select_templates %}<!-- Templates considered: {{ select_templates|join(", ") }} -->{% endif %}
+</body>
+
+</html>

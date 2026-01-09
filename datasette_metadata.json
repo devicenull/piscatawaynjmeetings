@@ -1,0 +1,11 @@
+{
+	"databases": {
+		"cad_calls": {
+			"queries": {
+				"all_calls": {
+					"sql": "select * from cad_calls"
+				}
+			}
+		}
+	}
+}

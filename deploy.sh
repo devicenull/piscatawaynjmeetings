@@ -9,11 +9,11 @@ echo "Generating DBs"
 pushd data
 rm -f cad_calls.*
 php ../scripts/cad_calls.php > cad_calls.csv
-csv-to-sqlite --file cad_calls.csv -o cad_calls.db
+/home/piscataway/bin/csv-to-sqlite --file cad_calls.csv -o cad_calls.db
 popd
 
 echo "Syncing content"
-rsync -rt --exclude=web/files .git classes config.php init.php templates vendor web scripts root@$DEST:/home/piscataway/
+rsync --copy-links -rt --exclude=web/files .git classes config.php init.php templates vendor web scripts data datasette.service datasette_metadata.json root@$DEST:/home/piscataway/
 # sync only transcripts, the rest are too big!
 find ./web/ -iname \*.txt | rsync -rt --files-from=/dev/stdin . root@185.101.97.102:/home/piscataway/
 
@@ -37,3 +37,6 @@ rclone -v --delete-excluded --exclude=**youtube** --fast-list -L --config=/home/
 
 echo "Starting transcription"
 php scripts/transcribe_meetings.php
+
+echo "Restarting datasette"
+ssh root@$DEST "cp /home/piscataway/datasette.service /etc/systemd/system/; systemctl daemon-reload; systemctl restart datasette"
