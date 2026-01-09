@@ -17,6 +17,7 @@ foreach (glob(__DIR__.'/../web/*.php') as $file)
 		'index.php',
 		'copylogger.php',
 		'sendsms.php',
+		'datasette/cad_calls/all_calls',
 	]))
 	{
 		continue;
