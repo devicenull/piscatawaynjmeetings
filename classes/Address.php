@@ -34,8 +34,8 @@ class Address extends BaseDBObject
 			{
 				$this->add([
 					'address' => $params['address'],
-					'lat' => $json['features'][0]['geometry']['coordinates'][0],
-					'lng' => $json['features'][0]['geometry']['coordinates'][1],
+					'lat' => $json['features'][0]['geometry']['coordinates'][1],
+					'lng' => $json['features'][0]['geometry']['coordinates'][0],
 				]);
 			}
 

@@ -29,4 +29,21 @@ class CADCall extends BaseDBObject
 
 		return parent::add($params);
 	}
+
+	public static function getAll()
+	{
+		global $db;
+		$res = $db->Execute('
+			select *
+			from cad_call
+			order by incident
+		');
+		$calls = [];
+		foreach ($res as $cur)
+		{
+			$calls[] = new CADCall(['record' => $cur]);
+		}
+
+		return $calls;
+	}
 }

@@ -5,6 +5,13 @@ cd /home/piscataway/
 #DEST="www.piscatawaynjmeetings.com"
 DEST="185.101.97.102"
 
+echo "Generating DBs"
+pushd data
+rm -f cad_calls.*
+php ../scripts/cad_calls.php > cad_calls.csv
+csv-to-sqlite --file cad_calls.csv -o cad_calls.db
+popd
+
 echo "Syncing content"
 rsync -rt --exclude=web/files .git classes config.php init.php templates vendor web scripts root@$DEST:/home/piscataway/
 # sync only transcripts, the rest are too big!

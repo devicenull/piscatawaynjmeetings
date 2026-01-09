@@ -9,12 +9,14 @@ while (!feof($f))
 	$data = fgetcsv($f);
 	if (!empty($data) == 0) continue;
 
-	$cad = new CADCall();
+	$cad = new CADCall(['incident' => $data[0]]);
+	if ($cad->isInitialized()) continue;
+
 	if (!$cad->add([
 		'incident' => $data[0],
 		'call_time' => strftime('%F %T', strtotime($data[1])),
-		'location' => $data[2],
-		'call_type' => $data[3],
+		'location' => trim($data[2].' '.$data[3]),
+		'call_type' => $data[4],
 	]))
 	{
 		echo "UNABLE TO ADD: \n";
