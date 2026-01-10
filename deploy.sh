@@ -40,3 +40,4 @@ php scripts/transcribe_meetings.php
 
 echo "Restarting datasette"
 ssh root@$DEST "cp /home/piscataway/datasette.service /etc/systemd/system/; systemctl daemon-reload; systemctl restart datasette"
+systemctl restart datasette

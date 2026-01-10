@@ -81,6 +81,14 @@ fputcsv($f, [
 
 foreach (CADCall::getAll() as $call)
 {
+	if ($call['name'] != '')
+	{
+		$title = $call['name'].' - '.$call['location'];
+	}
+	else
+	{
+		$title = $call['location'];
+	}
 	fputcsv($f, [
 		$call['incident'],
 		$call['call_time'],
@@ -91,7 +99,7 @@ foreach (CADCall::getAll() as $call)
 		json_encode([
 			// https://github.com/simonw/datasette-cluster-map?tab=readme-ov-file#custom-marker-popups
 	//		'image' => '/icons/911-hangup.svg',
-			'title' => $call['location'],
+			'title' => $title,
 			'description' => $call['call_type'].' at '.$call['call_time'],
 		]),
 	]);

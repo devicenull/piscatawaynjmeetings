@@ -4,6 +4,9 @@
 			"queries": {
 				"all_calls": {
 					"sql": "select * from cad_calls"
+				},
+				"traffic_stops": {
+					"sql": "select * from cad_calls where `Incident Type`='Traffic Stop'"
 				}
 			}
 		}

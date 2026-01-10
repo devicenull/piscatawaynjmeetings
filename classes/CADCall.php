@@ -7,6 +7,7 @@ class CADCall extends BaseDBObject
 		'location',
 		'call_type',
 		'ADDRESSID',
+		'name',
 	];
 
 	var $virtual_fields = [
