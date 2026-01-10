@@ -1,4 +1,5 @@
 <?php
+ini_set('display_errors', 1);
 require(__DIR__.'/../init.php');
 Header('Content-Type: text/csv');
 Header('Content-Disposition: attachment; filename="piscataway_cad_calls.csv"');

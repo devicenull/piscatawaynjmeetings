@@ -6,6 +6,10 @@ class CADCall extends BaseDBObject
 		'call_time',
 		'location',
 		'call_type',
+		'ADDRESSID',
+	];
+
+	var $virtual_fields = [
 		'lat',
 		'lng',
 	];
@@ -37,6 +41,7 @@ class CADCall extends BaseDBObject
 		$res = $db->Execute('
 			select *
 			from cad_call
+			left join address using(ADDRESSID)
 			where call_time > "2025-10-01"
 			order by incident
 		');
@@ -47,5 +52,15 @@ class CADCall extends BaseDBObject
 		}
 
 		return $calls;
+	}
+
+	public function get($offset)
+	{
+		//fixme: dynamically fetch these if needed
+		if ($offset == 'lat' || $offset == 'lng')
+		{
+			return $this->record[$offset];
+		}
+		return parent::get($offset);;
 	}
 }
