@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="h-100">
+<html lang="en">
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -10,7 +10,7 @@
 		<link href="/css/select2.min.css" rel="stylesheet">
 		<link href="//cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css" rel="stylesheet">
 
-		<meta name="theme-color" content="#563d7c">
+		<meta name="theme-color" content="#111111">
 
 		{% if not has_edit_auth %}
 		<!-- Global site tag (gtag.js) - Google Analytics -->
@@ -19,34 +19,190 @@
 			window.dataLayer = window.dataLayer || [];
 			function gtag(){dataLayer.push(arguments);}
 			gtag('js', new Date());
-
 			gtag('config', 'G-CDCX8Z04Q3');
 		</script>
 		{% endif %}
 
 		<style>
-			.bd-placeholder-img {
-				font-size: 1.125rem;
-				text-anchor: middle;
-				-webkit-user-select: none;
-				-moz-user-select: none;
-				-ms-user-select: none;
-				user-select: none;
+			:root {
+				--pnj-black:        #111111;
+				--pnj-yellow:       #F5C000;
+				--pnj-yellow-light: #FFF8DC;
+				--pnj-gray:         #F4F4F4;
 			}
 
-			@media (min-width: 768px) {
-				.bd-placeholder-img-lg {
-					font-size: 3.5rem;
-				}
+			/* ── Navbar ── */
+			.navbar-pnj {
+				background: var(--pnj-black);
+				padding: .6rem 1.5rem;
+				box-shadow: 0 2px 6px rgba(0,0,0,.4);
+			}
+			.navbar-pnj .navbar-brand {
+				color: var(--pnj-yellow);
+				font-weight: 700;
+				font-size: 1.1rem;
+				letter-spacing: .02em;
+			}
+			.navbar-pnj .navbar-brand:hover { color: #fff; text-decoration: none; }
+			.navbar-pnj .nav-link {
+				color: rgba(255,255,255,.8) !important;
+				font-size: .9rem;
+				padding: .35rem .7rem !important;
+				border-radius: 3px;
+				transition: background .15s, color .15s;
+			}
+			.navbar-pnj .nav-link:hover,
+			.navbar-pnj .nav-link:focus {
+				color: var(--pnj-yellow) !important;
+				background: rgba(255,255,255,.08);
+			}
+			.navbar-pnj .nav-link.active {
+				color: var(--pnj-yellow) !important;
+				font-weight: 600;
+			}
+			.navbar-pnj .dropdown-menu {
+				background: #1e1e1e;
+				border: 1px solid rgba(255,255,255,.1);
+				border-radius: 4px;
+				min-width: 12rem;
+				margin-top: 4px;
+			}
+			.navbar-pnj .dropdown-item {
+				color: rgba(255,255,255,.8);
+				font-size: .88rem;
+				padding: .45rem 1rem;
+			}
+			.navbar-pnj .dropdown-item:hover {
+				background: rgba(245,192,0,.15);
+				color: var(--pnj-yellow);
+			}
+			.navbar-pnj .nav-divider {
+				width: 1px;
+				background: rgba(255,255,255,.15);
+				margin: .25rem .3rem;
+			}
+			.navbar-toggler { border-color: rgba(255,255,255,.3); }
+			.navbar-toggler-icon {
+				background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.7)' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 			}
 
-		.footer {
-			background-color: #f5f5f5;
-		}
+			/* ── Page header ── */
+			.board-header {
+				border-left: 5px solid var(--pnj-yellow);
+				padding-left: 1rem;
+				margin: 1.8rem 0 1.2rem;
+			}
+			.board-header h1 {
+				font-size: 1.7rem;
+				font-weight: 700;
+				margin: 0 0 .2rem;
+				color: var(--pnj-black);
+			}
+			.board-header a { font-size: .85rem; color: #555; }
+			.board-header a:hover { color: var(--pnj-black); }
 
-		.qrcode {
-			padding-bottom: 25px;
-		}
+			/* ── Section headings ── */
+			.section-heading {
+				font-size: 1rem;
+				font-weight: 700;
+				text-transform: uppercase;
+				letter-spacing: .06em;
+				color: var(--pnj-black);
+				border-bottom: 2px solid var(--pnj-yellow);
+				padding-bottom: .3rem;
+				margin-bottom: 1rem;
+			}
+
+			/* ── Tables ── */
+			.pnj-table td { vertical-align: top; padding: .6rem .75rem; }
+			.pnj-table thead th {
+				background-color: var(--pnj-black);
+				color: #fff;
+				font-size: .8rem;
+				text-transform: uppercase;
+				letter-spacing: .05em;
+				border: none;
+			}
+			.pnj-table tbody tr:hover { background: var(--pnj-yellow-light); }
+			.date-cell {
+				font-weight: 600;
+				font-size: .9rem;
+				white-space: nowrap;
+				color: var(--pnj-black);
+			}
+			.item-entry { line-height: 1.4; }
+			.item-entry + .item-entry { margin-top: .5rem; padding-top: .5rem; border-top: 1px solid #eee; }
+			.item-label {
+				display: inline-block;
+				background: var(--pnj-black);
+				color: var(--pnj-yellow);
+				font-size: .7rem;
+				font-weight: 700;
+				padding: 1px 6px;
+				border-radius: 3px;
+				margin-right: .3rem;
+				vertical-align: middle;
+			}
+			.item-type {
+				font-size: .72rem;
+				color: #888;
+				text-transform: uppercase;
+				letter-spacing: .04em;
+				margin-right: .25rem;
+			}
+			.item-title { font-size: .88rem; color: #333; }
+			.case-number { font-weight: 700; font-size: .88rem; color: var(--pnj-black); }
+			.case-meta { font-size: .8rem; color: #666; }
+			.doc-links a {
+				display: inline-block;
+				font-size: .8rem;
+				color: #333;
+				border: 1px solid #ccc;
+				border-radius: 3px;
+				padding: 2px 8px;
+				margin: 2px 2px 2px 0;
+				text-decoration: none;
+				transition: background .12s, border-color .12s;
+			}
+			.doc-links a:hover {
+				background: var(--pnj-yellow);
+				border-color: var(--pnj-yellow);
+				color: var(--pnj-black);
+			}
+			.dataTables_wrapper .dataTables_filter input { border-radius: 4px; border: 1px solid #ccc; padding: 3px 8px; }
+			.dataTables_wrapper .dataTables_length select { border-radius: 4px; border: 1px solid #ccc; }
+
+			/* ── Members ── */
+			.member-grid {
+				display: flex;
+				flex-wrap: wrap;
+				gap: .6rem;
+				margin-top: .5rem;
+			}
+			.member-card {
+				background: #fff;
+				border: 1px solid #e0e0e0;
+				border-top: 3px solid var(--pnj-yellow);
+				border-radius: 4px;
+				padding: .6rem .9rem;
+				min-width: 180px;
+				flex: 1 1 180px;
+				max-width: 260px;
+			}
+			.member-name { font-weight: 600; font-size: .9rem; color: var(--pnj-black); }
+			.member-title { font-size: .78rem; color: #666; margin-top: 2px; }
+			.member-term { font-size: .73rem; color: #999; margin-top: 3px; }
+
+			/* ── Footer ── */
+			footer.footer-pnj {
+				background: var(--pnj-black);
+				color: rgba(255,255,255,.55);
+				font-size: .82rem;
+				margin-top: 3rem;
+				padding: 1.2rem 0;
+			}
+
+			.qrcode { padding-bottom: 25px; }
 		</style>
 
 		<script src="/js/jquery-3.5.1.min.js"></script>
@@ -61,31 +217,54 @@
 			});
 		</script>
 	</head>
-	<body class="d-flex flex-column h-100">
-		<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
-		  <h5 class="my-0 mr-md-auto font-weight-normal">Piscataway, New Jersey Public Meeting History</h5>
-		  <nav class="my-2 my-md-0 mr-md-3">
-			<a class="p-2 text-dark" href="/">Recent Meetings</a>
-			<a class="p-2 text-dark" href="/all_meetings.php">All Meetings</a>
-			<div class="d-inline-block dropdown">
-				<a class="p-2 text-dark dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">Boards</a>
-				<ul class="dropdown-menu">
-					<li><a class="dropdown-item" href="/council.php">Township Council</a></li>
-					<li><a class="dropdown-item" href="/planning.php">Planning Board</a></li>
-					<li><a class="dropdown-item" href="/zoning.php">Zoning Board</a></li>
+	<body class="d-flex flex-column" style="min-height:100vh; background:#f8f8f8">
+
+		<nav class="navbar navbar-pnj navbar-expand-lg">
+			<a class="navbar-brand" href="/">Piscataway, NJ Public Meetings</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="navMain">
+				<ul class="navbar-nav ml-auto align-items-lg-center">
+
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">Boards</a>
+						<div class="dropdown-menu">
+							<a class="dropdown-item" href="/council.php">Township Council</a>
+							<a class="dropdown-item" href="/planning.php">Planning Board</a>
+							<a class="dropdown-item" href="/zoning.php">Zoning Board</a>
+						</div>
+					</li>
+
+					<li class="nav-item"><a class="nav-link" href="/">Recent Meetings</a></li>
+					<li class="nav-item"><a class="nav-link" href="/all_meetings.php">All Meetings</a></li>
+
+					<div class="nav-divider d-none d-lg-block"></div>
+
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">Records</a>
+						<div class="dropdown-menu">
+							<a class="dropdown-item" href="/bids.php">Bids</a>
+							<a class="dropdown-item" href="/newsletter.php">Newsletter</a>
+							<a class="dropdown-item" href="/misc_files.php">Other Documents</a>
+							<a class="dropdown-item" href="/campaign_files.php">PDO Finance</a>
+						</div>
+					</li>
+
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">Data</a>
+						<div class="dropdown-menu dropdown-menu-right">
+							<a class="dropdown-item" href="/datasette/cad_calls/all_calls">CAD Calls</a>
+							<a class="dropdown-item" href="/tweets.php">Tweets</a>
+							<a class="dropdown-item" href="/youtube.php">YouTube</a>
+						</div>
+					</li>
+
 				</ul>
 			</div>
-			<a class="p-2 text-dark" href="/bids.php">Bids</a>
-			<a class="p-2 text-dark" href="/newsletter.php">Newsletter</a>
-			<a class="p-2 text-dark" href="/tweets.php">Tweets</a>
-			<a class="p-2 text-dark" href="/youtube.php">Youtube</a>
-			<a class="p-2 text-dark" href="/campaign_files.php">Piscataway Democratic Organization Finance</a>
-			<a class="p-2 text-dark" href="/misc_files.php">Other Content</a>
-			<a class="p-2 text-dark" href="/datasette/cad_calls/all_calls">CAD Calls</a>
-		  </nav>
-		</div>
+		</nav>
 
-		<main role="main" class="flex-shrink-0">
+		<main role="main" class="flex-grow-1">
 			{% if success_message|default() != '' %}
 				<div class="alert alert-success" role="alert">
 					{{ success_message }}
@@ -96,15 +275,15 @@
 					{{ error_message }}
 				</div>
 			{% endif %}
-			<div class="container">
+			<div class="container" style="max-width:1000px">
 				{% block maincontent %}
 				{% endblock %}
 			</div>
 		</main>
 
-		<footer class="footer mt-auto py-3">
-			<div class="container" data-nosnippet>
-				<span class="text-muted">Not affiliated with or endorsed by Piscataway Township, NJ.  Questions?  Email admin AT piscatawaynjmeetings.com</span>
+		<footer class="footer-pnj">
+			<div class="container" style="max-width:1000px" data-nosnippet>
+				Not affiliated with or endorsed by Piscataway Township, NJ. Questions? Email admin AT piscatawaynjmeetings.com
 			</div>
 		</footer>
 	</body>

@@ -3,32 +3,34 @@
 {% block title %}Piscataway Township, NJ Assorted Documents{% endblock %}
 
 {% block maincontent %}
-	<h3>Other Content</h3>
-	<table class="table table-striped table-sm">
-		<caption>Assorted public documents from Piscataway, New Jersey</caption>
+	<div class="board-header">
+		<h1>Other Documents</h1>
+	</div>
+
+	<p class="section-heading">Public Documents</p>
+	<table class="table table-sm pnj-table">
+		<caption class="sr-only">Assorted public documents from Piscataway, New Jersey</caption>
 		<thead>
 			<tr>
-				<th scope="col">Type</th>
-				<th scope="col">Date</th>
-				<th scope="col">Notes</th>
-				<th scope="col">Download</th>
+				<th>Type</th>
+				<th>Date</th>
+				<th>Notes</th>
+				<th style="width:6em">Download</th>
 			</tr>
 		</thead>
 		<tbody>
 			{% for cur in misc_files %}
-				<tr>
-					<td>{{ cur.type_description }}</td>
-					<td>{{ cur.date }}</td>
-					<td>{{ cur.notes }}</td>
-					<td><a href="{{ cur.getLink() }}">View</a></td>
-				</tr>
+			<tr>
+				<td>{{ cur.type_description }}</td>
+				<td>{{ cur.date }}</td>
+				<td>{{ cur.notes }}</td>
+				<td class="doc-links"><a href="{{ cur.getLink() }}">View</a></td>
+			</tr>
 			{% endfor %}
 		</tbody>
 	</table>
 
-	<br><br>
-	<hr>
-	<div>
-		These are various files that have been posted by the town in the past.  Dates listed here are estimates (for example, 2020 budget might show up as 2020-01-01, even if it was released later)
-	</div>	
+	<p class="text-muted" style="font-size:.85rem">
+		Various files posted by the town. Dates are estimates — for example, the 2020 budget may show as 2020-01-01 even if released later.
+	</p>
 {% endblock %}

@@ -4,92 +4,124 @@
 	<script>
 		$(document).ready(function () {
 			$('#allmeetings').DataTable({
-				"order": [[ 0, "desc" ]],
-				"pageLength": 10
+				order: [[ 0, 'desc' ]],
+				pageLength: 10,
+				columnDefs: [
+					{ orderable: false, targets: '_all' },
+					{ orderable: true, targets: 0 }
+				]
 			});
 		});
 	</script>
-	<strong style="float: right">Call in number is always 1-646-876-9923</strong>
+
+	<div class="board-header">
+		<h1>Recent &amp; Upcoming Meetings</h1>
+	</div>
+
+	<p class="section-heading">Upcoming Meetings</p>
 	{% if has_edit_auth %}
-	<a class="btn btn-primary" href="/meeting_edit.php?MEETINGID=new">Add</a>
+	<a class="btn btn-sm btn-primary mb-2" href="/meeting_edit.php?MEETINGID=new">Add Meeting</a>
 	{% endif %}
-	<h3 style="display: inline">Recent/Upcoming Meetings</h3> <a href="calendar_instructions.php">Add all meetings to calendar</a>
-	<table class="table table-striped table-sm">
-		<caption>Upcoming public meetings in Piscataway, New Jersey</caption>
+	<table class="table table-sm pnj-table" id="recentmeetings" style="width:100%">
+		<caption class="sr-only">Upcoming public meetings in Piscataway, New Jersey</caption>
 		<thead>
 			<tr>
-				<th scope="col">Date</th>
-				<th scope="col">Type</th>
-				<th scope="col">Minutes</th>
-				<th scope="col">Recording</th>
-				<th scope="col">Transcript</th>
-				<th scope="col">Join Information</th>
+				<th style="width:14em">Date</th>
+				<th>Type</th>
+				<th>Documents</th>
+				<th>Join Information</th>
 				{% if has_edit_auth %}
-				<th scope="col"></th>
+				<th></th>
 				{% endif %}
 			</tr>
 		</thead>
 		<tbody>
 			{% for cur in recent_meetings %}
-				<tr {% if cur.happensToday() %}class="font-weight-bold"{% endif %} itemscope itemtype="https://schema.org/Event">
-					<td itemprop="startDate" content="{{ cur.date }}">{{ cur.date|date('F j Y h:i A') }}</td>
-					<td itemprop="name" content="Piscataway, New Jersey {{ cur.type }} meeting">{{ cur.type|capitalize }}</td>
-					<td>{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getPublicLink('minutes') }}">YES</a>{% endif %}</td>
-					<td>{% if cur.recording_available == 'yes' %}<a href="{{ cur.getPublicLink('recording') }}">YES</a>{% endif %}</td>
-					<td>{% if cur.transcript_available == 'yes' %}<a href="/transcript.php?MEETINGID={{ cur.MEETINGID }}">YES</a>{% endif %}</td>
-					<td itemprop="location" content="VirtualLocation">
-						{% if cur.zoom_id > 0 and not (cur.hasHappened() and not cur.happensToday()) %}
-							Meeting ID: {{ cur.zoom_id|number_format(0, '', ' ') }}<br>
-							Meeting Password: {{ "%06s"|format(cur.zoom_password) }}<br>
-							<a href="zoommtg://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (computer)</a><br>
-							<a href="zoomus://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (iOS/Android)</a><br>
-						{% elseif cur.zoom_joinurl != '' and not (cur.hasHappened() and not cur.happensToday()) %}
-							<a href="{{ cur.zoom_joinurl }}">Join</a><br>
-						{% endif %}
-					</td>
-					{% if has_edit_auth %}
-					<td><a class="btn btn-primary" href="/meeting_edit.php?MEETINGID={{ cur.MEETINGID }}">edit</a></td>
+			<tr {% if cur.happensToday() %}style="font-weight:600"{% endif %} itemscope itemtype="https://schema.org/Event">
+				<td class="date-cell" itemprop="startDate" content="{{ cur.date }}">{{ cur.date|date('M j, Y g:i A') }}</td>
+				<td itemprop="name" content="Piscataway, New Jersey {{ cur.type }} meeting">{{ cur.type|capitalize }}</td>
+				<td class="doc-links">
+					{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getPublicLink('minutes') }}">Minutes</a>{% endif %}
+					{% if cur.recording_available == 'yes' %}<a href="{{ cur.getPublicLink('recording') }}">Recording</a>{% endif %}
+					{% if cur.transcript_available == 'yes' %}<a href="/transcript.php?MEETINGID={{ cur.MEETINGID }}">Transcript</a>{% endif %}
+				</td>
+				<td itemprop="location" content="VirtualLocation">
+					{% if cur.zoom_id > 0 and not (cur.hasHappened() and not cur.happensToday()) %}
+						Meeting ID: {{ cur.zoom_id|number_format(0, '', ' ') }}<br>
+						Password: {{ "%06s"|format(cur.zoom_password) }}<br>
+						<a href="zoommtg://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (computer)</a><br>
+						<a href="zoomus://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (iOS/Android)</a>
+					{% elseif cur.zoom_joinurl != '' and not (cur.hasHappened() and not cur.happensToday()) %}
+						<a href="{{ cur.zoom_joinurl }}">Join</a>
 					{% endif %}
-				</tr>
+				</td>
+				{% if has_edit_auth %}
+				<td><a class="btn btn-sm btn-primary" href="/meeting_edit.php?MEETINGID={{ cur.MEETINGID }}">edit</a></td>
+				{% endif %}
+			</tr>
 			{% endfor %}
 		</tbody>
 	</table>
-	<strong>Note:</strong>  Since COVID-19, meeting information is posted <a href="https://piscatawaynj.org/government/meeting_schedules/index.php">here</a>. You will not see it under 'Alerts' nor posted to their Twitter/Facebook.  Only council meetings have the option of attending in person.<br><br>
 
-	<br><br>
-	<h3>Upcoming/Historical Meetings (<a href="/all_meetings.php">See All Meetings</a>)</h3>
-	<table class="table table-striped table-sm" id="allmeetings">
-		<caption>Recent public meetings in Piscataway, New Jersey</caption>
+	<p class="text-muted" style="font-size:.85rem">
+		Zoom Call-in number: 1-646-876-9923.
+	</p>
+
+	<p class="section-heading mt-4">Meeting History</p>
+	<table class="table table-sm pnj-table" id="allmeetings" style="width:100%">
+		<caption class="sr-only">Recent public meetings in Piscataway, New Jersey</caption>
 		<thead>
 			<tr>
-				<th scope="col">Date</th>
-				<th scope="col">Artifacts</th>
+				<th style="width:10em">Date</th>
+				<th>Meeting</th>
+				<th>Documents</th>
 				{% if has_edit_auth %}
-				<th scope="col"></th>
+				<th></th>
 				{% endif %}
 			</tr>
 		</thead>
 		<tbody>
 			{% for cur in meetings %}
-				<tr itemscope itemtype="https://schema.org/Event">
-					<td itemprop="startDate" content="{{ cur.date }}" data-order="{{ cur.date|date('U') }}">{{ cur.date|date('F j Y') }}</td>
-					<td>
-						<strong itemprop="name" >Piscataway, New Jersey {{ cur.type|capitalize }} Meeting</strong><br>
-						<span itemprop="location" content="VirtualLocation"/>
-						{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getPublicLink('minutes') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.board_type }} Minutes</a><br>{% endif %}
-						{% if cur.recording_available == 'yes' %}<a href="{{ cur.getPublicLink('recording') }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.board_type }} Recording</a><br>{% endif %}
-						{% if cur.transcript_available == 'yes' %}<a href="/transcript.php?MEETINGID={{ cur.MEETINGID }}">{{ cur.date|date('F j Y') }} Piscataway {{ cur.board_type }} Transcript</a>{% endif %}
-						{% if cur.minutes_available == 'no' and cur.recording_available == 'no' and cur.transcript_available == 'no' %}
-						Nothing available for {{ cur.date|date('F j Y') }} Piscataway {{ cur.type|capitalize }} Board Meeting
-						{%endif %}
-
-					</td>
-					{% if has_edit_auth %}
-					<td><a class="btn btn-primary" href="/meeting_edit.php?MEETINGID={{ cur.MEETINGID }}">edit</a></td>
+			<tr itemscope itemtype="https://schema.org/Event">
+				<td class="date-cell" itemprop="startDate" content="{{ cur.date }}" data-order="{{ cur.date|date('U') }}">{{ cur.date|date('M j, Y') }}</td>
+				<td>
+					<span itemprop="name">Piscataway {{ cur.board_type }} Meeting</span>
+					<span itemprop="location" content="VirtualLocation"></span>
+				</td>
+				<td class="doc-links">
+					{% if cur.minutes_available == 'yes' %}
+					<a href="{{ cur.getPublicLink('minutes') }}" itemscope itemtype="https://schema.org/DigitalDocument">
+						<meta itemprop="name" content="Piscataway {{ cur.board_type }} Minutes {{ cur.date|date('F j, Y') }}">
+						Minutes
+					</a>
 					{% endif %}
-				</tr>
+					{% if cur.recording_available == 'yes' %}
+					<a href="{{ cur.getPublicLink('recording') }}" itemscope itemtype="https://schema.org/AudioObject">
+						<meta itemprop="name" content="Piscataway {{ cur.board_type }} Recording {{ cur.date|date('F j, Y') }}">
+						Recording
+					</a>
+					{% endif %}
+					{% if cur.transcript_available == 'yes' %}
+					<a href="/transcript.php?MEETINGID={{ cur.MEETINGID }}" itemscope itemtype="https://schema.org/Transcript">
+						<meta itemprop="name" content="Piscataway {{ cur.board_type }} Transcript {{ cur.date|date('F j, Y') }}">
+						Transcript
+					</a>
+					{% endif %}
+					{% if cur.minutes_available == 'no' and cur.recording_available == 'no' and cur.transcript_available == 'no' %}
+					<span class="text-muted" style="font-size:.85rem">Nothing available</span>
+					{% endif %}
+				</td>
+				{% if has_edit_auth %}
+				<td><a class="btn btn-sm btn-primary" href="/meeting_edit.php?MEETINGID={{ cur.MEETINGID }}">edit</a></td>
+				{% endif %}
+			</tr>
 			{% endfor %}
 		</tbody>
 	</table>
-	Your web browser should be able to play most of the recordings - if it's not, I'd suggest installing <a href="https://www.videolan.org/vlc/index.html">VLC</a>.
+
+	<p class="text-muted" style="font-size:.85rem">
+		Your browser can play most recordings — if not, try <a href="https://www.videolan.org/vlc/index.html">VLC</a>.
+		<br>
+		<a href="/all_meetings.php">See all meetings →</a>
+	</p>
 {% endblock %}

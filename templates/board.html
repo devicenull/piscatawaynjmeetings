@@ -20,23 +20,33 @@ Piscataway {{ board.name }} meeting history, recordings, and {% if board.type ==
 	<script>
 		$(document).ready(function () {
 			$('#boardmeetings').DataTable({
-				"order": [[ 0, "desc" ]],
-				"pageLength": 25
+				order: [[ 0, 'desc' ]],
+				pageLength: 25,
+				columnDefs: [
+					{ orderable: false, targets: '_all' },
+					{ orderable: true, targets: 0 }
+				]
 			});
 		});
 	</script>
 
-	<h2>Piscataway, NJ {{ board.name }} Meeting History</h2>
+	<div class="board-header">
+		<h1>{{ board.name }}</h1>
+		{% if board.official_url %}
+		<a href="{{ board.official_url }}" target="_blank" rel="noopener">Official {{ board.name }} Page ↗</a>
+		{% endif %}
+	</div>
 
-	<table class="table table-bordered table-sm" id="boardmeetings">
-		<caption>{{ board.name }} meeting history for Piscataway, New Jersey</caption>
-		<thead class="thead-light">
+	<p class="section-heading">Meeting History</p>
+	<table class="table table-sm pnj-table" id="boardmeetings" style="width:100%">
+		<caption class="sr-only">{{ board.name }} meeting history for Piscataway, New Jersey</caption>
+		<thead>
 			<tr>
-				<th scope="col" style="width:9em">Date</th>
-				<th scope="col">{% if board.type == 'council' %}Resolutions &amp; Motions{% else %}Cases Heard{% endif %}</th>
-				<th scope="col" style="width:10em">Documents</th>
+				<th style="width:9em">Date</th>
+				<th>{% if board.type == 'council' %}Resolutions &amp; Motions{% else %}Cases Heard{% endif %}</th>
+				<th style="width:10em">Documents</th>
 				{% if has_edit_auth %}
-				<th scope="col"></th>
+				<th></th>
 				{% endif %}
 			</tr>
 		</thead>
@@ -45,49 +55,51 @@ Piscataway {{ board.name }} meeting history, recordings, and {% if board.type ==
 			<tr itemscope itemtype="https://schema.org/Event">
 				<meta itemprop="name" content="Piscataway {{ board.name }} Meeting">
 				<meta itemprop="organizer" content="Piscataway Township">
-				<td itemprop="startDate" content="{{ cur.date }}" data-order="{{ cur.date|date('U') }}">{{ cur.date|date('M j, Y') }}</td>
+				<td itemprop="startDate" content="{{ cur.date }}" data-order="{{ cur.date|date('U') }}" class="date-cell">{{ cur.date|date('M j, Y') }}</td>
 				<td>
 					{% if board.type == 'council' %}
 						{% for c in cur.getCases() %}
-						<div{% if not loop.last %} class="mb-1"{% endif %} itemscope itemtype="https://schema.org/Legislation">
+						<div class="item-entry" itemscope itemtype="https://schema.org/Legislation">
 							<meta itemprop="legislationType" content="{{ c.type|capitalize }}">
 							<span itemprop="legislationPassedBy" itemscope itemtype="https://schema.org/GovernmentOrganization">
 								<meta itemprop="name" content="Piscataway Township Council">
 							</span>
-							<strong>{{ c.letter }}.</strong>
-							<span class="text-muted small">{{ c.type|capitalize }}</span> &mdash;
-							<span itemprop="name">{{ c.title }}</span>
+							<span class="item-label">{{ c.letter }}</span>
+							<span class="item-type">{{ c.type|capitalize }}</span>
+							<span class="item-title" itemprop="name">{{ c.title }}</span>
 						</div>
 						{% endfor %}
 					{% else %}
 						{% for c in cur.getCases() %}
-						<div{% if not loop.last %} class="mb-1"{% endif %}>
-							<strong>{{ c.case }}</strong><br>
-							<span class="text-muted small">
+						<div class="item-entry">
+							<span class="case-number">{{ c.case }}</span><br>
+							<span class="case-meta">
 								<span itemscope itemtype="https://schema.org/Person"><span itemprop="name">{{ c.name }}</span></span>
+								{% if c.address %}
 								&mdash;
 								<span itemscope itemtype="https://schema.org/PostalAddress">
 									<span itemprop="streetAddress">{{ c.address }}</span><span class="sr-only">, <span itemprop="addressLocality">Piscataway</span>, <span itemprop="addressRegion">NJ</span></span>
 								</span>
+								{% endif %}
 							</span>
 						</div>
 						{% endfor %}
 					{% endif %}
 				</td>
-				<td>
+				<td class="doc-links">
 					{% if cur.minutes_available == 'yes' %}
 					<a href="{{ cur.getPublicLink('minutes') }}" itemprop="subjectOf" itemscope itemtype="https://schema.org/DigitalDocument">
 						<meta itemprop="name" content="Piscataway {{ board.name }} Minutes {{ cur.date|date('F j, Y') }}">
 						<meta itemprop="encodingFormat" content="application/pdf">
 						Minutes
-					</a><br>
+					</a>
 					{% endif %}
 					{% if cur.recording_available == 'yes' %}
 					<a href="{{ cur.getPublicLink('recording') }}" itemprop="recordedIn" itemscope itemtype="https://schema.org/AudioObject">
 						<meta itemprop="contentUrl" content="{{ cur.getPublicLink('recording') }}">
 						<meta itemprop="name" content="Piscataway {{ board.name }} Recording {{ cur.date|date('F j, Y') }}">
 						Recording
-					</a><br>
+					</a>
 					{% endif %}
 					{% if cur.transcript_available == 'yes' %}
 					<a href="/transcript.php?MEETINGID={{ cur.MEETINGID }}" itemprop="transcript" itemscope itemtype="https://schema.org/Transcript">
@@ -104,33 +116,25 @@ Piscataway {{ board.name }} meeting history, recordings, and {% if board.type ==
 		</tbody>
 	</table>
 
-	{% if board.official_url %}
-	<p><a href="{{ board.official_url }}" target="_blank" rel="noopener">Official {{ board.name }} Page</a></p>
-	{% endif %}
-
 	{% if board.members is not empty %}
-	<div class="mt-4" itemscope itemtype="https://schema.org/GovernmentOrganization">
+	<div class="mt-4 mb-3" itemscope itemtype="https://schema.org/GovernmentOrganization">
 		<meta itemprop="name" content="Piscataway {{ board.name }}">
 		<meta itemprop="address" content="455 Hoes Lane, Piscataway, NJ 08854">
-		<h4>Current Members</h4>
-		<table class="table table-sm table-hover w-auto">
-			<thead class="thead-light">
-				<tr>
-					<th>Name</th>
-					<th>Title</th>
-					<th>Term</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for member in board.members %}
-				<tr itemscope itemtype="https://schema.org/Person" itemprop="member">
-					<td itemprop="name">{{ member.name }}</td>
-					<td itemprop="jobTitle">{{ member.title|default('') }}</td>
-					<td>{{ member.term|default('') }}</td>
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
+		<p class="section-heading">Current Members</p>
+		<div class="member-grid">
+			{% for member in board.members %}
+			<div class="member-card" itemscope itemtype="https://schema.org/Person" itemprop="member">
+				<div class="member-name" itemprop="name">{{ member.name }}</div>
+				{% if member.title|default('') %}
+				<div class="member-title" itemprop="jobTitle">{{ member.title }}</div>
+				{% endif %}
+				{% if member.term|default('') %}
+				<div class="member-term">{{ member.term }}</div>
+				{% endif %}
+			</div>
+			{% endfor %}
+		</div>
 	</div>
 	{% endif %}
+
 {% endblock %}
