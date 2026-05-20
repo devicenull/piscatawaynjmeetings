@@ -12,6 +12,11 @@ $debtFiles = [];
 foreach (MiscFile::getByType('debt_statements') as $df)
 	$debtFiles[(int)date('Y', strtotime($df['date']))] = $df;
 
+// Financial statements are certified as of Oct 1 year N and feed budget year N+1
+$financialFiles = [];
+foreach (MiscFile::getByType('financial_statements') as $ff)
+	$financialFiles[(int)date('Y', strtotime($ff['date'])) + 1] = $ff;
+
 $statsRows = $db->Execute('SELECT * FROM budget_stats ORDER BY year');
 $stats = [];
 foreach ($statsRows as $row) {
@@ -78,6 +83,7 @@ foreach (array_reverse($stats, true) as $year => $row) {
 $allYears = array_unique(array_merge(
 	array_keys($budgetFiles),
 	array_keys($debtFiles),
+	array_keys($financialFiles),
 	array_keys($stats)
 ));
 rsort($allYears);
@@ -86,6 +92,7 @@ displayPage('budget.html', [
 	'years'           => $allYears,
 	'budget_files'    => $budgetFiles,
 	'debt_files'      => $debtFiles,
+	'financial_files' => $financialFiles,
 	'stats'           => $stats,
 	'latest'          => $latest,
 	'chart_years'     => json_encode($chartYears),

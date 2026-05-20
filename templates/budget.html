@@ -35,7 +35,7 @@
 
 <p class="section-heading mt-4">Trends</p>
 <p style="font-size:.82rem; color:#777; margin-top:-.5rem; margin-bottom:1rem">
-	Taxable valuation and levy data from User Friendly Budget filings (2017–present). Total debt extends to 2012 using annual debt statements.
+	Taxable valuation and levy data from User Friendly Budget filings (2017&ndash;present). Total debt extends to 2012 using annual debt statements.
 </p>
 
 <div class="row">
@@ -63,9 +63,9 @@
 			<th>County</th>
 			<th>Other</th>
 			<th>Total Levy</th>
-			<th>Notes</th>
 			<th style="width:5em">Budget</th>
 			<th style="width:5.5em">Debt Stmt</th>
+			<th style="width:5.5em">Fin. Stmt</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -73,23 +73,24 @@
 		{% set row = stats[year] ?? null %}
 		{% set bf = budget_files[year] ?? null %}
 		{% set df = debt_files[year] ?? null %}
+		{% set ff = financial_files[year] ?? null %}
 		<tr>
 			<td class="date-cell">{{ year }}{% if bf and bf.notes == 'transitional year' %} *{% endif %}</td>
-			<td>{% if row and row.taxable_fmt %}<span title="{{ row.taxable_exact }}">{{ row.taxable_fmt }}</span>{% else %}—{% endif %}</td>
-			<td>{% if row and row.debt_fmt %}<span title="{{ row.debt_exact }}">{{ row.debt_fmt }}</span>{% else %}—{% endif %}</td>
-			<td>{% if row and row.municipal_fmt %}<span title="{{ row.municipal_exact }}">{{ row.municipal_fmt }}</span>{% else %}—{% endif %}</td>
-			<td>{% if row and row.school_fmt %}<span title="{{ row.school_exact }}">{{ row.school_fmt }}</span>{% else %}—{% endif %}</td>
-			<td>{% if row and row.county_fmt %}<span title="{{ row.county_exact }}">{{ row.county_fmt }}</span>{% else %}—{% endif %}</td>
-			<td>{% if row and row.other_fmt %}<span title="{{ row.other_exact }}">{{ row.other_fmt }}</span>{% else %}—{% endif %}</td>
-			<td>{% if row and row.raised_fmt %}<span title="{{ row.raised_exact }}">{{ row.raised_fmt }}</span>{% else %}—{% endif %}</td>
-			<td>{% if bf %}{{ bf.notes != 'transitional year' ? bf.notes : '' }}{% endif %}</td>
-			<td class="doc-links">{% if bf %}<a href="{{ bf.getLink() }}">View</a>{% else %}—{% endif %}</td>
-			<td class="doc-links">{% if df %}<a href="{{ df.getLink() }}">View</a>{% else %}—{% endif %}</td>
+			<td>{% if row and row.taxable_fmt %}<span title="{{ row.taxable_exact }}">{{ row.taxable_fmt }}</span>{% else %}&#8212;{% endif %}</td>
+			<td>{% if row and row.debt_fmt %}<span title="{{ row.debt_exact }}">{{ row.debt_fmt }}</span>{% else %}&#8212;{% endif %}</td>
+			<td>{% if row and row.municipal_fmt %}<span title="{{ row.municipal_exact }}">{{ row.municipal_fmt }}</span>{% else %}&#8212;{% endif %}</td>
+			<td>{% if row and row.school_fmt %}<span title="{{ row.school_exact }}">{{ row.school_fmt }}</span>{% else %}&#8212;{% endif %}</td>
+			<td>{% if row and row.county_fmt %}<span title="{{ row.county_exact }}">{{ row.county_fmt }}</span>{% else %}&#8212;{% endif %}</td>
+			<td>{% if row and row.other_fmt %}<span title="{{ row.other_exact }}">{{ row.other_fmt }}</span>{% else %}&#8212;{% endif %}</td>
+			<td>{% if row and row.raised_fmt %}<span title="{{ row.raised_exact }}">{{ row.raised_fmt }}</span>{% else %}&#8212;{% endif %}</td>
+			<td class="doc-links">{% if bf %}<a href="{{ bf.getLink() }}">View</a>{% else %}&#8212;{% endif %}</td>
+			<td class="doc-links">{% if df %}<a href="{{ df.getLink() }}">View</a>{% else %}&#8212;{% endif %}</td>
+			<td class="doc-links">{% if ff %}<a href="{{ ff.getLink() }}">View</a>{% else %}&#8212;{% endif %}</td>
 		</tr>
 		{% endfor %}
 	</tbody>
 </table>
-<p style="font-size:.8rem; color:#888">* Transitional year. Hover dollar figures for exact values. "Other" = library + fire districts + county open space. Debt figures for 2012–2016 sourced from debt statements.</p>
+<p style="font-size:.8rem; color:#888">* Transitional year. Hover dollar figures for exact values. &ldquo;Other&rdquo; = library + fire districts + county open space. Debt figures for 2012&ndash;2016 sourced from debt statements.</p>
 
 <style>
 	.budget-cards { display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; }

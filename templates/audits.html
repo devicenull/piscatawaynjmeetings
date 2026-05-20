@@ -1,16 +1,15 @@
 {% extends 'layout.html' %}
 
-{% block title %}Piscataway, NJ Audits & Financial Statements{% endblock %}
+{% block title %}Piscataway, NJ Annual Audits{% endblock %}
 
-{% block metadescripion %}Annual audit reports and financial statements for Piscataway Township, New Jersey.{% endblock %}
+{% block metadescripion %}Annual audit reports for Piscataway Township, New Jersey.{% endblock %}
 
 {% block maincontent %}
 
 <div class="board-header">
-	<h1>Audits &amp; Financial Statements</h1>
+	<h1>Annual Audits</h1>
 </div>
 
-<p class="section-heading">Annual Audits</p>
 <table class="table table-sm pnj-table">
 	<caption class="sr-only">Annual audit reports for Piscataway, NJ</caption>
 	<thead>
@@ -22,27 +21,6 @@
 	</thead>
 	<tbody>
 		{% for f in audits %}
-		<tr>
-			<td class="date-cell">{{ f.date|date('Y') }}{% if f.notes == 'transitional year' %} *{% endif %}</td>
-			<td>{{ f.notes != 'transitional year' ? f.notes : '' }}</td>
-			<td class="doc-links"><a href="{{ f.getLink() }}">View</a></td>
-		</tr>
-		{% endfor %}
-	</tbody>
-</table>
-
-<p class="section-heading mt-4">Financial Statements</p>
-<table class="table table-sm pnj-table">
-	<caption class="sr-only">Annual financial statements for Piscataway, NJ</caption>
-	<thead>
-		<tr>
-			<th>Year</th>
-			<th>Notes</th>
-			<th style="width:5em">PDF</th>
-		</tr>
-	</thead>
-	<tbody>
-		{% for f in financial_statements %}
 		<tr>
 			<td class="date-cell">{{ f.date|date('Y') }}{% if f.notes == 'transitional year' %} *{% endif %}</td>
 			<td>{{ f.notes != 'transitional year' ? f.notes : '' }}</td>
