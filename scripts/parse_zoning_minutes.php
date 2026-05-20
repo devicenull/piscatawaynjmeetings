@@ -1,6 +1,6 @@
 <?php
-// Extracts case numbers, applicant names, and addresses from a zoning board minutes PDF
-// and saves them to the meeting.metadata column.
+// Extracts case numbers, applicant names, and addresses from zoning or planning board
+// minutes PDFs and saves them to the meeting.metadata column.
 // Usage: php parse_zoning_minutes.php <path_to_pdf>
 
 require(__DIR__.'/../init.php');
@@ -11,14 +11,26 @@ if (!$pdf || !file_exists($pdf)) {
 	exit(1);
 }
 
+// Auto-detect board type from directory name
+$boardType = basename(dirname($pdf));
+if (!in_array($boardType, ['zoning', 'planning'])) {
+	fwrite(STDERR, "Could not determine board type from path (expected zoning or planning): $pdf\n");
+	exit(1);
+}
+
 $text = shell_exec('pdf2txt ' . escapeshellarg($pdf));
 if (!$text) {
 	fwrite(STDERR, "Failed to extract text from: $pdf\n");
 	exit(1);
 }
 
-// Stop before "ADOPTION OF RESOLUTIONS" — those case references are not hearings
-$cutoff = stripos($text, 'ADOPTION OF RESOLUTIONS');
+// For zoning: hearings come before "ADOPTION OF RESOLUTIONS", so truncate there.
+// For planning: "ADOPTION OF RESOLUTIONS" appears before hearings, so truncate at "ADJOURNMENT".
+if ($boardType === 'zoning') {
+	$cutoff = stripos($text, 'ADOPTION OF RESOLUTIONS');
+} else {
+	$cutoff = stripos($text, 'ADJOURNMENT');
+}
 if ($cutoff !== false) {
 	$text = substr($text, 0, $cutoff);
 }
@@ -29,14 +41,18 @@ $lines = array_values(array_filter(
 	fn($l) => $l !== ''
 ));
 
+// Zoning:   25-ZB-80V, 25-ZB-31/32V  (ends with letter(s))
+// Planning: 25-PB-02                  (ends with digits)
+$casePattern = '/^\d{2}-(ZB|PB)-[\d\/]+[A-Z]?$/';
+
 $streetSuffixes = 'Avenue|Street|Drive|Road|Terrace|Court|Lane|Boulevard|Way|Place|Circle|Ave|St|Dr|Rd|Ct|Ln|Blvd';
 
 $results = [];
 
 for ($i = 0; $i < count($lines); $i++) {
-	// A hearing item's case number appears as its own line, e.g. "25-ZB-80V" or "25-ZB-31/32V"
-	// Cases in "CHANGES TO AGENDA" or "ADOPTION OF RESOLUTIONS" are always embedded in longer lines
-	if (!preg_match('/^\d{2}-ZB-[\d\/]+[A-Z]$/', $lines[$i])) {
+	// Hearing items have the case number alone on its own line.
+	// Cases in agenda changes or adoption sections are always embedded in longer lines.
+	if (!preg_match($casePattern, $lines[$i])) {
 		continue;
 	}
 
@@ -67,9 +83,9 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
 	exit(1);
 }
 
-$meeting = new Meeting(['type' => 'zoning', 'date' => $date]);
+$meeting = new Meeting(['type' => $boardType, 'date' => $date]);
 if (!$meeting['MEETINGID']) {
-	fwrite(STDERR, "No zoning meeting found for date: $date\n");
+	fwrite(STDERR, "No $boardType meeting found for date: $date\n");
 	exit(1);
 }
 
@@ -78,4 +94,4 @@ $meeting->set(['metadata' => json_encode($results)]);
 foreach ($results as $r) {
 	printf("%-20s %-35s %s\n", $r['case'], $r['name'], $r['address']);
 }
-printf("Saved %d case(s) to meeting %d\n", count($results), $meeting['MEETINGID']);
+printf("Saved %d case(s) to meeting %d (%s)\n", count($results), $meeting['MEETINGID'], $boardType);
