@@ -16,6 +16,7 @@ class Meeting extends BaseDBObject
 		'transcript_available',
 		'last_updated',
 		'bluesky_posts',
+		'metadata',
 	];
 
 	var $virtual_fields = [
@@ -160,6 +161,14 @@ class Meeting extends BaseDBObject
 		return $meetings;
 	}
 
+	public function getCases(): array
+	{
+		if ($this['metadata'] === '' || $this['metadata'] === null) {
+			return [];
+		}
+		return json_decode($this['metadata'], true) ?? [];
+	}
+
 	public function hasHappened(): bool
 	{
 		return strtotime($this['date']) < time();
@@ -235,6 +244,23 @@ class Meeting extends BaseDBObject
 			$meetings[] = new Meeting(['record' => $cur]);
 		}
 
+		return $meetings;
+	}
+
+	public static function getUpcomingAndOlderByType(string $type): array
+	{
+		global $db;
+		$res = $db->Execute('
+			select *
+			from meeting
+			where type = ? and date < ?
+			order by date ASC, type
+		', [$type, strftime('%F %T', strtotime('+30 days'))]);
+		$meetings = [];
+		foreach ($res as $cur)
+		{
+			$meetings[] = new Meeting(['record' => $cur]);
+		}
 		return $meetings;
 	}
 
