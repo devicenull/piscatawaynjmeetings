@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- black rounded background -->
+  <rect width="32" height="32" rx="4" fill="#111111"/>
+  <!-- white document body with top-right corner folded -->
+  <polygon points="7,3 21,3 25,7 25,29 7,29" fill="#F5F5F5"/>
+  <!-- yellow fold triangle -->
+  <polygon points="21,3 25,7 21,7" fill="#F5C000"/>
+  <!-- text lines -->
+  <rect x="10" y="13" width="12" height="2" rx="1" fill="#333333"/>
+  <rect x="10" y="18" width="12" height="2" rx="1" fill="#333333"/>
+  <rect x="10" y="23" width="8"  height="2" rx="1" fill="#333333"/>
+</svg>
