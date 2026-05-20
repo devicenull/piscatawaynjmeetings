@@ -113,6 +113,10 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				if (str_ends_with($link, '.pdf'))
 				{
 					ocrPDF(__DIR__.'/../web/'.$link);
+					if (in_array($parentdirectory, ['council', 'planning', 'zoning']) && empty($meeting['metadata']))
+					{
+						parseMinutes($parentdirectory, __DIR__.'/../web/'.$link);
+					}
 				}
 
 				setExifMetadata(__DIR__.'/../web/'.$link, $meeting->getExifTitle('minutes'));
@@ -233,4 +237,20 @@ function setExifMetadata(string $filename, string $title)
 function setMP3Metadata(string $filename, string $title)
 {
 	system('/usr/bin/id3v2 -t '.escapeshellarg($title).' '.escapeshellarg($filename));
+}
+
+function parseMinutes(string $boardType, string $pdfPath): void
+{
+	if ($boardType === 'council') {
+		$script = __DIR__.'/parse_council_minutes.php';
+	} elseif (in_array($boardType, ['planning', 'zoning'])) {
+		$script = __DIR__.'/parse_zoning_minutes.php';
+	} else {
+		return;
+	}
+	echo "\nParsing minutes: $pdfPath\n";
+	passthru('php '.escapeshellarg($script).' '.escapeshellarg($pdfPath), $exit_code);
+	if ($exit_code !== 0) {
+		echo "Warning: minute parser exited with code $exit_code for $pdfPath\n";
+	}
 }
