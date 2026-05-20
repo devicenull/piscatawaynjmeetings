@@ -107,7 +107,7 @@
 		<tbody>
 			{% for call in calls %}
 			<tr>
-				<td class="date-cell">{{ call.call_time|date('M j g:i A') }}</td>
+				<td class="date-cell" data-order="{{ call.call_time|date('U') }}">{{ call.call_time|date('M j g:i A') }}</td>
 				<td>{{ call.display_location }}</td>
 				<td>{{ call.type_name }}</td>
 			</tr>
