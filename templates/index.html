@@ -1,127 +1,146 @@
 {% extends 'layout.html' %}
 
+{% block title %}Piscataway, NJ — Public Records &amp; Meeting Information{% endblock %}
+
+{% block metadescripion %}Public records, meeting minutes, budget documents, and crime statistics for Piscataway Township, New Jersey. Includes council, zoning, and planning board minutes dating back to 2009.{% endblock %}
+
 {% block maincontent %}
-	<script>
-		$(document).ready(function () {
-			$('#allmeetings').DataTable({
-				order: [[ 0, 'desc' ]],
-				pageLength: 10,
-				columnDefs: [
-					{ orderable: false, targets: '_all' },
-					{ orderable: true, targets: 0 }
-				]
-			});
-		});
-	</script>
 
-	<div class="board-header">
-		<h1>Recent &amp; Upcoming Meetings</h1>
-	</div>
+<div class="board-header">
+	<h1>Piscataway Township Public Records</h1>
+</div>
 
-	<p class="section-heading">Upcoming Meetings</p>
-	{% if has_edit_auth %}
-	<a class="btn btn-sm btn-primary mb-2" href="/meeting_edit.php?MEETINGID=new">Add Meeting</a>
-	{% endif %}
-	<table class="table table-sm pnj-table" id="recentmeetings" style="width:100%">
-		<caption class="sr-only">Upcoming public meetings in Piscataway, New Jersey</caption>
-		<thead>
-			<tr>
-				<th style="width:14em">Date</th>
-				<th>Type</th>
-				<th>Documents</th>
-				<th>Join Information</th>
-				{% if has_edit_auth %}
-				<th></th>
+<p class="section-heading">Upcoming Meetings</p>
+{% if has_edit_auth %}
+<a class="btn btn-sm btn-primary mb-2" href="/meeting_edit.php?MEETINGID=new">Add Meeting</a>
+{% endif %}
+<table class="table table-sm pnj-table" id="recentmeetings" style="width:100%">
+	<caption class="sr-only">Upcoming public meetings in Piscataway, New Jersey</caption>
+	<thead>
+		<tr>
+			<th style="width:14em">Date</th>
+			<th>Type</th>
+			<th>Documents</th>
+			<th>Join Information</th>
+			{% if has_edit_auth %}
+			<th></th>
+			{% endif %}
+		</tr>
+	</thead>
+	<tbody>
+		{% for cur in recent_meetings %}
+		<tr {% if cur.happensToday() %}style="font-weight:600"{% endif %} itemscope itemtype="https://schema.org/Event">
+			<td class="date-cell" itemprop="startDate" content="{{ cur.date }}">{{ cur.date|date('M j, Y g:i A') }}</td>
+			<td itemprop="name" content="Piscataway, New Jersey {{ cur.type }} meeting">{{ cur.type|capitalize }}</td>
+			<td class="doc-links">
+				{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getPublicLink('minutes') }}">Minutes</a>{% endif %}
+				{% if cur.recording_available == 'yes' %}<a href="{{ cur.getPublicLink('recording') }}">Recording</a>{% endif %}
+				{% if cur.transcript_available == 'yes' %}<a href="/transcript.php?MEETINGID={{ cur.MEETINGID }}">Transcript</a>{% endif %}
+			</td>
+			<td itemprop="location" content="VirtualLocation">
+				{% if cur.zoom_id > 0 and not (cur.hasHappened() and not cur.happensToday()) %}
+					Meeting ID: {{ cur.zoom_id|number_format(0, '', ' ') }}<br>
+					Password: {{ "%06s"|format(cur.zoom_password) }}<br>
+					<a href="zoommtg://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (computer)</a><br>
+					<a href="zoomus://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (iOS/Android)</a>
+				{% elseif cur.zoom_joinurl != '' and not (cur.hasHappened() and not cur.happensToday()) %}
+					<a href="{{ cur.zoom_joinurl }}">Join</a>
 				{% endif %}
-			</tr>
-		</thead>
-		<tbody>
-			{% for cur in recent_meetings %}
-			<tr {% if cur.happensToday() %}style="font-weight:600"{% endif %} itemscope itemtype="https://schema.org/Event">
-				<td class="date-cell" itemprop="startDate" content="{{ cur.date }}">{{ cur.date|date('M j, Y g:i A') }}</td>
-				<td itemprop="name" content="Piscataway, New Jersey {{ cur.type }} meeting">{{ cur.type|capitalize }}</td>
-				<td class="doc-links">
-					{% if cur.minutes_available == 'yes' %}<a href="{{ cur.getPublicLink('minutes') }}">Minutes</a>{% endif %}
-					{% if cur.recording_available == 'yes' %}<a href="{{ cur.getPublicLink('recording') }}">Recording</a>{% endif %}
-					{% if cur.transcript_available == 'yes' %}<a href="/transcript.php?MEETINGID={{ cur.MEETINGID }}">Transcript</a>{% endif %}
-				</td>
-				<td itemprop="location" content="VirtualLocation">
-					{% if cur.zoom_id > 0 and not (cur.hasHappened() and not cur.happensToday()) %}
-						Meeting ID: {{ cur.zoom_id|number_format(0, '', ' ') }}<br>
-						Password: {{ "%06s"|format(cur.zoom_password) }}<br>
-						<a href="zoommtg://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (computer)</a><br>
-						<a href="zoomus://zoom.us/join?confno={{ cur.zoom_id }}&pwd={{ "%06s"|format(cur.zoom_password) }}">Join (iOS/Android)</a>
-					{% elseif cur.zoom_joinurl != '' and not (cur.hasHappened() and not cur.happensToday()) %}
-						<a href="{{ cur.zoom_joinurl }}">Join</a>
-					{% endif %}
-				</td>
-				{% if has_edit_auth %}
-				<td><a class="btn btn-sm btn-primary" href="/meeting_edit.php?MEETINGID={{ cur.MEETINGID }}">edit</a></td>
-				{% endif %}
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
+			</td>
+			{% if has_edit_auth %}
+			<td><a class="btn btn-sm btn-primary" href="/meeting_edit.php?MEETINGID={{ cur.MEETINGID }}">edit</a></td>
+			{% endif %}
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+<p class="text-muted" style="font-size:.85rem; margin-top:-.5rem">
+	Zoom call-in: 1-646-876-9923. &nbsp;
+	<a href="/all_meetings.php">See full meeting history &rarr;</a>
+</p>
 
-	<p class="text-muted" style="font-size:.85rem">
-		Zoom Call-in number: 1-646-876-9923.
-	</p>
+<p class="section-heading mt-4">What&rsquo;s Available</p>
+<p style="font-size:.88rem; color:#555; margin-top:-.5rem; margin-bottom:1rem">
+	An unofficial archive of public records for Piscataway, New Jersey.
+</p>
 
-	<p class="section-heading mt-4">Meeting History</p>
-	<table class="table table-sm pnj-table" id="allmeetings" style="width:100%">
-		<caption class="sr-only">Recent public meetings in Piscataway, New Jersey</caption>
-		<thead>
-			<tr>
-				<th style="width:10em">Date</th>
-				<th>Meeting</th>
-				<th>Documents</th>
-				{% if has_edit_auth %}
-				<th></th>
-				{% endif %}
-			</tr>
-		</thead>
-		<tbody>
-			{% for cur in meetings %}
-			<tr itemscope itemtype="https://schema.org/Event">
-				<td class="date-cell" itemprop="startDate" content="{{ cur.date }}" data-order="{{ cur.date|date('U') }}">{{ cur.date|date('M j, Y') }}</td>
-				<td>
-					<span itemprop="name">Piscataway {{ cur.board_type }} Meeting</span>
-					<span itemprop="location" content="VirtualLocation"></span>
-				</td>
-				<td class="doc-links">
-					{% if cur.minutes_available == 'yes' %}
-					<a href="{{ cur.getPublicLink('minutes') }}" itemscope itemtype="https://schema.org/DigitalDocument">
-						<meta itemprop="name" content="Piscataway {{ cur.board_type }} Minutes {{ cur.date|date('F j, Y') }}">
-						Minutes
-					</a>
-					{% endif %}
-					{% if cur.recording_available == 'yes' %}
-					<a href="{{ cur.getPublicLink('recording') }}" itemscope itemtype="https://schema.org/AudioObject">
-						<meta itemprop="name" content="Piscataway {{ cur.board_type }} Recording {{ cur.date|date('F j, Y') }}">
-						Recording
-					</a>
-					{% endif %}
-					{% if cur.transcript_available == 'yes' %}
-					<a href="/transcript.php?MEETINGID={{ cur.MEETINGID }}" itemscope itemtype="https://schema.org/Transcript">
-						<meta itemprop="name" content="Piscataway {{ cur.board_type }} Transcript {{ cur.date|date('F j, Y') }}">
-						Transcript
-					</a>
-					{% endif %}
-					{% if cur.minutes_available == 'no' and cur.recording_available == 'no' and cur.transcript_available == 'no' %}
-					<span class="text-muted" style="font-size:.85rem">Nothing available</span>
-					{% endif %}
-				</td>
-				{% if has_edit_auth %}
-				<td><a class="btn btn-sm btn-primary" href="/meeting_edit.php?MEETINGID={{ cur.MEETINGID }}">edit</a></td>
-				{% endif %}
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
+<div class="pnj-feature-grid">
 
-	<p class="text-muted" style="font-size:.85rem">
-		Your browser can play most recordings — if not, try <a href="https://www.videolan.org/vlc/index.html">VLC</a>.
-		<br>
-		<a href="/all_meetings.php">See all meetings →</a>
-	</p>
+	<a href="/council.php" class="pnj-feature-card">
+		<div class="pnj-feature-title">Township Council</div>
+		<div class="pnj-feature-body">Minutes, recordings, and transcripts for Township Council meetings dating back to 2009.</div>
+		<div class="pnj-feature-link">Browse minutes &rarr;</div>
+	</a>
+
+	<a href="/zoning.php" class="pnj-feature-card">
+		<div class="pnj-feature-title">Zoning Board</div>
+		<div class="pnj-feature-body">Zoning Board of Adjustment meeting minutes and case records.</div>
+		<div class="pnj-feature-link">Browse minutes &rarr;</div>
+	</a>
+
+	<a href="/planning.php" class="pnj-feature-card">
+		<div class="pnj-feature-title">Planning Board</div>
+		<div class="pnj-feature-body">Planning Board meeting minutes covering land use applications and site plan reviews.</div>
+		<div class="pnj-feature-link">Browse minutes &rarr;</div>
+	</a>
+
+	<a href="/budget.php" class="pnj-feature-card">
+		<div class="pnj-feature-title">Municipal Budget</div>
+		<div class="pnj-feature-body">Annual budget documents with trend charts for taxable valuation, total debt, and tax levies by purpose from 2012 to present.</div>
+		<div class="pnj-feature-link">View budget data &rarr;</div>
+	</a>
+
+	<a href="/cad_analysis.php" class="pnj-feature-card">
+		<div class="pnj-feature-title">Crime &amp; Incident Stats</div>
+		<div class="pnj-feature-body">Monthly breakdown of police and emergency calls by type and location, sourced from the township&rsquo;s Computer-Aided Dispatch logs.</div>
+		<div class="pnj-feature-link">View incident data &rarr;</div>
+	</a>
+
+</div>
+
+<style>
+.pnj-feature-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 1rem;
+	margin-bottom: 1.5rem;
+}
+.pnj-feature-card {
+	display: block;
+	background: #fff;
+	border: 1px solid #e0e0e0;
+	border-top: 4px solid var(--pnj-yellow);
+	border-radius: 4px;
+	padding: .9rem 1.1rem;
+	text-decoration: none;
+	color: inherit;
+	transition: box-shadow .15s, border-top-color .15s;
+}
+.pnj-feature-card:hover {
+	box-shadow: 0 2px 8px rgba(0,0,0,.1);
+	border-top-color: var(--pnj-black);
+	text-decoration: none;
+	color: inherit;
+}
+.pnj-feature-title {
+	font-size: .85rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .05em;
+	color: var(--pnj-black);
+	margin-bottom: .35rem;
+}
+.pnj-feature-body {
+	font-size: .83rem;
+	color: #555;
+	line-height: 1.45;
+	margin-bottom: .5rem;
+}
+.pnj-feature-link {
+	font-size: .78rem;
+	color: var(--pnj-black);
+	font-weight: 600;
+}
+</style>
+
 {% endblock %}
