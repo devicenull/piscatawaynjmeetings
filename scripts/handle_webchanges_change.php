@@ -1,5 +1,6 @@
 <?php
 require(__DIR__.'/../init.php');
+require(__DIR__.'/minutes_filename.php');
 error_reporting(E_ALL);
 echo file_get_contents('php://stdin');
 
@@ -66,8 +67,28 @@ foreach ($output as $url)
 			l("Failed to download: {$url}");
 			l(print_r(curl_getinfo($c), true));
 			unlink($destname);
-			//echo "Failed to download\n";
-			//var_dump(curl_getinfo($c));
+		}
+		else
+		{
+			l("Downloaded: ".basename($destname));
+			$parsed = parseMinutesFilename(basename($destname));
+			if ($parsed !== null)
+			{
+				[$board, $date] = $parsed;
+				$target = __DIR__.'/../web/files/'.$board.'/'.$date.'.pdf';
+				if (!file_exists($target))
+				{
+					if (copy($destname, $target))
+					{
+						l("Copied minutes to web/files/$board/$date.pdf");
+						passthru('php '.escapeshellarg(__DIR__.'/import_files.php'));
+					}
+					else
+					{
+						l("Failed to copy minutes to web/files/$board/$date.pdf");
+					}
+				}
+			}
 		}
 		sleep(1);
 	}
