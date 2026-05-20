@@ -1,0 +1,369 @@
+{% extends 'layout.html' %}
+
+{% block title %}{% if view == 'month' %}Piscataway, NJ CAD Calls — {{ month_label }}{% else %}Piscataway, NJ CAD Emergency Call Analysis{% endif %}{% endblock %}
+
+{% block metadescripion %}{% if view == 'month' %}{{ total }} police and emergency calls in Piscataway, NJ in {{ month_label }}. Top call types: {{ top_list }}. Daily breakdown and category analysis.{% else %}Monthly breakdown of police and emergency CAD calls in Piscataway, New Jersey. Browse call volumes and top incident types by month.{% endif %}{% endblock %}
+
+{% block maincontent %}
+
+{% if view == 'calendar' %}
+
+	<div class="board-header">
+		<h1>CAD Call Analysis</h1>
+		<a href="/datasette/cad_calls/all_calls">Browse raw call data ↗</a>
+	</div>
+
+	<p class="section-heading">Calls by Month</p>
+	<p class="text-muted" style="font-size:.85rem; margin-top:-.5rem; margin-bottom:1rem">
+		Complete data available for months listed below. Click a month for a detailed breakdown. Call data is from OPRA requests, as a result some calls are not available for reasons like Daniel's law or other privacy laws.
+	</p>
+
+	<div class="cad-month-grid" itemscope itemtype="https://schema.org/Dataset">
+		<meta itemprop="name" content="Piscataway, NJ CAD Emergency Calls">
+		<meta itemprop="description" content="Monthly police and emergency CAD call volumes for Piscataway, New Jersey">
+		<meta itemprop="spatialCoverage" content="Piscataway, NJ">
+		{% for mo, count in months %}
+		{% set intensity = (count / max)|round(2) %}
+		<a href="/cad_analysis.php?month={{ mo }}" class="cad-month-card" style="--intensity: {{ intensity }}"
+		   itemprop="hasPart" itemscope itemtype="https://schema.org/DataFeedItem">
+			<meta itemprop="dateCreated" content="{{ mo }}-01">
+			<div class="cad-month-name">{{ mo|date('F Y') }}</div>
+			<div class="cad-month-count">{{ count|number_format }}</div>
+			<div class="cad-month-label">calls</div>
+		</a>
+		{% endfor %}
+	</div>
+
+	<style>
+		.cad-month-grid { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:.5rem; }
+		.cad-month-card {
+			flex: 1 1 160px; max-width:200px;
+			background: rgba(245,192,0,calc(var(--intensity)*.75+.08));
+			border:1px solid #ddd; border-radius:6px; padding:1rem 1.2rem;
+			text-decoration:none; color:var(--pnj-black);
+			transition: transform .12s, box-shadow .12s;
+		}
+		.cad-month-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.12); text-decoration:none; color:var(--pnj-black); }
+		.cad-month-name { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#555; }
+		.cad-month-count { font-size:2rem; font-weight:700; line-height:1.1; margin-top:.25rem; }
+		.cad-month-label { font-size:.75rem; color:#777; }
+	</style>
+
+{% else %}
+
+	<script src="https://code.highcharts.com/highcharts.js"></script>
+
+	<style>
+		.chart-dimmed { opacity: .55; pointer-events: none; transition: opacity .2s; }
+		.filter-active-label {
+			display: none;
+			font-size: .8rem; color: #555;
+			margin-top: .4rem;
+		}
+		.filter-active-label span { font-weight: 700; color: var(--pnj-black); }
+		.filter-active-label a { margin-left: .5rem; color: #888; font-size: .75rem; }
+	</style>
+
+	<div class="board-header">
+		<h1>{{ month_label }}</h1>
+		<div style="display:flex; gap:1.2rem; align-items:center; margin-top:.3rem">
+			{% if prev_month %}<a href="/cad_analysis.php?month={{ prev_month }}" style="font-size:.85rem;color:#555">← {{ prev_month|date('F Y') }}</a>{% endif %}
+			{% if next_month %}<a href="/cad_analysis.php?month={{ next_month }}" style="font-size:.85rem;color:#555">{{ next_month|date('F Y') }} →</a>{% endif %}
+			<a href="/cad_analysis.php" style="font-size:.85rem;color:#555">All months</a>
+		</div>
+	</div>
+
+	<p class="section-heading">
+		{{ total|number_format }} Calls in {{ month_label }}
+		<span class="filter-active-label" id="filter-label">
+			— filtered by <span id="filter-label-text"></span>
+			<a href="#" id="filter-clear">clear ×</a>
+		</span>
+		<span id="filter-hint" style="font-size:.75rem; font-weight:400; color:#888; margin-left:.5rem; text-transform:none; letter-spacing:0">Click a chart element to filter</span>
+	</p>
+
+	<div class="row mb-2">
+		<div class="col-12 mb-3">
+			<div id="chart-daily" style="height:280px"></div>
+		</div>
+		<div class="col-md-6 mb-3">
+			<div id="chart-types" style="height:340px"></div>
+		</div>
+		<div class="col-md-6 mb-3">
+			<div id="chart-addrs" style="height:420px"></div>
+		</div>
+	</div>
+
+	<p class="section-heading mt-2">All Calls</p>
+	<table class="table table-sm pnj-table" id="cadcalls" style="width:100%">
+		<caption class="sr-only">CAD calls in Piscataway, NJ for {{ month_label }}</caption>
+		<thead>
+			<tr>
+				<th style="width:10em">Time</th>
+				<th>Location</th>
+				<th>Type</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for call in calls %}
+			<tr>
+				<td class="date-cell">{{ call.call_time|date('M j g:i A') }}</td>
+				<td>{{ call.display_location }}</td>
+				<td>{{ call.type_name }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<div itemscope itemtype="https://schema.org/Dataset">
+		<meta itemprop="name" content="Piscataway, NJ CAD Calls — {{ month_label }}">
+		<meta itemprop="description" content="{{ total }} police and emergency calls in Piscataway, NJ in {{ month_label }}. Top types: {{ top_list }}.">
+		<meta itemprop="spatialCoverage" content="Piscataway, NJ">
+		<meta itemprop="temporalCoverage" content="{{ month }}-01/{{ month }}-{{ days_in_month }}">
+	</div>
+
+	<script>
+	(function() {
+		var DAYS      = {{ days_in_month }};
+		var CALLS     = {{ call_data_json|raw }};   // [[day, typeIdx, addrIdx], ...]
+		var TYPE_NAMES = {{ type_names_json|raw }};  // all type names by idx
+		var ADDR_NAMES = {{ addr_names_json|raw }};  // all addr names by idx
+
+		var initDaily = {{ daily_json|raw }};
+		var initTypes = {{ type_slices_json|raw }};
+		var initAddrs = {{ addr_slices_json|raw }}.filter(function(s) { return s.name !== 'Other'; });
+
+		function cloneSlices(arr) {
+			return arr.map(function(s) { return Object.assign({}, s); });
+		}
+
+		// Capture clean copies before Highcharts mutates the objects during chart init
+		var pristineDaily = initDaily.slice();
+		var pristineTypes = cloneSlices(initTypes);
+		var pristineAddrs = cloneSlices(initAddrs);
+
+		var PIE_COLORS = [
+			'#F5C000','#111111','#e6a817','#3d3d3d','#ffd84d',
+			'#6b6b6b','#ffbf00','#999999','#cc9900','#b3b3b3','#a37a00','#cccccc'
+		];
+
+		// ── Chart setup ────────────────────────────────────────────────
+
+		var days = [];
+		for (var i = 1; i <= DAYS; i++) days.push(i);
+
+		var dailyChart = Highcharts.chart('chart-daily', {
+			chart: { type: 'column', backgroundColor: 'transparent', style: { fontFamily: 'inherit' }, animation: false },
+			title: { text: 'Calls by Day', style: { fontSize: '1rem', fontWeight: '700' } },
+			xAxis: { categories: days, title: { text: 'Day of Month' }, tickInterval: 5 },
+			yAxis: { title: { text: 'Calls' }, min: 0 },
+			series: [{ name: 'Calls', data: initDaily, color: '#F5C000', borderColor: '#c49a00' }],
+			tooltip: { headerFormat: '<b>Day {point.key}</b><br>', pointFormat: '{point.y} calls' },
+			legend: { enabled: false },
+			credits: { enabled: false },
+			plotOptions: { column: {
+				pointPadding: .05, groupPadding: .05, cursor: 'pointer',
+				point: { events: { click: function() { onDayClick(this.category, this); } } }
+			}}
+		});
+
+		var pieOpts = {
+			chart: { type: 'pie', backgroundColor: 'transparent', style: { fontFamily: 'inherit' }, animation: false },
+			colors: PIE_COLORS,
+			tooltip: { pointFormat: '<b>{point.y}</b> calls ({point.percentage:.1f}%)' },
+			plotOptions: { pie: {
+				cursor: 'pointer',
+				dataLabels: { enabled: true, format: '{point.name}', style: { fontSize: '11px', fontWeight: 'normal' }, distance: 8 },
+				point: { events: { click: function() {} } }
+			}},
+			credits: { enabled: false }
+		};
+
+		var typesChart = Highcharts.chart('chart-types', Highcharts.merge(pieOpts, {
+			title: { text: 'Call Types', style: { fontSize: '1rem', fontWeight: '700' } },
+			series: [{ name: 'Calls', data: initTypes, point: { events: { click: function() { onTypeClick(this.name, this); } } } }]
+		}));
+
+		var addrsChart = Highcharts.chart('chart-addrs', {
+			chart: { type: 'bar', backgroundColor: 'transparent', style: { fontFamily: 'inherit' }, animation: false },
+			title: { text: 'Top Locations', style: { fontSize: '1rem', fontWeight: '700' } },
+			xAxis: { type: 'category', labels: { style: { fontSize: '11px' } } },
+			yAxis: { title: { text: 'Calls' }, min: 0 },
+			series: [{ name: 'Calls', data: initAddrs, color: '#F5C000', borderColor: '#c49a00' }],
+			tooltip: { pointFormat: '<b>{point.y}</b> calls' },
+			legend: { enabled: false },
+			credits: { enabled: false },
+			plotOptions: { bar: {
+				cursor: 'pointer',
+				dataLabels: { enabled: true, format: '{point.y}', style: { fontSize: '11px', fontWeight: 'normal', textOutline: 'none' } },
+				point: { events: { click: function() { onAddrClick(this.name, this); } } }
+			}}
+		});
+
+		// ── DataTable filter ────────────────────────────────────────────
+
+		var activeFilter = null; // {kind, value} or null
+
+		$.fn.dataTable.ext.search.push(function(settings, _data, dataIndex) {
+			if (settings.nTable.id !== 'cadcalls') return true;
+			if (!activeFilter) return true;
+			var c = CALLS[dataIndex];
+			if (!c) return true;
+			if (activeFilter.kind === 'day')  return c[0] === activeFilter.value;
+			if (activeFilter.kind === 'type') return c[1] === activeFilter.value;
+			if (activeFilter.kind === 'addr') return c[2] === activeFilter.value;
+			return true;
+		});
+
+		var cadTable = $('#cadcalls').DataTable({
+			order: [[ 0, 'desc' ]],
+			pageLength: 25,
+			columnDefs: [
+				{ orderable: false, targets: '_all' },
+				{ orderable: true, targets: 0 }
+			]
+		});
+
+		// ── Aggregation helpers ─────────────────────────────────────────
+
+		function topN(arr, n) {
+			// arr: {name: count}
+			var pairs = Object.entries(arr).map(function(e) { return {name: e[0], y: +e[1]}; });
+			pairs.sort(function(a, b) { return b.y - a.y; });
+			var top   = pairs.slice(0, n);
+			var other = pairs.slice(n).reduce(function(s, p) { return s + p.y; }, 0);
+			if (other > 0) top.push({name: 'Other', y: other, color: '#cccccc'});
+			return top;
+		}
+
+		function computeDaily(subset) {
+			var data = new Array(DAYS).fill(0);
+			subset.forEach(function(c) { data[c[0] - 1]++; });
+			return data;
+		}
+
+		function computeTypes(subset) {
+			var counts = {};
+			subset.forEach(function(c) {
+				var n = TYPE_NAMES[c[1]];
+				counts[n] = (counts[n] || 0) + 1;
+			});
+			return topN(counts, 12);
+		}
+
+		function computeAddrs(subset) {
+			var counts = {};
+			subset.forEach(function(c) {
+				var n = ADDR_NAMES[c[2]];
+				counts[n] = (counts[n] || 0) + 1;
+			});
+			return topN(counts, 10).filter(function(s) { return s.name !== 'Other'; });
+		}
+
+		// ── Filter application ──────────────────────────────────────────
+
+		function applyFilter() {
+			var subset;
+			if (!activeFilter) {
+				subset = null;
+			} else if (activeFilter.kind === 'day') {
+				subset = CALLS.filter(function(c) { return c[0] === activeFilter.value; });
+			} else if (activeFilter.kind === 'type') {
+				subset = CALLS.filter(function(c) { return c[1] === activeFilter.value; });
+			} else {
+				subset = CALLS.filter(function(c) { return c[2] === activeFilter.value; });
+			}
+
+			if (!subset) {
+				dailyChart.series[0].setData(pristineDaily.slice(), true, false, false);
+				typesChart.series[0].setData(cloneSlices(pristineTypes), true, false, false);
+				addrsChart.series[0].setData(cloneSlices(pristineAddrs), true, false, false);
+				$('#chart-daily, #chart-types, #chart-addrs').removeClass('chart-dimmed');
+				$('#filter-label').hide();
+				$('#filter-hint').show();
+			} else {
+				var kind  = activeFilter.kind;
+				var label = activeFilter.label;
+				var val   = activeFilter.value;
+
+				// Update non-active charts with filtered data
+				if (kind !== 'day')  dailyChart.series[0].setData(computeDaily(subset), true, false, false);
+				if (kind !== 'type') typesChart.series[0].setData(computeTypes(subset), true, false, false);
+				if (kind !== 'addr') addrsChart.series[0].setData(computeAddrs(subset), true, false, false);
+
+				// Restore active chart with the selected item highlighted
+				if (kind === 'day') {
+					dailyChart.series[0].setData(pristineDaily.map(function(v, i) {
+						return i === val - 1
+							? {y: v, color: '#27ae60', borderColor: '#1e8449', borderWidth: 2}
+							: v;
+					}), true, false, false);
+				} else if (kind === 'type') {
+					typesChart.series[0].setData(cloneSlices(pristineTypes).map(function(s) {
+						return s.name === label
+							? Object.assign({}, s, {sliced: true, color: '#27ae60'})
+							: s;
+					}), true, false, false);
+				} else {
+					addrsChart.series[0].setData(cloneSlices(pristineAddrs).map(function(s) {
+						return s.name === label
+							? Object.assign({}, s, {color: '#27ae60', borderColor: '#1e8449', borderWidth: 2})
+							: s;
+					}), true, false, false);
+				}
+
+				// Dim non-active charts
+				$('#chart-daily').toggleClass('chart-dimmed', kind !== 'day');
+				$('#chart-types').toggleClass('chart-dimmed', kind !== 'type');
+				$('#chart-addrs').toggleClass('chart-dimmed', kind !== 'addr');
+				$('#filter-label').show();
+				$('#filter-label-text').text(label);
+				$('#filter-hint').hide();
+			}
+
+			cadTable.draw();
+		}
+
+		function toggleFilter(kind, value, label) {
+			if (activeFilter && activeFilter.kind === kind && activeFilter.value === value) {
+				activeFilter = null;
+			} else {
+				activeFilter = {kind: kind, value: value, label: label};
+			}
+			applyFilter();
+		}
+
+		// ── Click handlers ──────────────────────────────────────────────
+
+		function onDayClick(day, _point) {
+			toggleFilter('day', day, 'Day ' + day);
+		}
+
+		function onTypeClick(name, _point) {
+			if (name === 'Other') return;
+			var idx = TYPE_NAMES.indexOf(name);
+			if (idx === -1) return;
+			toggleFilter('type', idx, name);
+		}
+
+		function onAddrClick(name, _point) {
+			if (name === 'Other') return;
+			var idx = ADDR_NAMES.indexOf(name);
+			if (idx === -1) return;
+			toggleFilter('addr', idx, name);
+		}
+
+		// ── Clear button ────────────────────────────────────────────────
+
+		$('#filter-clear').on('click', function(e) {
+			e.preventDefault();
+			activeFilter = null;
+			applyFilter();
+		});
+
+	})();
+	</script>
+
+{% endif %}
+
+{% endblock %}
