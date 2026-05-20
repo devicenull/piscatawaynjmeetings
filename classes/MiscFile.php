@@ -66,4 +66,31 @@ class MiscFile extends BaseDBObject
 
 		return $meetings;
 	}
+
+	public static function getByType(string $type): array
+	{
+		global $db;
+		$res = $db->Execute(
+			'SELECT * FROM misc_files WHERE type = ? ORDER BY date DESC',
+			[$type]
+		);
+		$files = [];
+		foreach ($res as $cur)
+			$files[] = new MiscFile(['record' => $cur]);
+		return $files;
+	}
+
+	public static function getByTypes(array $types): array
+	{
+		global $db;
+		$placeholders = implode(',', array_fill(0, count($types), '?'));
+		$res = $db->Execute(
+			"SELECT * FROM misc_files WHERE type IN ($placeholders) ORDER BY date DESC, type",
+			$types
+		);
+		$files = [];
+		foreach ($res as $cur)
+			$files[] = new MiscFile(['record' => $cur]);
+		return $files;
+	}
 }

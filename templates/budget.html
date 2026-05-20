@@ -1,0 +1,161 @@
+{% extends 'layout.html' %}
+
+{% block title %}Piscataway, NJ Municipal Budget Documents{% endblock %}
+
+{% block metadescripion %}Municipal budget documents for Piscataway, New Jersey. Includes taxable property valuations, total debt, and tax levies from 2008 to present.{% endblock %}
+
+{% block maincontent %}
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+
+<div class="board-header">
+	<h1>Municipal Budget</h1>
+</div>
+
+{% if latest %}
+<p class="section-heading">{{ latest.year }} Key Figures</p>
+<div class="budget-cards">
+	<div class="budget-card">
+		<div class="budget-card-label">Total Taxable Valuation</div>
+		<div class="budget-card-value">{{ latest.taxable_fmt }}</div>
+		<div class="budget-card-sub">assessed property value</div>
+	</div>
+	<div class="budget-card">
+		<div class="budget-card-label">Total Outstanding Debt</div>
+		<div class="budget-card-value">{{ latest.debt_fmt }}</div>
+		<div class="budget-card-sub">gross municipal debt</div>
+	</div>
+	<div class="budget-card">
+		<div class="budget-card-label">Total Raised by Taxes</div>
+		<div class="budget-card-value">{{ latest.raised_fmt }}</div>
+		<div class="budget-card-sub">all taxing entities combined</div>
+	</div>
+</div>
+{% endif %}
+
+<p class="section-heading mt-4">Trends</p>
+<p style="font-size:.82rem; color:#777; margin-top:-.5rem; margin-bottom:1rem">
+	Taxable valuation and levy data from User Friendly Budget filings (2017–present). Total debt extends to 2012 using annual debt statements.
+</p>
+
+<div class="row">
+	<div class="col-md-12 mb-3">
+		<div id="chart-taxable" style="height:220px"></div>
+	</div>
+	<div class="col-md-6 mb-3">
+		<div id="chart-debt" style="height:220px"></div>
+	</div>
+	<div class="col-md-6 mb-3">
+		<div id="chart-levy" style="height:220px"></div>
+	</div>
+</div>
+
+<p class="section-heading mt-2">Budget Documents</p>
+<table class="table table-sm pnj-table" id="budget-files">
+	<caption class="sr-only">Municipal budget documents for Piscataway, NJ</caption>
+	<thead>
+		<tr>
+			<th>Year</th>
+			<th>Taxable Valuation</th>
+			<th>Total Debt</th>
+			<th>Municipal</th>
+			<th>School</th>
+			<th>County</th>
+			<th>Other</th>
+			<th>Total Levy</th>
+			<th>Notes</th>
+			<th style="width:5em">Budget</th>
+			<th style="width:5.5em">Debt Stmt</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for year in years %}
+		{% set row = stats[year] ?? null %}
+		{% set bf = budget_files[year] ?? null %}
+		{% set df = debt_files[year] ?? null %}
+		<tr>
+			<td class="date-cell">{{ year }}{% if bf and bf.notes == 'transitional year' %} *{% endif %}</td>
+			<td>{% if row and row.taxable_fmt %}<span title="{{ row.taxable_exact }}">{{ row.taxable_fmt }}</span>{% else %}—{% endif %}</td>
+			<td>{% if row and row.debt_fmt %}<span title="{{ row.debt_exact }}">{{ row.debt_fmt }}</span>{% else %}—{% endif %}</td>
+			<td>{% if row and row.municipal_fmt %}<span title="{{ row.municipal_exact }}">{{ row.municipal_fmt }}</span>{% else %}—{% endif %}</td>
+			<td>{% if row and row.school_fmt %}<span title="{{ row.school_exact }}">{{ row.school_fmt }}</span>{% else %}—{% endif %}</td>
+			<td>{% if row and row.county_fmt %}<span title="{{ row.county_exact }}">{{ row.county_fmt }}</span>{% else %}—{% endif %}</td>
+			<td>{% if row and row.other_fmt %}<span title="{{ row.other_exact }}">{{ row.other_fmt }}</span>{% else %}—{% endif %}</td>
+			<td>{% if row and row.raised_fmt %}<span title="{{ row.raised_exact }}">{{ row.raised_fmt }}</span>{% else %}—{% endif %}</td>
+			<td>{% if bf %}{{ bf.notes != 'transitional year' ? bf.notes : '' }}{% endif %}</td>
+			<td class="doc-links">{% if bf %}<a href="{{ bf.getLink() }}">View</a>{% else %}—{% endif %}</td>
+			<td class="doc-links">{% if df %}<a href="{{ df.getLink() }}">View</a>{% else %}—{% endif %}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+<p style="font-size:.8rem; color:#888">* Transitional year. Hover dollar figures for exact values. "Other" = library + fire districts + county open space. Debt figures for 2012–2016 sourced from debt statements.</p>
+
+<style>
+	.budget-cards { display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; }
+	.budget-card {
+		flex:1 1 200px; max-width:280px;
+		background:#fff; border:1px solid #e0e0e0;
+		border-top:4px solid var(--pnj-yellow);
+		border-radius:4px; padding:.9rem 1.1rem;
+	}
+	.budget-card-label { font-size:.75rem; text-transform:uppercase; letter-spacing:.06em; color:#666; }
+	.budget-card-value { font-size:2rem; font-weight:700; line-height:1.1; margin:.2rem 0 .1rem; color:var(--pnj-black); }
+	.budget-card-sub { font-size:.73rem; color:#999; }
+</style>
+
+<script>
+(function() {
+	var YEARS     = {{ chart_years|raw }};
+	var TAXABLE   = {{ chart_taxable|raw }};
+	var DEBT      = {{ chart_debt|raw }};
+	var MUNICIPAL = {{ chart_municipal|raw }};
+	var SCHOOL    = {{ chart_school|raw }};
+	var COUNTY    = {{ chart_county|raw }};
+	var OTHER     = {{ chart_other|raw }};
+
+	var sharedOpts = {
+		chart: { backgroundColor: 'transparent', style: { fontFamily: 'inherit' }, animation: false },
+		xAxis: { categories: YEARS, crosshair: true },
+		legend: { enabled: false },
+		credits: { enabled: false },
+		plotOptions: { series: { marker: { enabled: true, radius: 4 } } }
+	};
+
+	Highcharts.chart('chart-taxable', Highcharts.merge(sharedOpts, {
+		chart: { type: 'area' },
+		title: { text: 'Total Taxable Property Valuation ($B)', style: { fontSize: '1rem', fontWeight: '700' } },
+		yAxis: { title: { text: 'Billions ($)' }, min: 0 },
+		tooltip: { valueSuffix: 'B', valueDecimals: 3 },
+		series: [{ name: 'Taxable Valuation', data: TAXABLE, color: '#F5C000',
+			fillColor: { linearGradient: {x1:0,y1:0,x2:0,y2:1}, stops: [[0,'rgba(245,192,0,.35)'],[1,'rgba(245,192,0,0)']] }
+		}]
+	}));
+
+	Highcharts.chart('chart-debt', Highcharts.merge(sharedOpts, {
+		chart: { type: 'column' },
+		title: { text: 'Total Outstanding Debt ($M)', style: { fontSize: '1rem', fontWeight: '700' } },
+		yAxis: { title: { text: 'Millions ($)' }, min: 0 },
+		tooltip: { valueSuffix: 'M', valueDecimals: 1 },
+		series: [{ name: 'Total Debt', data: DEBT, color: '#111111', borderColor: '#111111' }]
+	}));
+
+	Highcharts.chart('chart-levy', Highcharts.merge(sharedOpts, {
+		chart: { type: 'column' },
+		title: { text: 'Tax Levy by Purpose ($M)', style: { fontSize: '1rem', fontWeight: '700' } },
+		yAxis: { title: { text: 'Millions ($)' }, min: 0, stackLabels: { enabled: false } },
+		tooltip: { shared: true, valueSuffix: 'M', valueDecimals: 1 },
+		legend: { enabled: true },
+		plotOptions: { column: { stacking: 'normal', borderWidth: 0 } },
+		colors: ['#111111', '#F5C000', '#e6a817', '#cccccc'],
+		series: [
+			{ name: 'School',    data: SCHOOL    },
+			{ name: 'Municipal', data: MUNICIPAL },
+			{ name: 'County',    data: COUNTY    },
+			{ name: 'Other',     data: OTHER     }
+		]
+	}));
+})();
+</script>
+
+{% endblock %}
