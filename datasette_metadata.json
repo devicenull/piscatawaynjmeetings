@@ -7,6 +7,24 @@
 				},
 				"traffic_stops": {
 					"sql": "select * from cad_calls where `Incident Type`='Traffic Stop'"
+				},
+				"oct2025": {
+					"sql": "select * from cad_calls where date between '2025-10-01' and '2025-11-01'"
+				},
+				"nov2025": {
+					"sql": "select * from cad_calls where date between '2025-11-01' and '2025-12-01'"
+				},
+				"dec2025": {
+					"sql": "select * from cad_calls where date between '2025-12-01' and '2026-01-01'"
+				},
+				"jan2026": {
+					"sql": "select * from cad_calls where date between '2026-01-01' and '2026-01-31'"
+				},
+				"feb2026": {
+					"sql": "select * from cad_calls where date between '2026-02-01' and '2026-01-28'"
+				},
+				"mar2026": {
+					"sql": "select * from cad_calls where date between '2026-03-01' and '2026-03-31'"
 				}
 			}
 		}

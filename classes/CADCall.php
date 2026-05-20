@@ -22,13 +22,12 @@ class CADCall extends BaseDBObject
 
 	public function add(array $params): bool
 	{
-		if (!isset($params['lat']) || !isset($params['lng']))
+		if (!isset($params['ADDRESSID']))
 		{
 			$address = new Address(['address' => $params['location']]);
 			if ($address->isInitialized())
 			{
-				$params['lat'] = $address['lat'];
-				$params['lng'] = $address['lng'];
+				$params['ADDRESSID'] = $address['ADDRESSID'];
 			}
 		}
 

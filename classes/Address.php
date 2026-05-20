@@ -37,12 +37,13 @@ class Address extends BaseDBObject
 			$json = json_decode($data, true);
 			if (isset($json['features'][0]['geometry']['coordinates']))
 			{
-				if (round($json['features'][0]['geometry']['coordinates'][1], 6) == -74.466041 && round($json['features'][0]['geometry']['coordinates'][0], 6) == 40.546255)
+				if (strval(round($json['features'][0]['geometry']['coordinates'][1], 6)) == strval(-74.466041) && strval(round($json['features'][0]['geometry']['coordinates'][0], 6)) == strval(40.546255))
 				{
 					// this is apparently the center of town
 					echo "Got invalid coordinates for {$params['address']}\n";
-					continue;
+					return;
 				}
+				echo $params['address'].": ".$json['features'][0]['geometry']['coordinates'][1]." ".$json['features'][0]['geometry']['coordinates'][0]."\n";
 				$this->add([
 					'address' => $params['address'],
 					'lat' => $json['features'][0]['geometry']['coordinates'][1],

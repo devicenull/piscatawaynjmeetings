@@ -66,6 +66,10 @@ $typemap = [
 	'WEAPONS' => 'Weapons',
 	'MUN COURT TRANS' => 'Municipal Court Transport',
 	'ROR' => 'Released on Own Recognizance',
+	'VIO OF TRO/FRO' => 'Violation of Temporary/Final Restraining Order',
+	'ANIMAL BITE' => 'Animal Bite',
+	'FIRE INVESTIGA' => 'Fire Investigation',
+	'POLE/TREE DOWN' => 'Pole/Tree Down',
 ];
 
 $f = fopen('php://output', 'w');

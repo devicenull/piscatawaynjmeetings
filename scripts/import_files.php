@@ -99,7 +99,6 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 					$meeting = new Meeting(['MEETINGID' => $meeting['MEETINGID']]);
 				}
 			}
-
 			if (!$meeting->hasHappened())
 			{
 				continue 2;
