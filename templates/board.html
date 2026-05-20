@@ -22,6 +22,8 @@ Piscataway {{ board.name }} meeting history, recordings, and {% if board.type ==
 			$('#boardmeetings').DataTable({
 				order: [[ 0, 'desc' ]],
 				pageLength: 25,
+				stateSave: true,
+				stateDuration: 0,
 				columnDefs: [
 					{ orderable: false, targets: '_all' },
 					{ orderable: true, targets: 0 }
