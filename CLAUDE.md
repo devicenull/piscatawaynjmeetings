@@ -160,6 +160,7 @@ Located in `/scripts`, typically run via cron:
 - **post_to_bluesky.php** - Auto-post meeting summaries to Bluesky
 - **cad_calls.php** - Parse CAD logs, generate CSV
 - **parse_campaign_expenses.php** - Generate Graphviz visualization of campaign contributions
+- **extract_budget_stats.php** - Extract financial figures from budget/debt statement/financial statement PDFs into `budget_stats` table (run manually when new PDFs added)
 
 ## Datasette Integration
 
@@ -180,6 +181,10 @@ Meeting files organized by type and date:
   ├── newsletter/*.pdf
   ├── campaign/YEAR/
   ├── youtube/YYYY-MM-DD/
+  ├── budget/YYYY-MM-DD.pdf          (annual adopted budgets)
+  ├── audits/YYYY-MM-DD.pdf          (annual audits)
+  ├── financial_statements/YYYY-MM-DD.pdf
+  ├── debt_statements/YYYY-MM-DD.pdf
   └── misc_files/
 ```
 
@@ -225,6 +230,25 @@ Use service classes as templates:
 - **VoIPms.php**: SOAP client template
 - Config credentials in external `config.php`, never hardcoded
 
+## Budget & Financial Data
+
+**Pages**: `web/budget.php` + `templates/budget.html`, `web/audits.php` + `templates/audits.html`
+
+The budget page shows Highcharts trend charts (taxable valuation, total debt, stacked tax levy) plus a document table with links to both the budget PDF and the corresponding debt statement PDF for each year.
+
+**Extraction script**: `scripts/extract_budget_stats.php` — run manually to re-extract when new PDFs are added. Writes to `budget_stats` table. Three data sources in priority order:
+
+1. **Budget PDFs** (`web/files/budget/`): UFB format (2017+) extracts everything; legacy NJ format (pre-2017, 2022, 2026) extracts taxable valuation and municipal-only tax. Never extract debt from legacy budgets — "Outstanding Balance" is a partial figure (general capital only).
+
+2. **Debt statements** (`web/files/debt_statements/`): Gross debt total. Backfills years missing debt from budget PDFs. Three OCR formats: `Total $X`, `2 Total $X`, and space-embedded numbers (2016: `$   114,       173,057.00`). The budget loop overwrites debt unconditionally; the debt statement loop uses `COALESCE` so it only fills nulls.
+
+3. **Financial statements** (`web/files/financial_statements/`): Net Valuation Taxable. Each statement is certified as of October 1 of year N and feeds the year N+1 budget — so FS file for year N → `budget_stats` row for year N+1. Scanned PDFs produce 20M+ chars of junk; skip files > 5MB of text or with values < $1B. Regex: `NET\s+VALUATION\s+TAXABLE\s+\d{4}\s+([\d,]+)`.
+
+**Budget format notes**:
+- 2022 is legacy format despite the year (post-UFB era). Its debt extraction is unreliable; 2022 total_debt is intentionally NULL.
+- 2015 and 2016 have no budget PDFs; their rows exist in `budget_stats` via debt statement and financial statement backfill only.
+- The `misc_files` page excludes budget/audit/debt_statement types (they have dedicated pages). `MiscFile::getByTypes(['debt_statements', 'other'])` is used there.
+
 ## Known Quirks & TODOs
 
 - **CAD data partial**: Only complete logs from Oct 2025 onward (older data from 2 addresses only)
@@ -234,6 +258,8 @@ Use service classes as templates:
 - **Copy logging**: Tracking user text selection for textcopy table (privacy consideration)
 - **Twitter oEmbed**: Relies on Twitter's public API; may break if X/Twitter changes access
 - **Date timezone handling**: Strftime used inconsistently; prefer DateTime class for new code
+- **Budget debt 2022**: No reliable source; debt statement is scanned, budget extraction is partial. Stays NULL.
+- **Budget taxable 2013, 2015**: No usable financial statement for those years; taxable valuation stays NULL.
 
 ## Testing & QA
 

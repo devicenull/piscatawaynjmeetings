@@ -64,16 +64,14 @@ function extractDebtStatement(string $text): ?int
 
 function extractLegacy(string $text): array
 {
-	$taxable = $raised = $debt = $municipal = null;
+	$taxable = $raised = $municipal = null;
 
 	// "NET VALUATION TAXABLE   8,610,117,672"
 	if (preg_match('/NET VALUATION TAXABLE\s+([\d,]+)/i', $text, $m))
 		$taxable = parseDollar($m[1]);
 
-	// Note: legacy "raised" is municipal-only — leave null for cross-year consistency
-	// Outstanding municipal debt
-	if (preg_match('/Outstanding Balance\s+([\d,]+\.\d{2})/i', $text, $m))
-		$debt = parseDollar($m[1]);
+	// Note: legacy "raised" and "debt" are not reliably extractable — leave null.
+	// Debt is backfilled from debt statement PDFs instead.
 
 	// Older NJ budget format (2011-2014): OCR produces either spaced words or concatenated words.
 	// The prior-year figure always appears first, current-year last — take the last match.
@@ -88,7 +86,7 @@ function extractLegacy(string $text): array
 	if (!$municipal && preg_match('/AMOUNTTOBERAISEDBYTAXATIONFORMUNICIPALPURPOSES[^\n$]*\$\s*([\d,]+\.\d{2})/i', $text, $m))
 		$municipal = parseDollar($m[1]);
 
-	return [$taxable, $debt, $raised, $municipal, null, null, null];
+	return [$taxable, null, $raised, $municipal, null, null, null];
 }
 
 global $db;
@@ -170,6 +168,57 @@ foreach ($debtFiles as $path) {
 		 ON DUPLICATE KEY UPDATE
 		   total_debt = COALESCE(total_debt, VALUES(total_debt))',
 		[$year, $debt]
+	);
+}
+
+// Backfill taxable_valuation from financial statement PDFs.
+// NJ financial statements are certified as of Oct 1 of year N and feed the
+// year N+1 budget — so we store extracted values into budget year (file year + 1).
+// Uses COALESCE so existing budget-PDF values are never overwritten.
+$fsDir = BASE_FILE_PATH . 'financial_statements';
+$fsFiles = glob("$fsDir/*.pdf");
+sort($fsFiles);
+$seenFsYears = [];
+
+foreach ($fsFiles as $path) {
+	$fsYear = (int)substr(basename($path, '.pdf'), 0, 4);
+	if ($fsYear < 2000) continue;
+	// Use only the first file per year (e.g. 2010-01-01 before 2010-01-02)
+	if (isset($seenFsYears[$fsYear])) continue;
+	$seenFsYears[$fsYear] = true;
+
+	$budgetYear = $fsYear + 1;
+	if ($budgetYear < 2008) continue;  // outside range of budget_stats
+	echo "Financial statement $fsYear → budget $budgetYear... ";
+	$text = extractText($path);
+	$len = strlen($text);
+	// Scanned PDFs rendered as bitmaps produce 20M+ chars of whitespace/garbage
+	if ($len < 10000 || $len > 5000000) {
+		echo "likely scanned, skipping\n";
+		continue;
+	}
+
+	// "NET VALUATION TAXABLE YYYY   X,XXX,XXX,XXX"
+	// Handles OCR artifacts with extra spaces between words
+	if (!preg_match('/NET\s+VALUATION\s+TAXABLE\s+\d{4}\s+([\d,]+)/i', $text, $m)) {
+		echo "no valuation found\n";
+		continue;
+	}
+	$taxable = parseDollar($m[1]);
+	// Piscataway taxable valuation is always in the billions; reject garbage OCR matches
+	if (!$taxable || $taxable < 1_000_000_000) {
+		echo "value below sanity threshold, skipping\n";
+		continue;
+	}
+
+	printf("taxable=%s\n", '$' . number_format($taxable));
+
+	$db->Execute(
+		'INSERT INTO budget_stats (year, taxable_valuation)
+		 VALUES (?, ?)
+		 ON DUPLICATE KEY UPDATE
+		   taxable_valuation = COALESCE(taxable_valuation, VALUES(taxable_valuation))',
+		[$budgetYear, $taxable]
 	);
 }
 
