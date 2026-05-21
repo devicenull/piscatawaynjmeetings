@@ -105,19 +105,28 @@ class Meeting extends BaseDBObject
 		return 'Piscataway, New Jersey '.$this['type'].' meeting '.$type.' for '.explode(' ', $this['date'])[0];
 	}
 
-	public function getTranscript(): string
+	/**
+	 * Returns interleaved transcript segments for the template to render.
+	 * Each item is either:
+	 *   ['type' => 'section', 'index' => N, 'ts_seconds' => N, 'title' => ..., ...]
+	 *   ['type' => 'lines',   'html'  => '...pre-formatted lines with timestamp links...']
+	 */
+	public function getTranscriptSegments(): array
 	{
-		$transcript     = file_get_contents(__DIR__.'/../web/'.$this->getLink('transcript'));
-		$sections       = $this->loadTranscriptSections();
+		$transcript = file_get_contents(__DIR__.'/../web/'.$this->getLink('transcript'));
+		$sections   = $this->loadTranscriptSections();
+
 		$section_starts = [];
 		foreach ($sections as $i => $s) {
 			sscanf($s['start'], '%d:%d:%d', $h, $m, $sec);
-			$section_starts[$i] = ($h * 3600) + ($m * 60) + $sec;
+			$section_starts[$i]      = ($h * 3600) + ($m * 60) + $sec;
+			$sections[$i]['ts_seconds'] = $section_starts[$i];
+			$sections[$i]['index']      = $i;
 		}
 
-		$toc    = $this->renderSectionTOC($sections);
-		$output = '';
-		$next   = 0;
+		$segments     = [];
+		$current_html = '';
+		$next         = 0;
 
 		foreach (explode("\n", $transcript) as $line)
 		{
@@ -126,19 +135,39 @@ class Meeting extends BaseDBObject
 				sscanf($matches[2], '%d:%d:%d', $hours, $minutes, $seconds);
 				$timestamp = ($hours * 3600) + ($minutes * 60) + $seconds;
 
-				while ($next < count($sections) && $timestamp >= $section_starts[$next]) {
-					$output .= $this->renderSectionDivider($sections[$next]);
+				while ($next < count($sections) && $timestamp >= $section_starts[$next])
+				{
+					if ($current_html !== '') {
+						$segments[]   = ['type' => 'lines', 'html' => $current_html];
+						$current_html = '';
+					}
+					$segments[] = ['type' => 'section'] + $sections[$next];
 					$next++;
 				}
 
-				$output .= str_pad(trim($matches[1]), 14).'<a href="javascript:changePlayerTime('.$timestamp.');">'.$matches[2].'</a>'.$matches[3].$matches[4]."\n";
+				$current_html .= str_pad(trim($matches[1]), 14).'<a href="javascript:changePlayerTime('.$timestamp.');">'.$matches[2].'</a>'.$matches[3].$matches[4]."\n";
 			}
 			else
 			{
-				$output .= htmlspecialchars($line)."\n";
+				$current_html .= htmlspecialchars($line)."\n";
 			}
 		}
-		return $toc.$output;
+
+		if ($current_html !== '') {
+			$segments[] = ['type' => 'lines', 'html' => $current_html];
+		}
+
+		return $segments;
+	}
+
+	public function getTranscriptSections(): array
+	{
+		$sections = $this->loadTranscriptSections();
+		foreach ($sections as $i => $s) {
+			sscanf($s['start'], '%d:%d:%d', $h, $m, $sec);
+			$sections[$i]['ts_seconds'] = ($h * 3600) + ($m * 60) + $sec;
+		}
+		return $sections;
 	}
 
 	private function loadTranscriptSections(): array
@@ -147,49 +176,15 @@ class Meeting extends BaseDBObject
 		if (!$link) {
 			return [];
 		}
-		$path = __DIR__.'/../web/'.preg_replace('/\.txt$/', '.sections.json', $link);
+		// files/zoning/2026-02-26.txt  →  output/zoning-2026-02-26.sections.json
+		$parts = explode('/', ltrim($link, '/'));
+		$type  = $parts[count($parts) - 2] ?? '';
+		$name  = $type.'-'.preg_replace('/\.txt$/', '.sections.json', end($parts));
+		$path  = __DIR__.'/../output/'.$name;
 		if (!file_exists($path)) {
 			return [];
 		}
 		return json_decode(file_get_contents($path), true) ?? [];
-	}
-
-	private function renderSectionTOC(array $sections): string
-	{
-		if (!$sections) {
-			return '';
-		}
-		$items = '';
-		foreach ($sections as $s) {
-			sscanf($s['start'], '%d:%d:%d', $h, $m, $sec);
-			$ts = ($h * 3600) + ($m * 60) + $sec;
-			$cases = '';
-			foreach ($s['cases'] as $c) {
-				$cases .= ' <span class="badge bg-secondary">'.htmlspecialchars($c).'</span>';
-			}
-			$items .= '<li><a href="javascript:changePlayerTime('.$ts.');">'.htmlspecialchars($s['start']).'</a> — '.htmlspecialchars($s['title']).$cases."</li>\n";
-		}
-		return '<div class="card mb-3"><div class="card-header fw-bold">Meeting Sections</div><div class="card-body py-2"><ul class="mb-0">'.$items.'</ul></div></div>';
-	}
-
-	private function renderSectionDivider(array $section): string
-	{
-		sscanf($section['start'], '%d:%d:%d', $h, $m, $sec);
-		$ts    = ($h * 3600) + ($m * 60) + $sec;
-		$cases = '';
-		foreach ($section['cases'] as $c) {
-			$cases .= ' <span class="badge bg-light text-dark">'.htmlspecialchars($c).'</span>';
-		}
-		$html  = '</pre>';
-		$html .= '<div class="card border-primary my-3">';
-		$html .= '<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">';
-		$html .= '<span class="fw-bold">'.htmlspecialchars($section['title']).$cases.'</span>';
-		$html .= '<small class="text-white-50 ms-3 text-nowrap"><a class="text-white-50" href="javascript:changePlayerTime('.$ts.');">'.htmlspecialchars($section['start']).'</a> – '.htmlspecialchars($section['end']).'</small>';
-		$html .= '</div>';
-		$html .= '<div class="card-body py-2"><small class="text-muted">'.htmlspecialchars($section['description']).'</small></div>';
-		$html .= '</div>';
-		$html .= '<pre style="white-space: pre-wrap">';
-		return $html;
 	}
 
 	public static function getUpcomingAndOlder()

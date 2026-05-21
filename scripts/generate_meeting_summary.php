@@ -35,7 +35,7 @@ if ($argc === 3 && $argv[1] === '--file') {
 		fwrite(STDERR, "No transcript found for meeting {$argv[1]}.\n");
 		exit(1);
 	}
-	$transcript_path = realpath(__DIR__.'/../web').'/'.$link;
+	$transcript_path = realpath(__DIR__.'/../web').'/'.ltrim($link, '/');
 } else {
 	usage();
 }
@@ -45,7 +45,10 @@ if (!file_exists($transcript_path)) {
 	exit(1);
 }
 
-$sections_path = preg_replace('/\.txt$/', '.sections.json', $transcript_path);
+$output_dir    = __DIR__.'/../output';
+// Include the parent directory name (meeting type) to avoid cross-type collisions
+$sections_name = basename(dirname($transcript_path)).'-'.basename(preg_replace('/\.txt$/', '.sections.json', $transcript_path));
+$sections_path = $output_dir.'/'.$sections_name;
 $transcript    = file_get_contents($transcript_path);
 
 echo "Transcript: $transcript_path\n";

@@ -13,6 +13,27 @@
 			$('#audioplayer').prop('currentTime', seconds);
 			$('#audioplayer').trigger('play');
 		}
+		function jumpToSection(seconds, sectionId)
+		{
+			changePlayerTime(seconds);
+			var el = document.getElementById(sectionId);
+			if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'});
+		}
+		function toggleAISummaries()
+		{
+			var hidden = document.querySelector('.ai-summary.d-none') !== null
+				|| document.querySelectorAll('.ai-summary').length === 0;
+			document.querySelectorAll('.ai-summary').forEach(function(el) {
+				el.classList.toggle('d-none', !hidden);
+			});
+			var btn = document.getElementById('ai-summary-toggle');
+			if (btn) btn.textContent = hidden ? 'Hide AI summaries' : 'Show AI summaries';
+		}
+		document.addEventListener('DOMContentLoaded', function() {
+			document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+				new bootstrap.Tooltip(el);
+			});
+		});
 	</script>
 	<h1>Transcript for Piscataway {{ meeting.type|capitalize }} meeting on {{ meeting.date|date('F j Y') }}</h1>
 	<br>
@@ -21,9 +42,48 @@
 	{% if meeting.recording_available == 'yes' %}<audio id="audioplayer" controls src="{{ meeting.getPublicLink('recording') }}" type="audio/mpeg" style="width: 100%" data-html-media-element-title="{{ meeting.date }} {{ meeting.type }}"></audio>{% endif %}
 	<br><br>
 
-	<pre style="white-space: pre-wrap">
-{{ meeting.getTranscript()|raw }}
-	</pre>
+	{% set sections = meeting.getTranscriptSections() %}
+	{% if sections %}
+	<div class="mb-2">
+		<button id="ai-summary-toggle" class="btn btn-sm btn-outline-secondary" onclick="toggleAISummaries()">Hide AI summaries</button>
+	</div>
+	<div class="card mb-3 ai-summary">
+		<div class="card-header fw-bold">Meeting Sections</div>
+		<div class="card-body py-2">
+			<ul class="mb-0">
+				{% for section in sections %}
+				<li>
+					<a href="javascript:jumpToSection({{ section.ts_seconds }}, 'section-{{ loop.index0 }}');">{{ section.start }}</a>
+					— {{ section.title }}
+					{% for case in section.cases %}<span class="badge bg-secondary">{{ case }}</span>{% endfor %}
+				</li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
+	{% endif %}
+
+	{% for segment in meeting.getTranscriptSegments() %}
+		{% if segment.type == 'section' %}
+		<div class="card border-primary my-3 ai-summary" id="section-{{ segment.index }}">
+			<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+				<span class="fw-bold">
+					{{ segment.title }}
+					{% for case in segment.cases %}<span class="badge bg-light text-dark">{{ case }}</span>{% endfor %}
+				</span>
+				<span class="ms-3 text-nowrap d-flex align-items-center gap-2">
+					<span class="badge bg-warning text-dark" data-bs-toggle="tooltip" data-bs-placement="left" title="This summary was AI generated and may be inaccurate">AI</span>&nbsp;
+					<small class="text-white-50"><a class="text-white-50" href="javascript:changePlayerTime({{ segment.ts_seconds }});">{{ segment.start }}</a> – {{ segment.end }}</small>
+				</span>
+			</div>
+			<div class="card-body py-2">
+				<small class="text-muted">{{ segment.description }}</small>
+			</div>
+		</div>
+		{% else %}
+		<pre style="white-space: pre-wrap">{{ segment.html|raw }}</pre>
+		{% endif %}
+	{% endfor %}
 
 	{% if meeting.minutes_available == 'yes' and meeting.minutes_filetype == 'pdf' %}
 		<iframe title="Minutes for Piscataway {{ meeting.type|capitalize }} meeting on {{ meeting.date|date('F j Y') }}" src="{{ meeting.getPublicLink('minutes') }}" style="width: 100%; min-height: 800px"></iframe>
