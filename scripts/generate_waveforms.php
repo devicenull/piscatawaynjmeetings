@@ -67,6 +67,7 @@ foreach ($meetings as $meeting)
 	}
 
 	echo "Generating: {$meeting['type']} {$meeting['date']}\n";
+	$out = null;
 	exec(
 		'python3 '.escapeshellarg(__DIR__.'/generate_waveform.py')
 		.' '.escapeshellarg($audio_path)
