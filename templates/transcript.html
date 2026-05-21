@@ -54,21 +54,26 @@
 		}
 		#player-minimize:hover, #player-expand:hover { color: #f5c000; }
 		#player-body { padding: .65rem .75rem .75rem; }
+		#player-progress-row {
+			display: flex;
+			align-items: flex-end;
+			gap: .4rem;
+			margin-bottom: .6rem;
+		}
+		#player-waveform-seek {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			gap: .3rem;
+		}
 		#player-waveform {
 			height: 60px;
-			margin-bottom: .5rem;
 			display: none;
 			cursor: pointer;
 		}
 		#player-waveform wave { overflow: hidden !important; border-radius: 3px; }
-		#player-progress-row {
-			display: flex;
-			align-items: center;
-			gap: .4rem;
-			margin-bottom: .6rem;
-		}
 		#player-seek {
-			flex: 1;
+			width: 100%;
 			-webkit-appearance: none;
 			appearance: none;
 			height: 4px;
@@ -318,10 +323,12 @@
 			<button id="player-minimize" title="Minimize player">−</button>
 		</div>
 		<div id="player-body">
-			<div id="player-waveform"></div>
 			<div id="player-progress-row">
 				<span class="player-time" id="player-current-time">0:00</span>
-				<input type="range" id="player-seek" min="0" max="1000" value="0" step="1">
+				<div id="player-waveform-seek">
+					<div id="player-waveform"></div>
+					<input type="range" id="player-seek" min="0" max="1000" value="0" step="1">
+				</div>
 				<span class="player-time" id="player-duration">–:––</span>
 			</div>
 			<div id="player-controls">
