@@ -138,8 +138,29 @@ if ($raw === false || $raw === '') {
 }
 
 $envelope = json_decode(trim($raw), true);
-if (!is_array($envelope) || !isset($envelope['structured_output']['sections'])) {
+
+if (!is_array($envelope)) {
+	// Non-JSON output — check for rate limit keywords
+	if (preg_match('/rate.?limit|overload|429|too many/i', $raw)) {
+		fwrite(STDERR, "Rate limited.\n");
+		exit(2);
+	}
 	fwrite(STDERR, "Unexpected response from Claude.\nRaw output:\n$raw\n");
+	exit(1);
+}
+
+if (!empty($envelope['is_error'])) {
+	$status = $envelope['api_error_status'] ?? 0;
+	if ($status === 429 || preg_match('/rate.?limit|overload|too many/i', $envelope['result'] ?? '')) {
+		fwrite(STDERR, "Rate limited (HTTP $status).\n");
+		exit(2);
+	}
+	fwrite(STDERR, "API error (HTTP $status): ".($envelope['result'] ?? $raw)."\n");
+	exit(1);
+}
+
+if (!isset($envelope['structured_output']['sections'])) {
+	fwrite(STDERR, "Missing structured_output in response.\nRaw output:\n$raw\n");
 	exit(1);
 }
 

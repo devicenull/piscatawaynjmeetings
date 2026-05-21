@@ -176,11 +176,8 @@ class Meeting extends BaseDBObject
 		if (!$link) {
 			return [];
 		}
-		// files/zoning/2026-02-26.txt  →  output/zoning-2026-02-26.sections.json
-		$parts = explode('/', ltrim($link, '/'));
-		$type  = $parts[count($parts) - 2] ?? '';
-		$name  = $type.'-'.preg_replace('/\.txt$/', '.sections.json', end($parts));
-		$path  = __DIR__.'/../output/'.$name;
+		// /files/zoning/2026-02-26.txt  →  web/files/zoning/2026-02-26.json
+		$path = __DIR__.'/../web'.preg_replace('/\.txt$/', '.json', $link);
 		if (!file_exists($path)) {
 			return [];
 		}
