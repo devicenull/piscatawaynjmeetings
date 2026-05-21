@@ -26,6 +26,11 @@ if [ ${#txts[@]} -eq 0 ]; then
 	exit 0
 fi
 
+# Reverse so newest date is processed first
+for (( i=0, j=${#txts[@]}-1; i<j; i++, j-- )); do
+	tmp="${txts[$i]}"; txts[$i]="${txts[$j]}"; txts[$j]="$tmp"
+done
+
 total=${#txts[@]}
 done_count=0
 skipped=0
