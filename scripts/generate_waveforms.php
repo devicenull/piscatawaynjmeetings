@@ -89,6 +89,7 @@ foreach ($meetings as $meeting)
 	}
 	else
 	{
+		$meeting->set(['waveform_available' => 'error']);
 		echo "  ERROR: generation failed\n";
 	}
 }

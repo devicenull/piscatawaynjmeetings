@@ -83,6 +83,7 @@ foreach (Meeting::getWaveformNeeded() as $meeting)
 	$peaks_path = __DIR__.'/../web'.$meeting->getWaveformPath();
 	echo "Generating waveform: {$meeting['type']} {$meeting['date']}\n";
 
+	$out = [];
 	exec(
 		'python3 '.escapeshellarg(__DIR__.'/generate_waveform.py')
 		.' '.escapeshellarg($recording)
@@ -99,6 +100,7 @@ foreach (Meeting::getWaveformNeeded() as $meeting)
 	}
 	else
 	{
+		$meeting->set(['waveform_available' => 'error']);
 		echo "  ERROR: waveform generation failed for {$meeting['type']} {$meeting['date']}\n";
 	}
 }

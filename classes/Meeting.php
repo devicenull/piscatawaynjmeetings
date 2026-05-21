@@ -397,7 +397,7 @@ class Meeting extends BaseDBObject
 			select *
 			from meeting
 			where recording_available = "yes"
-			  and (waveform_available IS NULL or waveform_available = "no")
+			  and waveform_available = "no"
 			order by date desc, type
 		');
 		$meetings = [];
