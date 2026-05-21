@@ -54,10 +54,13 @@
 		}
 		#player-minimize:hover, #player-expand:hover { color: #f5c000; }
 		#player-body { padding: .65rem .75rem .75rem; }
-		/* WAVEFORM: uncomment and style when adding WaveSurfer */
-		/*
-		#player-waveform { height: 60px; margin-bottom: .5rem; }
-		*/
+		#player-waveform {
+			height: 60px;
+			margin-bottom: .5rem;
+			display: none;
+			cursor: pointer;
+		}
+		#player-waveform wave { overflow: hidden !important; border-radius: 3px; }
 		#player-progress-row {
 			display: flex;
 			align-items: center;
@@ -259,6 +262,45 @@
 				player.classList.toggle('expanded');
 				expBtn.title = player.classList.contains('expanded') ? 'Compact player' : 'Expand player';
 			});
+
+			// WaveSurfer — desktop only
+			var waveformUrl = '{{ meeting.waveform_available == "yes" ? meeting.getWaveformPublicLink()|e("js") : "" }}';
+			if (waveformUrl && window.innerWidth > 575) {
+				var wsScript = document.createElement('script');
+				wsScript.src = 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesurfer.min.js';
+				wsScript.onload = function() {
+					Promise.all([
+						fetch(waveformUrl).then(function(r) { return r.json(); }),
+						new Promise(function(resolve) {
+							if (audio.duration > 0) resolve(audio.duration);
+							else audio.addEventListener('loadedmetadata', function() { resolve(audio.duration); }, {once: true});
+						})
+					]).then(function(results) {
+						var peaks    = results[0].peaks;
+						var duration = results[1];
+						var ws = WaveSurfer.create({
+							container:     '#player-waveform',
+							media:         audio,
+							peaks:         peaks,
+							duration:      duration,
+							waveColor:     '#4a4a4a',
+							progressColor: '#f5c000',
+							cursorColor:   '#f5c000',
+							cursorWidth:   1,
+							barWidth:      2,
+							barGap:        1,
+							barRadius:     1,
+							height:        60,
+							normalize:     true,
+							interact:      true,
+						});
+						document.getElementById('player-waveform').style.display = 'block';
+					}).catch(function(err) {
+						console.warn('WaveSurfer init failed:', err);
+					});
+				};
+				document.head.appendChild(wsScript);
+			}
 		});
 	</script>
 
@@ -276,8 +318,7 @@
 			<button id="player-minimize" title="Minimize player">−</button>
 		</div>
 		<div id="player-body">
-			<!-- WAVEFORM: replace with WaveSurfer canvas here when peaks data is available -->
-			<!-- <div id="player-waveform"></div> -->
+			<div id="player-waveform"></div>
 			<div id="player-progress-row">
 				<span class="player-time" id="player-current-time">0:00</span>
 				<input type="range" id="player-seek" min="0" max="1000" value="0" step="1">
