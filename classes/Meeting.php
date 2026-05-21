@@ -112,10 +112,27 @@ class Meeting extends BaseDBObject
 	 *   ['type' => 'section', 'index' => N, 'ts_seconds' => N, 'title' => ..., ...]
 	 *   ['type' => 'lines',   'html'  => '...pre-formatted lines with timestamp links...']
 	 */
+	private function loadSpeakerNames(): array
+	{
+		$link = $this->getLink('transcript');
+		if (!$link) return [];
+		$path = __DIR__.'/../web'.preg_replace('/\.txt$/', '.speakers.json', $link);
+		if (!file_exists($path)) return [];
+		$data = json_decode(file_get_contents($path), true) ?? [];
+		$names = [];
+		foreach ($data as $num => $info) {
+			if ($info && isset($info['name'])) {
+				$names[(int)$num] = $info['name'];
+			}
+		}
+		return $names;
+	}
+
 	public function getTranscriptSegments(): array
 	{
-		$transcript = file_get_contents(__DIR__.'/../web/'.$this->getLink('transcript'));
-		$sections   = $this->loadTranscriptSections();
+		$transcript   = file_get_contents(__DIR__.'/../web/'.$this->getLink('transcript'));
+		$sections     = $this->loadTranscriptSections();
+		$speaker_names = $this->loadSpeakerNames();
 
 		$section_starts = [];
 		foreach ($sections as $i => $s) {
@@ -131,10 +148,14 @@ class Meeting extends BaseDBObject
 
 		foreach (explode("\n", $transcript) as $line)
 		{
-			if (preg_match('/(Speaker [0-9]+\s+)([0-9\:]+)(\s+)(.*)$/', $line, $matches))
+			if (preg_match('/(Speaker ([0-9]+)\s+)([0-9\:]+)(\s+)(.*)$/', $line, $matches))
 			{
-				sscanf($matches[2], '%d:%d:%d', $hours, $minutes, $seconds);
-				$timestamp = ($hours * 3600) + ($minutes * 60) + $seconds;
+				sscanf($matches[3], '%d:%d:%d', $hours, $minutes, $seconds);
+				$timestamp  = ($hours * 3600) + ($minutes * 60) + $seconds;
+				$speaker_num = (int)$matches[2];
+				$label       = isset($speaker_names[$speaker_num])
+					? $speaker_names[$speaker_num]
+					: trim($matches[1]);
 
 				while ($next < count($sections) && $timestamp >= $section_starts[$next])
 				{
@@ -146,7 +167,7 @@ class Meeting extends BaseDBObject
 					$next++;
 				}
 
-				$current_html .= str_pad(trim($matches[1]), 14).'<a href="javascript:changePlayerTime('.$timestamp.');">'.$matches[2].'</a>'.$matches[3].$matches[4]."\n";
+				$current_html .= str_pad($label, 14).'<a href="javascript:changePlayerTime('.$timestamp.');">'.$matches[3].'</a>'.$matches[4].$matches[5]."\n";
 			}
 			else
 			{
