@@ -264,7 +264,7 @@
 			});
 
 			// WaveSurfer — desktop only
-			var waveformUrl = '{{ meeting.waveform_available == "yes" ? meeting.getWaveformPublicLink()|e("js") : "" }}';
+			var waveformUrl = {{ meeting.waveform_available == "yes" ? meeting.getWaveformPublicLink()|json_encode : '""' }};
 			if (waveformUrl && window.innerWidth > 575) {
 				var wsScript = document.createElement('script');
 				wsScript.src = 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesurfer.min.js';
