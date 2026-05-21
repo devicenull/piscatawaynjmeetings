@@ -39,6 +39,7 @@ foreach (Meeting::getUntranscribed() as $meeting)
 		'media_url'           => $meeting->getPublicLink('recording'),
 		'metadata'            => $meeting['type'].' '.$meeting['date'],
 		'remove_disfluencies' => true,
+		'forced_alignment'    => true,
 		// array of objects, yay
 		'custom_vocabularies' => [ [
 			'phrases' => $phrases,

@@ -31,12 +31,24 @@ foreach ($res as $cur)
 	$json = json_decode($data, true);
 	if ($json['status'] == 'transcribed')
 	{
-		curl_setopt($c, CURLOPT_URL, 'https://api.rev.ai/speechtotext/v1/jobs/'.$cur['revai_jobid'].'/transcript');
+		$transcript_url = 'https://api.rev.ai/speechtotext/v1/jobs/'.$cur['revai_jobid'].'/transcript';
+		curl_setopt($c, CURLOPT_URL, $transcript_url);
 		curl_setopt($c, CURLOPT_HTTPHEADER, array_merge($baseheaders, ['Accept: text/plain']));
 		$transcript = curl_exec($c);
 		if (curl_getinfo($c, CURLINFO_HTTP_CODE) == 200)
 		{
 			file_put_contents(__DIR__.'/../web/'.$meeting->getLink('transcript', true), $transcript);
+
+			// Also save full JSON for word-level speaker timestamps (used by speaker identification)
+			curl_setopt($c, CURLOPT_HTTPHEADER, array_merge($baseheaders, ['Accept: application/vnd.rev.transcript.v1.0+json']));
+			$transcript_json = curl_exec($c);
+			if (curl_getinfo($c, CURLINFO_HTTP_CODE) == 200)
+			{
+				$date = explode(' ', $meeting['date']);
+				$json_path = __DIR__.'/../web/files/'.$meeting['type'].'/'.$date[0].'.revai.json';
+				file_put_contents($json_path, $transcript_json);
+			}
+
 			$meeting->set(['transcript_available' => 'yes']);
 		}
 	}
