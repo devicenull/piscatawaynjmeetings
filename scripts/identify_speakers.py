@@ -6,8 +6,8 @@ Reads:  web/files/{board}/{date}.revai.json   - Rev.ai JSON with word-level spea
         web/files/{board}/{date}.mp3/.m4a     - Meeting recording
         data/speakers/profiles.json           - Known speaker profiles with embeddings
 
-Writes: web/files/{board}/{date}.speakers.json
-        e.g. {"0": {"name": "Chairman Cahill", "confidence": 0.91}, "1": null, ...}
+Writes: output/speakers/{board}/{date}.speakers.json
+        e.g. {"0": {"name": "Shawn Cahill (Chair)", "confidence": 0.91}, "1": null, ...}
 
 Usage:
     python3 identify_speakers.py zoning 2026-04-23 [--threshold 0.75] [--dry-run]
@@ -164,7 +164,9 @@ def main():
         print(f'ERROR: {revai_path} not found. Run fetch_revai_json.php first.')
         sys.exit(1)
 
-    speakers_path = os.path.join(BASE_DIR, 'web', 'files', board, f'{date}.speakers.json')
+    out_dir       = os.path.join(BASE_DIR, 'output', 'speakers', board)
+    os.makedirs(out_dir, exist_ok=True)
+    speakers_path = os.path.join(out_dir, f'{date}.speakers.json')
 
     profiles = load_profiles()
     known    = {sid: info for sid, info in profiles.items() if info.get('embedding')}

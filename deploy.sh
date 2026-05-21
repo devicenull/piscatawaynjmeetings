@@ -13,7 +13,7 @@ php ../scripts/cad_calls.php > cad_calls.csv
 popd
 
 echo "Syncing content"
-rsync --copy-links -rt --exclude=web/files .git classes config.php init.php templates vendor web scripts data datasette.service datasette_metadata.json root@$DEST:/home/piscataway/
+rsync --copy-links -rt --exclude=web/files .git classes config.php init.php templates vendor web scripts data output datasette.service datasette_metadata.json root@$DEST:/home/piscataway/
 # sync only transcripts, the rest are too big!
 find ./web/ -iname \*.txt | rsync -rt --files-from=/dev/stdin . root@185.101.97.102:/home/piscataway/
 
