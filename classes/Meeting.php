@@ -107,14 +107,30 @@ class Meeting extends BaseDBObject
 
 	public function getTranscript(): string
 	{
-		$transcript = file_get_contents(__DIR__.'/../web/'.$this->getLink('transcript'));
+		$transcript     = file_get_contents(__DIR__.'/../web/'.$this->getLink('transcript'));
+		$sections       = $this->loadTranscriptSections();
+		$section_starts = [];
+		foreach ($sections as $i => $s) {
+			sscanf($s['start'], '%d:%d:%d', $h, $m, $sec);
+			$section_starts[$i] = ($h * 3600) + ($m * 60) + $sec;
+		}
+
+		$toc    = $this->renderSectionTOC($sections);
 		$output = '';
+		$next   = 0;
+
 		foreach (explode("\n", $transcript) as $line)
 		{
 			if (preg_match('/(Speaker [0-9]+\s+)([0-9\:]+)(\s+)(.*)$/', $line, $matches))
 			{
 				sscanf($matches[2], '%d:%d:%d', $hours, $minutes, $seconds);
-				$timestamp = ($hours * 60 * 60)+($minutes * 60)+$seconds;
+				$timestamp = ($hours * 3600) + ($minutes * 60) + $seconds;
+
+				while ($next < count($sections) && $timestamp >= $section_starts[$next]) {
+					$output .= $this->renderSectionDivider($sections[$next]);
+					$next++;
+				}
+
 				$output .= str_pad(trim($matches[1]), 14).'<a href="javascript:changePlayerTime('.$timestamp.');">'.$matches[2].'</a>'.$matches[3].$matches[4]."\n";
 			}
 			else
@@ -122,7 +138,58 @@ class Meeting extends BaseDBObject
 				$output .= htmlspecialchars($line)."\n";
 			}
 		}
-		return $output;
+		return $toc.$output;
+	}
+
+	private function loadTranscriptSections(): array
+	{
+		$link = $this->getLink('transcript');
+		if (!$link) {
+			return [];
+		}
+		$path = __DIR__.'/../web/'.preg_replace('/\.txt$/', '.sections.json', $link);
+		if (!file_exists($path)) {
+			return [];
+		}
+		return json_decode(file_get_contents($path), true) ?? [];
+	}
+
+	private function renderSectionTOC(array $sections): string
+	{
+		if (!$sections) {
+			return '';
+		}
+		$items = '';
+		foreach ($sections as $s) {
+			sscanf($s['start'], '%d:%d:%d', $h, $m, $sec);
+			$ts = ($h * 3600) + ($m * 60) + $sec;
+			$cases = '';
+			foreach ($s['cases'] as $c) {
+				$cases .= ' <span class="badge bg-secondary">'.htmlspecialchars($c).'</span>';
+			}
+			$items .= '<li><a href="javascript:changePlayerTime('.$ts.');">'.htmlspecialchars($s['start']).'</a> — '.htmlspecialchars($s['title']).$cases."</li>\n";
+		}
+		return '<div class="card mb-3"><div class="card-header fw-bold">Meeting Sections</div><div class="card-body py-2"><ul class="mb-0">'.$items.'</ul></div></div>';
+	}
+
+	private function renderSectionDivider(array $section): string
+	{
+		sscanf($section['start'], '%d:%d:%d', $h, $m, $sec);
+		$ts    = ($h * 3600) + ($m * 60) + $sec;
+		$cases = '';
+		foreach ($section['cases'] as $c) {
+			$cases .= ' <span class="badge bg-light text-dark">'.htmlspecialchars($c).'</span>';
+		}
+		$html  = '</pre>';
+		$html .= '<div class="card border-primary my-3">';
+		$html .= '<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">';
+		$html .= '<span class="fw-bold">'.htmlspecialchars($section['title']).$cases.'</span>';
+		$html .= '<small class="text-white-50 ms-3 text-nowrap"><a class="text-white-50" href="javascript:changePlayerTime('.$ts.');">'.htmlspecialchars($section['start']).'</a> – '.htmlspecialchars($section['end']).'</small>';
+		$html .= '</div>';
+		$html .= '<div class="card-body py-2"><small class="text-muted">'.htmlspecialchars($section['description']).'</small></div>';
+		$html .= '</div>';
+		$html .= '<pre style="white-space: pre-wrap">';
+		return $html;
 	}
 
 	public static function getUpcomingAndOlder()
