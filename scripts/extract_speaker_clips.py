@@ -142,6 +142,81 @@ def rollcall_extract(board: str, date: str):
     return results
 
 
+def longest_turns_mode(args):
+    """
+    Find the longest speaking turn per speaker in a meeting and offer to register them.
+    This produces much better embeddings than short roll-call clips.
+    """
+    board     = args.board
+    date      = args.date
+    min_secs  = args.min_seconds
+    top_n     = args.top_n
+    auto      = getattr(args, 'auto', False)
+
+    revai = load_revai_json(board, date)
+    monologues = revai.get('monologues', [])
+
+    # Collect longest monologue per speaker
+    best: dict[int, list] = {}  # speaker_num → list of (duration, mono)
+    for mono in monologues:
+        sid = mono['speaker']
+        start, end = monologue_time_range(mono)
+        dur = end - start
+        if dur < min_secs:
+            continue
+        best.setdefault(sid, []).append((dur, start, end, monologue_text(mono)))
+
+    # Sort each speaker's turns by duration descending, keep top_n
+    turns = {}
+    for sid, entries in best.items():
+        entries.sort(reverse=True)
+        turns[sid] = entries[:top_n]
+
+    if not turns:
+        print(f'No turns ≥ {min_secs}s found in {board}/{date}.')
+        return
+
+    print(f'{board}/{date}: {len(turns)} speaker(s) with turns ≥ {min_secs}s\n')
+    for sid in sorted(turns.keys()):
+        dur, start, end, text = turns[sid][0]
+        print(f'  Speaker {sid:2d}  {start:.1f}s–{end:.1f}s ({dur:.1f}s)  "{text[:80]}..."')
+    print()
+    print('Ready-to-run add commands (replace SPEAKER_ID and "Display Name" as needed):')
+    for sid in sorted(turns.keys()):
+        dur, start, end, text = turns[sid][0]
+        print(f'  python3 scripts/extract_speaker_clips.py add {board} {date} SPEAKER_ID {start:.1f} {end:.1f} "Display Name"  # Speaker {sid}')
+    print()
+
+    data    = load_profiles()
+    changed = False
+
+    for sid in sorted(turns.keys()):
+        for dur, start, end, text in turns[sid]:
+            preview = text[:60].replace('\n', ' ')
+            if auto:
+                # In auto mode, skip — we can't assign names without input
+                print(f'  Speaker {sid}: {dur:.1f}s turn skipped in auto mode (needs name assignment)')
+                break
+
+            prompt = f'\nSpeaker {sid} ({dur:.1f}s): "{preview}..."\nAssign to speaker ID (or blank to skip): '
+            answer = input(prompt).strip()
+            if not answer:
+                break
+
+            name_prompt = f'Display name for {answer!r} (blank to keep existing): '
+            name_answer = input(name_prompt).strip()
+
+            if add_clip(data, answer, board, date, start, end, name_answer or answer):
+                changed = True
+            break  # only use the longest turn per speaker
+
+    if changed:
+        save_profiles(data)
+        print(f'\nSaved. Run build_speaker_profiles.py to recompute embeddings.')
+    else:
+        print('\nNothing added.')
+
+
 def manual_mode(args):
     board      = args.board
     date       = args.date
@@ -161,9 +236,19 @@ def manual_mode(args):
         print(f'Saved. Run build_speaker_profiles.py to recompute embeddings.')
 
 
+def resolve_speaker(data: dict, last_name: str) -> tuple[str, str]:
+    """Return (speaker_id, display_name) for a detected last name, matching existing entries if possible."""
+    slug = last_name.lower()
+    for sid, info in data.get('speakers', {}).items():
+        if slug in sid or last_name.lower() in info.get('name', '').lower():
+            return sid, info['name']
+    return slug, last_name
+
+
 def rollcall_mode(args):
     board = args.board
     date  = args.date
+    auto  = getattr(args, 'auto', False)
 
     print(f'Scanning roll call in {board}/{date}...\n')
     try:
@@ -185,18 +270,15 @@ def rollcall_mode(args):
 
     print()
     for last_name, speaker_num, start, end, response_text in candidates:
-        slug = last_name.lower()
-        # Check if we already know this speaker
-        existing_name = ''
-        existing_id   = ''
-        for sid, info in data.get('speakers', {}).items():
-            if slug in sid or last_name.lower() in info.get('name', '').lower():
-                existing_id   = sid
-                existing_name = info['name']
-                break
+        sid, disp_name = resolve_speaker(data, last_name)
 
-        if existing_id:
-            prompt = f'Register clip for {existing_name} (speaker {speaker_num}, {start:.1f}-{end:.1f}s)? [y/N] '
+        if auto:
+            if add_clip(data, sid, board, date, start, end, disp_name):
+                changed = True
+            continue
+
+        if sid in data.get('speakers', {}):
+            prompt = f'Register clip for {disp_name} (speaker {speaker_num}, {start:.1f}-{end:.1f}s)? [y/N] '
         else:
             prompt = f'New speaker "{last_name}" (speaker {speaker_num}, {start:.1f}-{end:.1f}s)? Enter ID or blank to skip: '
 
@@ -204,12 +286,8 @@ def rollcall_mode(args):
         if not answer or answer.lower() == 'n':
             continue
 
-        if existing_id:
-            sid        = existing_id
-            disp_name  = existing_name
-        else:
-            sid        = answer if answer.lower() not in ('y', 'yes') else slug
-            disp_name  = last_name
+        if answer.lower() not in ('y', 'yes') and sid not in data.get('speakers', {}):
+            sid = answer  # user typed a custom ID
 
         if add_clip(data, sid, board, date, start, end, disp_name):
             changed = True
@@ -238,9 +316,17 @@ def main():
     rc = sub.add_parser('rollcall', help='Auto-extract clips from roll call')
     rc.add_argument('board')
     rc.add_argument('date')
+    rc.add_argument('--auto', action='store_true', help='Accept all candidates without prompting')
+
+    # Longest-turn mode
+    lt = sub.add_parser('longturns', help='Show longest speaking turns per speaker for manual assignment')
+    lt.add_argument('board')
+    lt.add_argument('date')
+    lt.add_argument('--min-seconds', type=float, default=5.0, help='Minimum turn length in seconds (default 5)')
+    lt.add_argument('--top-n', type=int, default=1, help='Top N turns per speaker to consider (default 1)')
 
     # Fallback: bare positional args for backwards compat
-    if len(sys.argv) > 1 and sys.argv[1] not in ('add', 'rollcall', '-h', '--help'):
+    if len(sys.argv) > 1 and sys.argv[1] not in ('add', 'rollcall', 'longturns', '-h', '--help'):
         sys.argv.insert(1, 'add')
 
     args = parser.parse_args()
@@ -249,6 +335,8 @@ def main():
         manual_mode(args)
     elif args.mode == 'rollcall':
         rollcall_mode(args)
+    elif args.mode == 'longturns':
+        longest_turns_mode(args)
     else:
         parser.print_help()
 

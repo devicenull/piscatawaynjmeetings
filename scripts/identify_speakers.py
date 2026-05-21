@@ -111,7 +111,9 @@ def compute_embedding(wav_bytes: bytes, embedder) -> list | None:
         tensor   = torch.tensor(waveform).unsqueeze(0).unsqueeze(0)
         with torch.no_grad():
             emb = embedder(tensor)
-        arr = emb.squeeze().numpy()
+        arr = emb.squeeze()
+        if hasattr(arr, 'numpy'):
+            arr = arr.numpy()
         arr = arr / (np.linalg.norm(arr) + 1e-8)
         return arr.tolist()
     except Exception as e:
