@@ -14,6 +14,7 @@ class Meeting extends BaseDBObject
 		'zoom_joinurl',
 		'revai_jobid',
 		'transcript_available',
+		'waveform_available',
 		'last_updated',
 		'bluesky_posts',
 		'metadata',
@@ -353,6 +354,57 @@ class Meeting extends BaseDBObject
 			$meetings[] = new Meeting(['record' => $cur]);
 		}
 
+		return $meetings;
+	}
+
+	// Returns web-root-relative path like /files/council/2026-01-14.peaks.json
+	public function getWaveformPath(): string
+	{
+		$link = $this->getLink('recording');
+		if (!$link) return '';
+		return preg_replace('/\.[^.]+$/', '.peaks.json', $link);
+	}
+
+	public function getWaveformPublicLink(): string
+	{
+		$path = $this->getWaveformPath();
+		if (!$path) return '';
+		$baselink = str_replace('/files/', '', $path);
+		return 'https://files.piscatawaynjmeetings.com/' . $baselink;
+	}
+
+	public static function getAllWithRecordings(): array
+	{
+		global $db;
+		$res = $db->Execute('
+			select *
+			from meeting
+			where recording_available = "yes"
+			order by date desc, type
+		');
+		$meetings = [];
+		foreach ($res as $cur)
+		{
+			$meetings[] = new Meeting(['record' => $cur]);
+		}
+		return $meetings;
+	}
+
+	public static function getWaveformNeeded(): array
+	{
+		global $db;
+		$res = $db->Execute('
+			select *
+			from meeting
+			where recording_available = "yes"
+			  and (waveform_available IS NULL or waveform_available = "no")
+			order by date desc, type
+		');
+		$meetings = [];
+		foreach ($res as $cur)
+		{
+			$meetings[] = new Meeting(['record' => $cur]);
+		}
 		return $meetings;
 	}
 }

@@ -70,3 +70,35 @@ foreach (Meeting::getUntranscribed() as $meeting)
 	$i++;
 	if ($i > 10) die("hit transcribe limit\n");
 }
+
+// Generate waveform peaks for any meeting that has a local recording but no peaks yet
+foreach (Meeting::getWaveformNeeded() as $meeting)
+{
+	$recording = __DIR__.'/../web/'.$meeting->getLink('recording');
+	if (!file_exists($recording))
+	{
+		continue;
+	}
+
+	$peaks_path = __DIR__.'/../web'.$meeting->getWaveformPath();
+	echo "Generating waveform: {$meeting['type']} {$meeting['date']}\n";
+
+	exec(
+		'python3 '.escapeshellarg(__DIR__.'/generate_waveform.py')
+		.' '.escapeshellarg($recording)
+		.' '.escapeshellarg($peaks_path)
+		.' 2>&1',
+		$out,
+		$ret
+	);
+	echo implode("\n", $out)."\n";
+
+	if ($ret === 0)
+	{
+		$meeting->set(['waveform_available' => 'yes']);
+	}
+	else
+	{
+		echo "  ERROR: waveform generation failed for {$meeting['type']} {$meeting['date']}\n";
+	}
+}
