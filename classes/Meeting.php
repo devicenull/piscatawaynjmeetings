@@ -169,7 +169,12 @@ class Meeting extends BaseDBObject
 					$next++;
 				}
 
-				$current_html .= str_pad($label, 14).'<a href="javascript:changePlayerTime('.$timestamp.');">'.$matches[3].'</a>'.$matches[4].$matches[5]."\n";
+				$current_html .=
+					'<div class="ts-line" data-speaker="'.$speaker_num.'">'.
+					'<span class="ts-speaker" title="'.htmlspecialchars($label).'">'.htmlspecialchars($label).'</span>'.
+					'<button class="btn-ts" onclick="changePlayerTime('.$timestamp.')" title="Jump to '.$matches[3].'">'.$matches[3].'</button>'.
+					'<span class="ts-text">'.htmlspecialchars(trim($matches[5])).'</span>'.
+					"</div>\n";
 			}
 			else
 			{
