@@ -299,6 +299,38 @@ def rollcall_mode(args):
         print('\nNothing added.')
 
 
+def preview_mode(args):
+    """Print the .txt transcript with Speaker N labels replaced by identified names."""
+    board = args.board
+    date  = args.date
+
+    txt_path = os.path.join(BASE_DIR, 'web', 'files', board, f'{date}.txt')
+    if not os.path.exists(txt_path):
+        print(f'ERROR: No transcript at {txt_path}')
+        sys.exit(1)
+
+    speakers_path = os.path.join(BASE_DIR, 'output', 'speakers', board, f'{date}.speakers.json')
+    names = {}
+    if os.path.exists(speakers_path):
+        with open(speakers_path) as f:
+            data = json.load(f)
+        for num, info in data.items():
+            if info and 'name' in info:
+                names[int(num)] = f"{info['name']} ({info['confidence']:.2f})"
+    else:
+        print(f'NOTE: No speakers.json at {speakers_path} — showing raw labels\n')
+
+    with open(txt_path) as f:
+        for line in f:
+            m = re.match(r'(Speaker (\d+))\s+(\d{2}:\d{2}:\d{2})\s+(.*)', line.rstrip())
+            if m:
+                num  = int(m.group(2))
+                label = names.get(num, m.group(1))
+                print(f'{label:<35} {m.group(3)}  {m.group(4)}')
+            else:
+                print(line, end='')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub    = parser.add_subparsers(dest='mode')
@@ -325,8 +357,13 @@ def main():
     lt.add_argument('--min-seconds', type=float, default=5.0, help='Minimum turn length in seconds (default 5)')
     lt.add_argument('--top-n', type=int, default=1, help='Top N turns per speaker to consider (default 1)')
 
+    # Preview mode
+    pv = sub.add_parser('preview', help='Show transcript with identified speaker names')
+    pv.add_argument('board')
+    pv.add_argument('date')
+
     # Fallback: bare positional args for backwards compat
-    if len(sys.argv) > 1 and sys.argv[1] not in ('add', 'rollcall', 'longturns', '-h', '--help'):
+    if len(sys.argv) > 1 and sys.argv[1] not in ('add', 'rollcall', 'longturns', 'preview', '-h', '--help'):
         sys.argv.insert(1, 'add')
 
     args = parser.parse_args()
@@ -337,6 +374,8 @@ def main():
         rollcall_mode(args)
     elif args.mode == 'longturns':
         longest_turns_mode(args)
+    elif args.mode == 'preview':
+        preview_mode(args)
     else:
         parser.print_help()
 

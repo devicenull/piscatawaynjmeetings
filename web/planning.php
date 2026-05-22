@@ -16,6 +16,8 @@ $vars = [
 			['name' => 'Alex Adkins',             'title' => 'Class IV',                         'term' => '01/01/24–12/31/27'],
 			['name' => 'E. Basheer Ahammed',      'title' => '',                                 'term' => '01/01/25–12/31/28'],
 			['name' => 'Philip Echevarria',       'title' => 'Alternate #1',                     'term' => '01/01/25–12/31/26'],
+			['name' => 'Laura Buckley',            'title' => 'Recording Secretary',              'term' => ''],
+			['name' => 'Thomas W. Barlow',         'title' => 'Planning Board Attorney',          'term' => ''],
 		],
 	],
 	'meetings' => Meeting::getUpcomingAndOlderByType('planning'),

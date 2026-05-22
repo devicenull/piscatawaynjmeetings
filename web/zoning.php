@@ -15,6 +15,8 @@ $vars = [
 			['name' => 'Alternate #1: VACANT', 'title' => '',                  'term' => ''],
 			['name' => 'William Mitterando',   'title' => 'Alternate #2',      'term' => '01/01/25–12/31/26'],
 			['name' => 'Waqar Ali',            'title' => 'Alternate #3',      'term' => '01/01/25–12/31/26'],
+			['name' => 'Laura Buckley',        'title' => 'Recording Secretary', 'term' => ''],
+			['name' => 'James Kinneally, III Esq.', 'title' => 'Zoning Board Attorney', 'term' => ''],
 		],
 	],
 	'meetings' => Meeting::getUpcomingAndOlderByType('zoning'),
