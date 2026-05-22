@@ -2,7 +2,8 @@
 """
 Identify speakers in a meeting transcript using pyannote embeddings.
 
-Reads:  web/files/{board}/{date}.revai.json   - Rev.ai JSON with word-level speaker IDs
+Reads:  web/files/{board}/{date}.revai.json   - Rev.ai JSON with word-level speaker IDs (preferred)
+        web/files/{board}/{date}.txt          - Plain transcript (fallback; uses line timestamps)
         web/files/{board}/{date}.mp3/.m4a     - Meeting recording
         data/speakers/profiles.json           - Known speaker profiles with embeddings
 
@@ -158,6 +159,31 @@ def parse_revai_segments(revai: dict) -> dict[int, list[tuple[float, float]]]:
     return segments
 
 
+def parse_txt_segments(txt_path: str) -> dict[int, list[tuple[float, float]]]:
+    """Return {speaker_num: [(start, end), ...]} from a plain .txt transcript.
+
+    Uses each line's timestamp as segment start; end = next line's timestamp.
+    The last segment gets a 60s window (ffmpeg clips at EOF regardless).
+    Boundary imprecision (~1 word bleed) is acceptable for voice embeddings.
+    """
+    import re
+    lines = []
+    with open(txt_path) as f:
+        for line in f:
+            m = re.match(r'Speaker\s+(\d+)\s+(\d+):(\d+):(\d+)', line)
+            if m:
+                spk  = int(m.group(1))
+                secs = int(m.group(2)) * 3600 + int(m.group(3)) * 60 + int(m.group(4))
+                lines.append((spk, secs))
+
+    segments: dict[int, list[tuple[float, float]]] = {}
+    for i, (spk, start) in enumerate(lines):
+        end = lines[i + 1][1] if i + 1 < len(lines) else start + 60
+        if end > start:
+            segments.setdefault(spk, []).append((float(start), float(end)))
+    return segments
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('board')
@@ -170,9 +196,7 @@ def main():
     board, date = args.board, args.date
 
     revai_path = os.path.join(BASE_DIR, 'web', 'files', board, f'{date}.revai.json')
-    if not os.path.exists(revai_path):
-        print(f'ERROR: {revai_path} not found. Run fetch_revai_json.php first.')
-        sys.exit(1)
+    txt_path   = os.path.join(BASE_DIR, 'web', 'files', board, f'{date}.txt')
 
     out_dir       = os.path.join(BASE_DIR, 'output', 'speakers', board)
     os.makedirs(out_dir, exist_ok=True)
@@ -189,13 +213,22 @@ def main():
         print('HuggingFace token not found.')
         sys.exit(1)
 
-    with open(revai_path) as f:
-        revai = json.load(f)
+    rec = recording_path(board, date)
 
-    rec      = recording_path(board, date)
-    segments = parse_revai_segments(revai)
+    if os.path.exists(revai_path):
+        with open(revai_path) as f:
+            revai = json.load(f)
+        segments = parse_revai_segments(revai)
+        source   = 'revai'
+    elif os.path.exists(txt_path):
+        segments = parse_txt_segments(txt_path)
+        source   = 'txt'
+        print(f'NOTE: No .revai.json found, using .txt timestamps (lower boundary precision)')
+    else:
+        print(f'ERROR: No transcript found for {board}/{date}')
+        sys.exit(1)
 
-    print(f'{board}/{date}: {len(segments)} speaker(s), {len(known)} known profile(s)')
+    print(f'{board}/{date}: {len(segments)} speaker(s), {len(known)} known profile(s) [{source}]')
     print('Loading pyannote model...')
     embedder = load_model(token)
     print('Model ready.\n')

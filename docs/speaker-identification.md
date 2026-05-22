@@ -43,7 +43,7 @@ The pyannote embedding model is gated. You need to:
 
 ## Regular workflow: identifying a new meeting
 
-### Step 1 — make sure the .revai.json exists
+### Step 1 — make sure the .revai.json exists (optional but preferred)
 
 New meetings get their JSON saved automatically when `monitor_revai_progress.php` runs.
 For older meetings, backfill while the Rev.ai job is still live (30-day retention):
@@ -51,6 +51,10 @@ For older meetings, backfill while the Rev.ai job is still live (30-day retentio
 ```bash
 php scripts/fetch_revai_json.php
 ```
+
+If the job has expired, identification still works using `.txt` timestamps as a fallback
+(see **Older meetings without .revai.json** below). Scores will be slightly lower because
+turn boundaries are whole-second rather than word-level.
 
 ### Step 2 — run identification
 
@@ -62,6 +66,8 @@ The output file is written to `output/speakers/zoning/2026-04-23.speakers.json`.
 
 Check the results. Known regulars (Cahill, Rahi, Kinneally, Laura the clerk) should
 match confidently (≥ 0.80). Board members who only speak briefly score lower.
+
+For `.txt`-only meetings, threshold 0.60 may be needed for regulars who narrowly miss 0.70.
 
 ### Step 3 — deploy
 
@@ -99,19 +105,32 @@ venv/bin/python scripts/extract_speaker_clips.py add zoning 2026-04-23 cahill 11
 
 Speaker IDs in use:
 
-| ID           | Name                    | Role          |
-|--------------|-------------------------|---------------|
-| `cahill`     | Shawn Cahill (Chair)    | Chair         |
-| `laura`      | Laura (Clerk)           | Clerk         |
-| `kinneally`  | Jim Kinneally (Atty)    | Board Attorney|
-| `rahi`       | Jonathan Rahi (Planner) | Planner       |
-| `weisman`    | Steven Weisman          | Member        |
-| `tillery`    | Jeffrey Tillery         | Member        |
-| `regio`      | Roy O'Reggio            | Member        |
-| `mitterando` | William Mitterando      | Member        |
-| `patel`      | Kalpesh Patel           | Member        |
-| `ali`        | Waqar Ali               | Alternate     |
-| `blount`     | Rodney Blount           | Member        |
+**Zoning Board:**
+
+| ID           | Name                              | Role          |
+|--------------|-----------------------------------|---------------|
+| `cahill`     | Shawn Cahill (Chair)              | Chair         |
+| `laura`      | Laura Buckley (Clerk)             | Clerk         |
+| `kinneally`  | James Kinneally (Zoning Atty)     | Board Attorney|
+| `rahi`       | Jonathan Rahi (Planner)           | Planner       |
+| `arch`       | Tim Arch (Atty)                   | Applicant Atty|
+| `weisman`    | Steven Weisman                    | Member        |
+| `tillery`    | Jeffrey Tillery                   | Member        |
+| `regio`      | Roy O'Reggio                      | Member        |
+| `mitterando` | William Mitterando                | Member        |
+| `patel`      | Kalpesh Patel                     | Member        |
+| `ali`        | Waqar Ali                         | Alternate     |
+| `blount`     | Rodney Blount                     | Member        |
+
+**Planning Board:**
+
+| ID             | Name                              | Role          |
+|----------------|-----------------------------------|---------------|
+| `brenda_smith` | Brenda Smith (Chair)              | Chair         |
+| `laura`        | Laura Buckley (Clerk)             | Clerk (shared)|
+| `barlow`       | Thomas Barlow (Planning Atty)     | Board Attorney|
+| `arch`         | Tim Arch (Atty)                   | Applicant Atty|
+| `kenney`       | Rev. Henry Kenney                 | Member        |
 
 ### Auto-extracting roll call clips
 
@@ -148,7 +167,7 @@ venv/bin/python scripts/build_speaker_profiles.py --speaker mitterando
 
 ## Backfilling existing transcripts
 
-To batch-run identification across all meetings that have a `.revai.json`:
+If `.revai.json` exists (last ~9 meetings), use it for best accuracy:
 
 ```bash
 for f in web/files/zoning/*.revai.json; do
@@ -157,6 +176,27 @@ for f in web/files/zoning/*.revai.json; do
     venv/bin/python scripts/identify_speakers.py zoning "$date" --threshold 0.70
 done
 ```
+
+For older meetings (`.txt` only — 116 zoning meetings going back to 2020), the script
+falls back to `.txt` timestamps automatically. Use a slightly lower threshold:
+
+```bash
+for f in web/files/zoning/*.txt; do
+    date=$(basename "$f" .txt)
+    [ -f "output/speakers/zoning/${date}.speakers.json" ] && continue   # already done
+    echo "=== $date ==="
+    venv/bin/python scripts/identify_speakers.py zoning "$date" --threshold 0.60
+done
+```
+
+## Older meetings without .revai.json
+
+`identify_speakers.py` falls back to the `.txt` transcript when no `.revai.json` exists.
+It parses the `Speaker N  HH:MM:SS  text` lines and uses each line's timestamp as the
+segment start, with the next line's timestamp as the end. Boundary precision is ~1 second
+(vs word-level with `.revai.json`), which is negligible for long turns but may slightly
+reduce scores for short turns. Regulars who score 0.80+ on `.revai.json` typically score
+0.70–0.75 on `.txt`. Use `--threshold 0.60` if known regulars are not matching.
 
 ## Troubleshooting
 
