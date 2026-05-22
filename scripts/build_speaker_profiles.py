@@ -10,6 +10,7 @@ Usage:
     python3 build_speaker_profiles.py [--speaker SPEAKER_ID]
 """
 import argparse
+import ctypes
 import json
 import os
 import subprocess
@@ -18,6 +19,12 @@ import tempfile
 import warnings
 
 warnings.filterwarnings('ignore')
+
+# Must run before torch import so the UR level-zero adapter can enumerate the GPU
+try:
+    ctypes.CDLL('libze_loader.so.1').zeInit(1)
+except OSError:
+    pass
 
 BASE_DIR   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOKEN_FILE = os.path.join(BASE_DIR, 'data', 'hf_token')
@@ -45,10 +52,13 @@ def extract_clip(recording_path: str, start: float, end: float) -> bytes:
 
 
 def load_model(token: str):
+    import torch
     from pyannote.audio import Model
     from pyannote.audio.pipelines.speaker_verification import PretrainedSpeakerEmbedding
+    device = torch.device('xpu') if torch.xpu.is_available() else torch.device('cpu')
     model = Model.from_pretrained('pyannote/embedding', use_auth_token=token)
-    return PretrainedSpeakerEmbedding(embedding=model)
+    model = model.to(device)
+    return PretrainedSpeakerEmbedding(embedding=model, device=device)
 
 
 def embed_wav_bytes(wav_bytes: bytes, embedder) -> list:

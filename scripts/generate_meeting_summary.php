@@ -47,7 +47,8 @@ if (!file_exists($transcript_path)) {
 
 $output_dir    = __DIR__.'/../output';
 // Include the parent directory name (meeting type) to avoid cross-type collisions
-$sections_name = basename(dirname($transcript_path)).'-'.basename(preg_replace('/\.txt$/', '.sections.json', $transcript_path));
+$meeting_type  = basename(dirname($transcript_path));
+$sections_name = $meeting_type.'-'.basename(preg_replace('/\.txt$/', '.sections.json', $transcript_path));
 $sections_path = $output_dir.'/'.$sections_name;
 $transcript    = file_get_contents($transcript_path);
 
@@ -55,7 +56,36 @@ echo "Transcript: $transcript_path\n";
 echo "Output:     $sections_path\n";
 echo "Size:       ".number_format(strlen($transcript))." bytes\n\n";
 
-$prompt = <<<PROMPT
+if ($meeting_type === 'planning') {
+	$prompt = <<<PROMPT
+Analyze this transcript from a Piscataway, NJ Planning Board public meeting.
+
+Transcript format per line:
+  Speaker N    HH:MM:SS    spoken text
+
+Identify the distinct sections/phases of the meeting. Typical phases include:
+- Meeting opening, roll call, Pledge of Allegiance
+- Resolutions to memorialize prior actions
+- Adoption of minutes
+- Agenda adjustments and postponements (list postponed cases if mentioned)
+- Individual case hearings — for each: include the case ID and applicant name in the title, summarize the application (site plan, subdivision, use variance, redevelopment, etc.), and state the vote result
+- Master plan or ordinance review items (if any)
+- Adjournment
+
+Return ONLY a JSON object. For each section provide:
+  title       — Short descriptive title; for case hearings include the case ID (e.g. "25-PB-07") and applicant name
+  start       — Timestamp of the first line in this section (HH:MM:SS)
+  end         — Timestamp of the last line in this section (HH:MM:SS)
+  description — 1–3 sentences: what the application was, notable testimony, and vote result if applicable
+  cases       — Array of case IDs mentioned in this section (format: "25-PB-07"); empty array if none
+
+Sections must be listed in chronological order and must cover the full meeting from beginning to end with no gaps.
+
+TRANSCRIPT:
+$transcript
+PROMPT;
+} else {
+	$prompt = <<<PROMPT
 Analyze this transcript from a Piscataway, NJ Zoning Board of Adjustment public meeting.
 
 Transcript format per line:
@@ -80,6 +110,7 @@ Sections must be listed in chronological order and must cover the full meeting f
 TRANSCRIPT:
 $transcript
 PROMPT;
+}
 
 $schema = json_encode([
 	'type'       => 'object',

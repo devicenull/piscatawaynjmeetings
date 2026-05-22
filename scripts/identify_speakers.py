@@ -13,6 +13,7 @@ Usage:
     python3 identify_speakers.py zoning 2026-04-23 [--threshold 0.75] [--dry-run]
 """
 import argparse
+import ctypes
 import json
 import os
 import subprocess
@@ -21,6 +22,12 @@ import tempfile
 import warnings
 
 warnings.filterwarnings('ignore')
+
+# Must run before torch import so the UR level-zero adapter can enumerate the GPU
+try:
+    ctypes.CDLL('libze_loader.so.1').zeInit(1)
+except OSError:
+    pass
 
 BASE_DIR   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOKEN_FILE = os.path.join(BASE_DIR, 'data', 'hf_token')
@@ -128,10 +135,13 @@ def cosine_similarity(a: list, b: list) -> float:
 
 
 def load_model(token: str):
+    import torch
     from pyannote.audio import Model
     from pyannote.audio.pipelines.speaker_verification import PretrainedSpeakerEmbedding
+    device = torch.device('xpu') if torch.xpu.is_available() else torch.device('cpu')
     model = Model.from_pretrained('pyannote/embedding', use_auth_token=token)
-    return PretrainedSpeakerEmbedding(embedding=model)
+    model = model.to(device)
+    return PretrainedSpeakerEmbedding(embedding=model, device=device)
 
 
 def parse_revai_segments(revai: dict) -> dict[int, list[tuple[float, float]]]:
