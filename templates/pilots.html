@@ -1,0 +1,187 @@
+{% extends 'layout.html' %}
+
+{% block title %}Payments in Lieu of Taxes (PILOTs) — Piscataway, NJ{% endblock %}
+
+{% block metadescripion %}PILOT agreements in Piscataway, NJ. Tracks annual payments, assessed values, and tax savings for each long-term tax exemption agreement from 2017 to present.{% endblock %}
+
+{% block maincontent %}
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+
+<div class="board-header">
+	<h1>Payments in Lieu of Taxes (PILOTs)</h1>
+</div>
+
+<p style="color:#555; margin-bottom:1.25rem">
+	PILOT agreements allow developers to pay a negotiated annual fee instead of standard property taxes, typically for 30 years.
+	The municipality keeps 100% of the PILOT payment; school and county taxes are not collected on these properties.
+	Data is from the User Friendly Budget filings (2017&ndash;present); 2021 data is unavailable because the 2022 budget used a legacy format with no per-project detail.
+</p>
+
+<p class="section-heading">{{ latest_year }} Summary</p>
+<div class="budget-cards">
+	<div class="budget-card">
+		<div class="budget-card-label">Tax Benefit to Developers</div>
+		<div class="budget-card-value" style="color:#cc0000">${{ ((latest_taxes_full - latest_billing) / 1000000)|number_format(1) }}M</div>
+		<div class="budget-card-sub">taxes avoided vs. full rate</div>
+	</div>
+	<div class="budget-card">
+		<div class="budget-card-label">Total Assessed Value</div>
+		<div class="budget-card-value">${{ (latest_assessed / 1000000000)|number_format(2) }}B</div>
+		<div class="budget-card-sub" title="${{ latest_assessed|number_format(0, '.', ',') }}">under PILOT agreements</div>
+	</div>
+	<div class="budget-card">
+		<div class="budget-card-label">Total PILOT Revenue</div>
+		<div class="budget-card-value">${{ (latest_billing / 1000000)|number_format(1) }}M</div>
+		<div class="budget-card-sub" title="${{ latest_billing|number_format(0, '.', ',') }}">paid to municipality</div>
+	</div>
+	<div class="budget-card">
+		<div class="budget-card-label">Active Agreements</div>
+		<div class="budget-card-value">{{ active_count }}</div>
+		<div class="budget-card-sub">projects with {{ latest_year }} billing</div>
+	</div>
+</div>
+
+<p class="section-heading mt-4">Annual PILOT Revenue</p>
+<p style="font-size:.82rem; color:#777; margin-top:-.5rem; margin-bottom:1rem">
+	Actual revenue collected by the municipality each year. Anticipated figures are from the adopted budget; 2021 actual came from the 2022 legacy budget.
+	<span style="color:#cc0000">Tax Revenue Foregone</span> = taxes that would have been owed at full rate minus PILOT billing (the annual cost to school and county taxpayers).
+</p>
+<div id="chart-revenue" style="height:240px; margin-bottom:2rem"></div>
+
+<p class="section-heading">Billing by Project</p>
+<div id="chart-stacked" style="height:300px; margin-bottom:2rem"></div>
+
+<p class="section-heading">All Projects</p>
+<table class="table table-sm pnj-table" id="pilots-table">
+	<caption class="sr-only">PILOT agreements in Piscataway, NJ</caption>
+	<thead>
+		<tr>
+			<th>Project</th>
+			<th>Type</th>
+			<th>Agreement</th>
+			{% for year in data_years %}
+			<th class="text-right year-col">{{ year }}</th>
+			{% endfor %}
+			<th class="text-right">Assessed Value</th>
+			<th class="text-right">Full Tax</th>
+			<th class="text-right">Tax Savings</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for p in projects %}
+		{% set latestBilling = p.payments[latest_year] ?? null %}
+		{% set latestAssessed = p.assessed[latest_year] ?? null %}
+		{% set latestFull = p.taxes_full[latest_year] ?? null %}
+		<tr class="{{ latestBilling ? '' : 'text-muted pilot-inactive' }}">
+			<td>
+				<strong>{{ p.name }}</strong>
+				{% if p.raw_name ?? false %}<br><small class="text-muted">{{ p.raw_name }}</small>{% endif %}
+			</td>
+			<td class="text-nowrap">{{ p.type }}</td>
+			<td class="text-nowrap">
+				{% if p.start_date %}
+					{{ p.start_date|date('n/Y') }}&ndash;{{ p.end_date|date('n/Y') }}
+				{% else %}
+					&#8212;
+				{% endif %}
+			</td>
+			{% for year in data_years %}
+			<td class="text-right year-col">
+				{% if p.payments[year] is defined %}
+					<span title="{{ p.payments[year]|number_format(2) }}">${{ (p.payments[year] / 1000)|number_format(0) }}K</span>
+				{% else %}
+					&#8212;
+				{% endif %}
+			</td>
+			{% endfor %}
+			<td class="text-right">
+				{% if latestAssessed %}<span title="${{ latestAssessed|number_format(0, '.', ',') }}">${{ (latestAssessed / 1000000)|number_format(1) }}M</span>{% else %}&#8212;{% endif %}
+			</td>
+			<td class="text-right">
+				{% if latestFull %}<span title="${{ latestFull|number_format(2) }}">${{ (latestFull / 1000)|number_format(0) }}K</span>{% else %}&#8212;{% endif %}
+			</td>
+			<td class="text-right {% if latestBilling and latestFull %}pilot-savings{% endif %}">
+				{% if latestBilling and latestFull %}
+					<span title="${{ (latestFull - latestBilling)|number_format(2) }} avoided">${{ ((latestFull - latestBilling) / 1000)|number_format(0) }}K</span>
+				{% else %}
+					&#8212;
+				{% endif %}
+			</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+<p style="font-size:.8rem; color:#888">
+	Billing shown in thousands (K). &ldquo;Full Tax&rdquo; = taxes that would be owed at the combined rate without the agreement.
+	&ldquo;Tax Savings&rdquo; = Full Tax minus PILOT billing — the annual benefit to the developer.
+	Agreement dates from the 2025 UFB filing; some projects show 2022 agreement dates despite earlier payments (agreements were restructured).
+	2021 per-project data unavailable (legacy budget format). Data sourced from NJ User Friendly Budget filings.
+</p>
+
+<style>
+	.budget-cards { display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; }
+	.budget-card {
+		flex:1 1 200px; max-width:280px;
+		background:#fff; border:1px solid #e0e0e0;
+		border-top:4px solid var(--pnj-yellow);
+		border-radius:4px; padding:.9rem 1.1rem;
+	}
+	.budget-card-label { font-size:.75rem; text-transform:uppercase; letter-spacing:.06em; color:#666; }
+	.budget-card-value { font-size:2rem; font-weight:700; line-height:1.1; margin:.2rem 0 .1rem; color:var(--pnj-black); }
+	.budget-card-sub { font-size:.73rem; color:#999; }
+	.pilot-inactive td { color: #aaa; }
+	.pilot-savings { color: #c00; font-weight: 600; }
+	.year-col { min-width: 4.5rem; }
+</style>
+
+<script>
+(function () {
+	var REV_YEARS    = {{ chart_rev_years|raw }};
+	var REALIZED     = {{ chart_realized|raw }};
+	var ANTICIPATED  = {{ chart_anticipated|raw }};
+	var MISSED       = {{ chart_missed|raw }};
+	var STACK_YEARS  = {{ chart_stacked_years|raw }};
+	var STACK_SERIES = {{ chart_stacked|raw }};
+
+	var sharedOpts = {
+		chart: { backgroundColor: 'transparent', style: { fontFamily: 'inherit' }, animation: false },
+		credits: { enabled: false },
+		plotOptions: { series: { marker: { enabled: true, radius: 3 } } }
+	};
+
+	Highcharts.chart('chart-revenue', Highcharts.merge(sharedOpts, {
+		chart: { type: 'line' },
+		title: { text: 'Total Annual PILOT Revenue ($M)', style: { fontSize: '1rem', fontWeight: '700' } },
+		xAxis: { categories: REV_YEARS, crosshair: true },
+		yAxis: { title: { text: 'Millions ($)' } },
+		tooltip: { shared: true, valueSuffix: 'M', valueDecimals: 2 },
+		legend: { enabled: true },
+		series: [
+			{ name: 'Realized',    data: REALIZED,    color: '#111111', lineWidth: 2,
+			  marker: { symbol: 'circle' } },
+			{ name: 'Anticipated', data: ANTICIPATED, color: '#F5C000', lineWidth: 2,
+			  dashStyle: 'ShortDash', marker: { symbol: 'diamond' } },
+			{ name: 'Tax Revenue Foregone', data: MISSED, color: '#cc0000', lineWidth: 2,
+			  dashStyle: 'ShortDot', marker: { symbol: 'triangle' } }
+		]
+	}));
+
+	STACK_SERIES.forEach(function (s) {
+		s.type = 'column';
+		delete s.marker;
+	});
+	Highcharts.chart('chart-stacked', Highcharts.merge(sharedOpts, {
+		chart: { type: 'column' },
+		title: { text: 'Annual PILOT Billing by Project ($M)', style: { fontSize: '1rem', fontWeight: '700' } },
+		xAxis: { categories: STACK_YEARS, crosshair: true },
+		yAxis: { title: { text: 'Millions ($)' }, min: 0, stackLabels: { enabled: false } },
+		tooltip: { shared: true, valueSuffix: 'M', valueDecimals: 3 },
+		legend: { enabled: true, layout: 'horizontal', maxHeight: 80 },
+		plotOptions: { column: { stacking: 'normal', borderWidth: 0 } },
+		series: STACK_SERIES
+	}));
+})();
+</script>
+
+{% endblock %}
