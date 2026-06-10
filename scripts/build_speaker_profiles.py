@@ -103,12 +103,25 @@ def main():
         print('HuggingFace token not found. Set HF_TOKEN or populate data/hf_token.')
         sys.exit(1)
 
+    speakers = data.get('speakers', {})
+    changed  = False
+
+    if args.speaker:
+        # Explicit target: always rebuild, even if embedding already exists
+        needs_rebuild = [args.speaker] if args.speaker in speakers else []
+    else:
+        needs_rebuild = [
+            sid for sid, info in speakers.items()
+            if info.get('clips') and info.get('embedding') is None
+        ]
+    if not needs_rebuild:
+        print('All embeddings up to date, nothing to do.')
+        sys.exit(0)
+
+    print(f'{len(needs_rebuild)} speaker(s) need rebuilding: {", ".join(needs_rebuild)}')
     print('Loading pyannote embedding model...')
     embedder = load_model(token)
     print('Model ready.')
-
-    speakers = data.get('speakers', {})
-    changed  = False
 
     for sid, info in speakers.items():
         if args.speaker and sid != args.speaker:
@@ -117,6 +130,9 @@ def main():
         clips = info.get('clips', [])
         if not clips:
             print(f'  {sid}: no clips, skipping')
+            continue
+
+        if info.get('embedding') is not None and sid not in needs_rebuild:
             continue
 
         print(f'  {sid} ({info["name"]}): {len(clips)} clip(s)...')

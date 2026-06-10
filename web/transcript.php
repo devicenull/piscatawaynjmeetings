@@ -14,8 +14,25 @@ $physical_location = [
 	],
 ];
 
+$known_speakers = [];
+$has_revai_json = false;
+if (hasEditAuth()) {
+	$profiles_path = __DIR__.'/../data/speakers/profiles.json';
+	if (file_exists($profiles_path)) {
+		$profiles = json_decode(file_get_contents($profiles_path), true) ?? [];
+		foreach ($profiles['speakers'] ?? [] as $id => $info) {
+			$known_speakers[] = ['id' => $id, 'name' => $info['name']];
+		}
+		usort($known_speakers, fn($a, $b) => strcmp($a['name'], $b['name']));
+	}
+	$date = explode(' ', $meeting['date'])[0];
+	$has_revai_json = file_exists(__DIR__.'/../web/files/'.$meeting['type'].'/'.$date.'.revai.json');
+}
+
 $vars = [
-	'meeting' => $meeting,
+	'meeting'        => $meeting,
+	'known_speakers' => $known_speakers,
+	'has_revai_json' => $has_revai_json,
 	'json_ld' => json_encode([
 		'@context'            => 'https://schema.org',
 		'@type'               => 'Event',

@@ -28,6 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`/scripts`** - Automated maintenance scripts (meetings, tweets, archive, transcription)
 - **`/web/files`** - Uploaded/served content (minutes, recordings, bids, newsletters, etc.)
 - **`/data`** - Local SQLite databases for Datasette (CAD calls, etc.)
+- **`/docs`** - Technical documentation for subsystems (see below)
 - **`/cad_extract`** - CAD log parsing utilities (Python/shell)
 - **`/vendor`** - Composer dependencies
 
@@ -260,6 +261,16 @@ The budget page shows Highcharts trend charts (taxable valuation, total debt, st
 - **Date timezone handling**: Strftime used inconsistently; prefer DateTime class for new code
 - **Budget debt 2022**: No reliable source; debt statement is scanned, budget extraction is partial. Stays NULL.
 - **Budget taxable 2013, 2015**: No usable financial statement for those years; taxable valuation stays NULL.
+
+## Documentation (`/docs`)
+
+Detailed technical documentation for complex subsystems lives in `/docs/`. Always read the
+relevant doc before working on those systems — it covers prerequisites, workflows, and
+troubleshooting that are not easily derivable from the code.
+
+| File | Covers |
+|------|--------|
+| `docs/speaker-identification.md` | Full pipeline: Rev.ai JSON → pyannote embeddings → `identify_speakers.py` → transcript display. Includes Python env setup, HuggingFace token requirements, clip quality guidance, backfill workflows, and troubleshooting. |
 
 ## Testing & QA
 

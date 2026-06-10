@@ -211,6 +211,53 @@
 		}
 		.btn-ts:hover { background: #0d6efd; color: #fff; border-color: #0d6efd; }
 		.ts-text { color: #222; word-break: break-word; }
+
+		/* Admin speaker-edit affordance */
+		.edit-auth .ts-speaker { cursor: pointer; }
+		.edit-auth .ts-speaker:hover::after {
+			content: ' ✎';
+			opacity: .45;
+			font-style: normal;
+			font-weight: normal;
+		}
+		.speaker-edit-form {
+			display: flex;
+			align-items: center;
+			gap: .3rem;
+			grid-column: 1;
+		}
+		.speaker-edit-select {
+			font-size: .78rem;
+			padding: .15rem .3rem;
+			border: 1px solid #86b7fe;
+			border-radius: 4px;
+			max-width: 240px;
+		}
+		.speaker-edit-select:focus { border-color: #0d6efd; outline: none; box-shadow: 0 0 0 2px rgba(13,110,253,.2); }
+		.speaker-edit-input {
+			width: 180px;
+			font-size: .78rem;
+			padding: .15rem .3rem;
+			border: 1px solid #86b7fe;
+			border-radius: 4px;
+			outline: none;
+		}
+		.speaker-edit-input:focus { border-color: #0d6efd; box-shadow: 0 0 0 2px rgba(13,110,253,.2); }
+		.speaker-edit-btn {
+			background: none;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			padding: .1rem .35rem;
+			font-size: .8rem;
+			cursor: pointer;
+			line-height: 1.3;
+		}
+		.speaker-edit-btn.save  { border-color: #198754; color: #198754; }
+		.speaker-edit-btn.save:hover  { background: #198754; color: #fff; }
+		.speaker-edit-btn.cancel { border-color: #dc3545; color: #dc3545; }
+		.speaker-edit-btn.cancel:hover { background: #dc3545; color: #fff; }
+		.speaker-clip-row { display: flex; align-items: center; gap: .25rem; font-size: .72rem; color: #666; }
+
 		@media (max-width: 575px) {
 			.ts-line { display: block; border-left-width: 2px; padding: .25rem .4rem; }
 			.ts-speaker { display: inline; }
@@ -381,6 +428,7 @@
 		});
 	</script>
 
+	<div id="transcript-root"{% if has_edit_auth %} class="edit-auth"{% endif %}>
 	<h1>Transcript for Piscataway {{ meeting.type|capitalize }} meeting on {{ meeting.date|date('F j Y') }}</h1>
 
 	<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 mt-2" data-nosnippet>
@@ -476,4 +524,180 @@
 		<a href="{{ meeting.getPublicLink('minutes') }}">Minutes for Piscataway {{ meeting.type|capitalize }} meeting on {{ meeting.date|date('F j Y') }}</a>
 	{% endif %}
 	<br><br>
+	</div>{# /transcript-root #}
+
+	{% if has_edit_auth %}
+	<script>
+	(function() {
+		var MEETING_ID    = {{ meeting.MEETINGID }};
+		var HAS_REVAI     = {{ has_revai_json ? 'true' : 'false' }};
+		var knownSpeakers = {{ known_speakers|json_encode|raw }};
+
+		function slugify(name) {
+			return name.replace(/\s*\(.*?\)\s*/g, ' ')
+				.trim().toLowerCase()
+				.replace(/[^a-z0-9]+/g, '_')
+				.replace(/^_|_$/g, '');
+		}
+
+		function closeAllForms() {
+			document.querySelectorAll('#transcript-root .ts-speaker.editing').forEach(function(el) {
+				el.innerHTML = '';
+				el.textContent = el.dataset.originalName || '';
+				el.classList.remove('editing');
+				delete el.dataset.originalName;
+			});
+		}
+
+		function openEditForm(labelEl) {
+			if (labelEl.classList.contains('editing')) return;
+			closeAllForms();
+
+			var speakerNum  = labelEl.closest('.ts-line').dataset.speaker;
+			var currentName = labelEl.textContent.trim();
+			labelEl.dataset.originalName = currentName;
+			labelEl.classList.add('editing');
+
+			var form = document.createElement('div');
+			form.className = 'speaker-edit-form';
+
+			// Dropdown of known speakers
+			var select = document.createElement('select');
+			select.className = 'speaker-edit-select';
+			var placeholder = new Option('— assign speaker —', '');
+			placeholder.disabled = true;
+			placeholder.selected = true;
+			select.appendChild(placeholder);
+			knownSpeakers.forEach(function(s) {
+				select.appendChild(new Option(s.name, s.id));
+			});
+			var divider = new Option('─────────────', '__sep__');
+			divider.disabled = true;
+			select.appendChild(divider);
+			select.appendChild(new Option('+ Add new person…', '__new__'));
+
+			// New-person name input (hidden until needed)
+			var input = document.createElement('input');
+			input.type        = 'text';
+			input.className   = 'speaker-edit-input';
+			input.placeholder = 'Display name';
+			input.style.display = 'none';
+
+			var saveBtn = document.createElement('button');
+			saveBtn.className   = 'speaker-edit-btn save';
+			saveBtn.textContent = '✓';
+			saveBtn.title       = 'Save';
+			saveBtn.style.display = 'none';
+
+			var cancelBtn = document.createElement('button');
+			cancelBtn.className   = 'speaker-edit-btn cancel';
+			cancelBtn.textContent = '✗';
+			cancelBtn.title       = 'Cancel';
+
+			form.appendChild(select);
+			form.appendChild(input);
+			form.appendChild(saveBtn);
+			form.appendChild(cancelBtn);
+
+			// Voice clip checkbox
+			var clipCb = null;
+			if (HAS_REVAI) {
+				var clipRow = document.createElement('div');
+				clipRow.className = 'speaker-clip-row';
+				clipCb = document.createElement('input');
+				clipCb.type    = 'checkbox';
+				clipCb.id      = 'reg-clip-' + speakerNum;
+				clipCb.checked = true;
+				var clipLbl = document.createElement('label');
+				clipLbl.htmlFor     = clipCb.id;
+				clipLbl.textContent = 'Register voice clip';
+				clipRow.appendChild(clipCb);
+				clipRow.appendChild(clipLbl);
+				form.appendChild(clipRow);
+			}
+
+			labelEl.innerHTML = '';
+			labelEl.appendChild(form);
+			select.focus();
+
+			function restore() {
+				labelEl.innerHTML = '';
+				labelEl.textContent = currentName;
+				labelEl.classList.remove('editing');
+				delete labelEl.dataset.originalName;
+			}
+
+			function doSave(displayName, speakerId) {
+				if (!displayName || !speakerId) return;
+				select.disabled = input.disabled = saveBtn.disabled = cancelBtn.disabled = true;
+				saveBtn.textContent = '…';
+
+				var fd = new FormData();
+				fd.append('MEETINGID',    MEETING_ID);
+				fd.append('speaker_num',  speakerNum);
+				fd.append('speaker_id',   speakerId);
+				fd.append('display_name', displayName);
+				if (clipCb && clipCb.checked) fd.append('register_clip', '1');
+
+				fetch('assign_speaker.php', { method: 'POST', body: fd })
+					.then(function(r) { return r.json(); })
+					.then(function(data) {
+						if (data.success) {
+							document.querySelectorAll('.ts-line[data-speaker="' + speakerNum + '"] .ts-speaker')
+								.forEach(function(el) {
+									el.classList.remove('editing');
+									delete el.dataset.originalName;
+									el.innerHTML = '';
+									el.textContent = displayName;
+									el.title = displayName;
+								});
+						} else {
+							alert('Error: ' + (data.error || 'Unknown error'));
+							restore();
+						}
+					})
+					.catch(function() { alert('Request failed'); restore(); });
+			}
+
+			// Selecting a known person saves immediately; "Add new" reveals the text input
+			select.addEventListener('change', function() {
+				var val = select.value;
+				if (!val) return;
+				if (val === '__new__') {
+					input.style.display  = '';
+					saveBtn.style.display = '';
+					input.focus();
+				} else {
+					doSave(select.options[select.selectedIndex].text, val);
+				}
+			});
+
+			saveBtn.addEventListener('click', function(e) {
+				e.stopPropagation();
+				var name = input.value.trim();
+				if (name) doSave(name, slugify(name));
+			});
+
+			cancelBtn.addEventListener('click', function(e) {
+				e.stopPropagation();
+				restore();
+			});
+
+			input.addEventListener('keydown', function(e) {
+				if (e.key === 'Escape') restore();
+				if (e.key === 'Enter') {
+					var name = input.value.trim();
+					if (name) doSave(name, slugify(name));
+				}
+			});
+		}
+
+		document.addEventListener('click', function(e) {
+			var label = e.target.closest('#transcript-root .ts-speaker');
+			if (!label) return;
+			openEditForm(label);
+		});
+	})();
+	</script>
+	{% endif %}
 {% endblock %}

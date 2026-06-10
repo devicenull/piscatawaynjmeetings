@@ -21,6 +21,13 @@ echo "Importing files"
 php scripts/import_files.php
 php scripts/monitor_revai_progress.php
 
+echo "Rebuilding speaker embeddings"
+venv/bin/python scripts/build_speaker_profiles.py
+
+echo "Identifying speakers"
+bash scripts/batch_identify_speakers.sh council
+rsync -rt output/speakers/ root@$DEST:/home/piscataway/output/speakers/
+
 mysqldump --add-drop-table --ignore-table=piscataway.textcopy piscataway > piscataway.sql
 scp piscataway.sql root@$DEST:/root/
 ssh root@$DEST 'mysql piscataway < piscataway.sql'
