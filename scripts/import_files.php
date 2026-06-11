@@ -116,13 +116,14 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				if (str_ends_with($link, '.pdf'))
 				{
 					ocrPDF(__DIR__.'/../web/'.$link);
-					if (in_array($parentdirectory, ['council', 'planning', 'zoning']) && empty($meeting['metadata']))
-					{
-						parseMinutes($parentdirectory, __DIR__.'/../web/'.$link);
-					}
+					setExifMetadata(__DIR__.'/../web/'.$link, $meeting->getExifTitle('minutes'));
 				}
+			}
 
-				setExifMetadata(__DIR__.'/../web/'.$link, $meeting->getExifTitle('minutes'));
+			if ($link != '' && str_ends_with($link, '.pdf')
+				&& in_array($parentdirectory, ['council', 'planning', 'zoning']) && empty($meeting['metadata']))
+			{
+				parseMinutes($parentdirectory, __DIR__.'/../web/'.$link);
 			}
 
 			$link = $meeting->getLink('recording');

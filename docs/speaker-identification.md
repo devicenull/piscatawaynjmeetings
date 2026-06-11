@@ -53,7 +53,7 @@ for the admin UI and `deploy.sh` to work correctly.
 ```bash
 # One-time setup (already done on this machine)
 uv venv /home/piscataway/venv
-uv pip install --python venv/bin/python "pyannote.audio>=3.1" torch numpy scipy soundfile omegaconf
+uv pip install --python venv/bin/python -r requirements.txt
 ```
 
 ### HuggingFace token
