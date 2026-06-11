@@ -56,7 +56,7 @@ for board in "${BOARDS[@]}"; do
 		fi
 
 		echo "[$board/$date] identifying speakers..."
-		if python3 "$SCRIPT_DIR/identify_speakers.py" "$board" "$date"; then
+		if "$BASE_DIR/venv/bin/python3" "$SCRIPT_DIR/identify_speakers.py" "$board" "$date"; then
 			(( done_count++ )) || true
 		else
 			echo "[$board/$date] FAILED (exit $?)"
