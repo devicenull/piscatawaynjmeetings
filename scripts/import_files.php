@@ -72,6 +72,9 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 		case 'zoning':
 		case 're-warding':
 		case 'ems':
+			if (preg_match('/\.(revai|peaks)\.json$/', basename($cleanpath)))
+				continue 2;
+
 			if (!preg_match_all('/^[0-9]+\\-[0-9]+\\-[0-9]+$/i', $filebasename))
 			{
 				echo "Invalid file format: $cleanpath\n";

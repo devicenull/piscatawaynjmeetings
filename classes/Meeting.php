@@ -130,37 +130,68 @@ class Meeting extends BaseDBObject
 		return $names;
 	}
 
+	/**
+	 * Parse .revai.json into [{speaker_num, ts_float, display_ts, text}, ...].
+	 * Returns null if the file doesn't exist.
+	 */
+	private function loadRevaiLines(): ?array
+	{
+		$date = explode(' ', $this['date'])[0];
+		$path = __DIR__.'/../web/files/'.$this['type'].'/'.$date.'.revai.json';
+		if (!file_exists($path)) return null;
+
+		$revai = json_decode(file_get_contents($path), true);
+		if (!$revai) return null;
+
+		$lines = [];
+		foreach ($revai['monologues'] as $mono) {
+			$elems = array_values(array_filter(
+				$mono['elements'],
+				fn($e) => $e['type'] === 'text' && isset($e['ts'])
+			));
+			if (!$elems) continue;
+
+			$ts    = (float)$elems[0]['ts'];
+			$h     = (int)($ts / 3600);
+			$m     = (int)(($ts % 3600) / 60);
+			$s     = (int)($ts % 60);
+			$lines[] = [
+				'speaker_num' => (int)$mono['speaker'],
+				'ts_float'    => $ts,
+				'display_ts'  => sprintf('%02d:%02d:%02d', $h, $m, $s),
+				'text'        => trim(implode('', array_column($mono['elements'], 'value'))),
+			];
+		}
+		return $lines ?: null;
+	}
+
 	public function getTranscriptSegments(): array
 	{
-		$transcript   = file_get_contents(__DIR__.'/../web/'.$this->getLink('transcript'));
-		$sections     = $this->loadTranscriptSections();
+		$sections      = $this->loadTranscriptSections();
 		$speaker_names = $this->loadSpeakerNames();
 
 		$section_starts = [];
 		foreach ($sections as $i => $s) {
 			sscanf($s['start'], '%d:%d:%d', $h, $m, $sec);
-			$section_starts[$i]      = ($h * 3600) + ($m * 60) + $sec;
+			$section_starts[$i]         = ($h * 3600) + ($m * 60) + $sec;
 			$sections[$i]['ts_seconds'] = $section_starts[$i];
 			$sections[$i]['index']      = $i;
 		}
+
+		// Use .revai.json for sub-second timestamp accuracy when available
+		$revai_lines = $this->loadRevaiLines();
 
 		$segments     = [];
 		$current_html = '';
 		$next         = 0;
 
-		foreach (explode("\n", $transcript) as $line)
-		{
-			if (preg_match('/(Speaker ([0-9]+)\s+)([0-9\:]+)(\s+)(.*)$/', $line, $matches))
-			{
-				sscanf($matches[3], '%d:%d:%d', $hours, $minutes, $seconds);
-				$timestamp  = ($hours * 3600) + ($minutes * 60) + $seconds;
-				$speaker_num = (int)$matches[2];
-				$label       = isset($speaker_names[$speaker_num])
-					? $speaker_names[$speaker_num]
-					: trim($matches[1]);
+		if ($revai_lines !== null) {
+			foreach ($revai_lines as $line) {
+				$speaker_num = $line['speaker_num'];
+				$timestamp   = $line['ts_float'];
+				$label       = $speaker_names[$speaker_num] ?? 'Speaker '.$speaker_num;
 
-				while ($next < count($sections) && $timestamp >= $section_starts[$next])
-				{
+				while ($next < count($sections) && $timestamp >= $section_starts[$next]) {
 					if ($current_html !== '') {
 						$segments[]   = ['type' => 'lines', 'html' => $current_html];
 						$current_html = '';
@@ -172,13 +203,37 @@ class Meeting extends BaseDBObject
 				$current_html .=
 					'<div class="ts-line" data-speaker="'.$speaker_num.'">'.
 					'<span class="ts-speaker" title="'.htmlspecialchars($label).'">'.htmlspecialchars($label).'</span>'.
-					'<button class="btn-ts" onclick="changePlayerTime('.$timestamp.')" title="Jump to '.$matches[3].'">'.$matches[3].'</button>'.
-					'<span class="ts-text">'.htmlspecialchars(trim($matches[5])).'</span>'.
+					'<button class="btn-ts" onclick="changePlayerTime('.$timestamp.')" title="Jump to '.$line['display_ts'].'">'.$line['display_ts'].'</button>'.
+					'<span class="ts-text">'.htmlspecialchars($line['text']).'</span>'.
 					"</div>\n";
 			}
-			else
-			{
-				$current_html .= htmlspecialchars($line)."\n";
+		} else {
+			$transcript = file_get_contents(__DIR__.'/../web/'.$this->getLink('transcript'));
+			foreach (explode("\n", $transcript) as $line) {
+				if (preg_match('/(Speaker ([0-9]+)\s+)([0-9\:]+)(\s+)(.*)$/', $line, $matches)) {
+					sscanf($matches[3], '%d:%d:%d', $hours, $minutes, $seconds);
+					$timestamp   = ($hours * 3600) + ($minutes * 60) + $seconds;
+					$speaker_num = (int)$matches[2];
+					$label       = $speaker_names[$speaker_num] ?? trim($matches[1]);
+
+					while ($next < count($sections) && $timestamp >= $section_starts[$next]) {
+						if ($current_html !== '') {
+							$segments[]   = ['type' => 'lines', 'html' => $current_html];
+							$current_html = '';
+						}
+						$segments[] = ['type' => 'section'] + $sections[$next];
+						$next++;
+					}
+
+					$current_html .=
+						'<div class="ts-line" data-speaker="'.$speaker_num.'">'.
+						'<span class="ts-speaker" title="'.htmlspecialchars($label).'">'.htmlspecialchars($label).'</span>'.
+						'<button class="btn-ts" onclick="changePlayerTime('.$timestamp.')" title="Jump to '.$matches[3].'">'.$matches[3].'</button>'.
+						'<span class="ts-text">'.htmlspecialchars(trim($matches[5])).'</span>'.
+						"</div>\n";
+				} else {
+					$current_html .= htmlspecialchars($line)."\n";
+				}
 			}
 		}
 

@@ -130,6 +130,31 @@ Key deployment tasks:
 - MySQL dump and restore
 - Datasette service restart via systemd
 
+## Environments
+
+There are three distinct environments:
+
+| Environment | Description |
+|-------------|-------------|
+| **Development** | Local machine where Claude Code runs and code is written. Python scripts, audio files, and `data/speakers/` live here. `hasEditAuth()` returns false. |
+| **Pre-prod** | `185.101.97.102` — the server where the PHP web app runs. `hasEditAuth()` returns true (requests come from the 192.168.5.* LAN). The admin UI (e.g. speaker assignment) writes to the filesystem here. `deploy.sh` runs **from this machine** and pushes to production. |
+| **Production** | The public-facing site. **Read-only** — every deployment completely overwrites it from pre-prod. Never write to production directly. |
+
+### Deployment flow
+
+```
+Dev (code changes)  →  rsync/git push  →  Pre-prod
+                                              │
+                                         deploy.sh
+                                              │
+                                              ↓
+                                         Production (overwritten)
+```
+
+`deploy.sh` runs on pre-prod. It builds speaker embeddings, identifies speakers, syncs the
+database, and rsyncs all output to production. Because pre-prod is authoritative, there is
+no need to pull anything back from production — it is always a replica.
+
 ## Important Configuration & Constants
 
 **`init.php`** - Central initialization file. Defines:

@@ -24,6 +24,29 @@ real names in the transcript display.
 5. `Meeting.php` loads that JSON and substitutes names for `Speaker N` labels in the
    transcript view. Unmatched speakers remain as `Speaker N`.
 
+## Environment architecture
+
+This pipeline spans three environments. Understanding where each piece runs is important
+for the admin UI and `deploy.sh` to work correctly.
+
+| Environment | Role in this pipeline |
+|-------------|----------------------|
+| **Dev** (local) | Write/edit Python scripts and PHP; run `bootstrap_speaker_profiles.py` to seed initial profiles; run `extract_speaker_clips.py` to add clips manually. Audio files and `data/speakers/profiles.json` live here. |
+| **Pre-prod** (`185.101.97.102`) | Runs the web app. `hasEditAuth()` is true here. The admin UI (`assign_speaker.php`) writes speaker assignments and new clips to the local filesystem — `output/speakers/{board}/{date}.speakers.json` and `data/speakers/profiles.json`. `deploy.sh` runs **on this machine** and pushes everything to production. |
+| **Production** | Read-only replica. `output/speakers/` and `data/speakers/` are overwritten from pre-prod on every deploy. Never write here directly. |
+
+### Admin UI assignment flow
+
+1. Admin views a transcript on pre-prod and clicks a `Speaker N` label.
+2. The dropdown saves via AJAX to `assign_speaker.php`, which writes to pre-prod's
+   `output/speakers/{board}/{date}.speakers.json` (with `manual: true`).
+3. Optionally, the assignment also appends a clip reference to `data/speakers/profiles.json`
+   with a null embedding (triggers a rebuild on next deploy).
+4. On next `deploy.sh` run (on pre-prod):
+   - `build_speaker_profiles.py` detects the null embedding and rebuilds it.
+   - `batch_identify_speakers.sh` re-identifies any unprocessed meetings.
+   - The updated files are rsynced to production.
+
 ## Prerequisites
 
 ### Python environment
