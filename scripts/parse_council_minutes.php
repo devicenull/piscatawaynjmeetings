@@ -11,10 +11,7 @@ if (!$pdf || !file_exists($pdf)) {
 	exit(1);
 }
 
-$text = shell_exec('pdf2txt ' . escapeshellarg($pdf));
-
-// If pdf2txt yields no useful text (scanned/image PDF), fall back to Tesseract OCR.
-if (!$text || strlen(trim($text)) < 200) {
+function runOCR(string $pdf): string {
 	$tmpdir = sys_get_temp_dir() . '/council_ocr_' . getmypid();
 	mkdir($tmpdir, 0700, true);
 	shell_exec('pdftoppm -r 300 ' . escapeshellarg($pdf) . ' ' . escapeshellarg($tmpdir . '/page') . ' 2>/dev/null');
@@ -29,6 +26,16 @@ if (!$text || strlen(trim($text)) < 200) {
 		unlink($out . '.txt');
 	}
 	rmdir($tmpdir);
+	return $text;
+}
+
+$text = shell_exec('pdf2txt ' . escapeshellarg($pdf));
+$usedOCR = false;
+
+// If pdf2txt yields no useful text (scanned/image PDF), fall back to Tesseract OCR.
+if (!$text || strlen(trim($text)) < 200) {
+	$text   = runOCR($pdf);
+	$usedOCR = true;
 	fwrite(STDERR, "Used OCR fallback for: $pdf\n");
 }
 
@@ -38,35 +45,50 @@ if (!$text) {
 }
 
 // Isolate the consent agenda listing section.
-// Use regex to handle double spaces that OCR inserts between words.
-function findPos(string $text, string $phrase, int $offset = 0): int|false {
-	$pattern = '/\b' . preg_replace('/\s+/', '\s+', preg_quote($phrase, '/')) . '\b/i';
+// $fuzzy=false uses \s+ (for clean pdf2txt output).
+// $fuzzy=true uses \W+ to tolerate OCR artifacts like colons injected between words
+// (e.g. "each:.of", "NOW,: THEREFORE") — only use on Tesseract output.
+function findPos(string $text, string $phrase, int $offset = 0, bool $fuzzy = false): int|false {
+	$sep     = $fuzzy ? '\\W+' : '\s+';
+	$pattern = '/\b' . preg_replace('/\s+/', $sep, preg_quote($phrase, '/')) . '\b/i';
 	if (preg_match($pattern, $text, $m, PREG_OFFSET_CAPTURE, $offset)) {
 		return $m[0][1];
 	}
 	return false;
 }
 
-// Try trigger phrases in order of specificity.
-// Some minutes say "Resolutions, Motions or Proclamations"; older/reorganization minutes
-// say just "Resolutions". Column-split PDFs scramble the phrase, so fall back to the
-// preamble sentence that always appears on one column.
-$start = findPos($text, 'each of the following Resolutions, Motions or Proclamations');
-if ($start === false) {
-	$start = findPos($text, 'each of the following Resolutions');
-}
-if ($start === false) {
-	$start = findPos($text, 'part of the Consent Agenda, upon certain conditions');
+function findSection(string $text, bool $fuzzy = false): array {
+	$start = findPos($text, 'each of the following Resolutions, Motions or Proclamations', 0, $fuzzy);
+	if ($start === false) $start = findPos($text, 'each of the following Resolutions', 0, $fuzzy);
+	if ($start === false) $start = findPos($text, 'part of the Consent Agenda, upon certain conditions', 0, $fuzzy);
+	// OCR can insert a stray character before "the" (e.g. "ithe Consent") — fuzzy only,
+	// since this shorter phrase can accidentally match garbled pdf2txt column fragments.
+	if ($fuzzy && $start === false) $start = findPos($text, 'Consent Agenda, upon certain conditions', 0, true);
+
+	$end = false;
+	if ($start !== false) {
+		$end = findPos($text, 'NOW, THEREFORE, BE IT RESOLVED', $start, $fuzzy);
+		if ($end === false) $end = findPos($text, 'The following are the Resolution', $start, $fuzzy);
+		// Fuzzy-only: "RESOLVED" can be split across a line break in bad OCR scans;
+		// too short to use in strict mode where it matches garbled column fragments.
+		if ($fuzzy && $end === false) $end = findPos($text, 'NOW, THEREFORE, BE IT', $start, true);
+	}
+	return [$start, $end];
 }
 
-$end = false;
-if ($start !== false) {
-	$end = findPos($text, 'NOW, THEREFORE, BE IT RESOLVED', $start);
-	// Some PDFs end the listing with "The following are the Resolution(s), typed in full"
-	if ($end === false) {
-		$end = findPos($text, 'The following are the Resolution', $start);
-	}
+// Try trigger phrases. Use fuzzy \W+ matching if we already have OCR output.
+[$start, $end] = findSection($text, $usedOCR);
+
+// If section markers weren't found and we used pdf2txt, the PDF may be a scanned
+// document where pdf2txt returns garbled/column-scrambled text. Retry with Tesseract
+// using fuzzy \W+ matching to tolerate OCR artifacts between words.
+if (($start === false || $end === false) && !$usedOCR) {
+	$text    = runOCR($pdf);
+	$usedOCR = true;
+	fwrite(STDERR, "Used OCR fallback for: $pdf\n");
+	[$start, $end] = findSection($text, true);
 }
+
 if ($start === false || $end === false) {
 	fwrite(STDERR, "Could not find consent agenda section in: $pdf\n");
 	exit(1);
@@ -78,6 +100,21 @@ $lines = array_values(array_filter(
 	array_map(fn($l) => trim(preg_replace('/  +/', ' ', $l)), explode("\n", $section)),
 	fn($l) => $l !== ''
 ));
+
+// For Tesseract OCR output, normalize common scan artifacts before pattern matching:
+//   - multiple dots after letter prefix: "b.. RESOLUTION" → "b. RESOLUTION"
+//   - non-alpha junk before keyword: "a. -RESOLUTION:..:" → "a. RESOLUTION —"
+//   - non-standard separator after keyword: "MOTION. —" → "MOTION —"
+//   - "RESTON" as a known OCR corruption of "RESOLUTION"
+if ($usedOCR) {
+	$lines = array_map(function($l) {
+		$l = preg_replace('/^([a-zA-Z]{1,2})\.{2,}\s/', '$1. ', $l);
+		$l = preg_replace('/^([a-zA-Z]{1,2})[.]\s+[^a-zA-Z]*(RESOLUTION|MOTION)/i', '$1. $2', $l);
+		$l = preg_replace('/\b(RESTON)\b/i', 'RESOLUTION', $l);
+		$l = preg_replace('/(RESOLUTION|MOTION)[^a-zA-Z]+/i', '$1 — ', $l);
+		return $l;
+	}, $lines);
+}
 
 // Patterns — support lowercase letters (a.), uppercase (A.), and numbers (1.)
 $letterAlone    = '/^([a-zA-Z]{1,2})[.]\s*$/';
@@ -174,6 +211,25 @@ if (empty($results)) {
 			$letter = strtolower($m[1]);
 			$type   = 'RESOLUTION';
 			[$title, $next] = collectTitle($lines, $i, trim($m[2]), true);
+			$results[] = compact('letter', 'type', 'title');
+			$i = $next;
+			continue;
+		}
+		$i++;
+	}
+}
+
+// Fallback for format with no letter prefixes — bare "RESOLUTION — Title" lines.
+// Assigns sequential letters a, b, c... for display.
+if (empty($results)) {
+	$i = 0;
+	$letterIdx = 0;
+	while ($i < count($lines)) {
+		$line = $lines[$i];
+		if (preg_match($resoLine, $line, $m)) {
+			$letter = chr(ord('a') + $letterIdx++);
+			$type   = strtoupper($m[1]);
+			[$title, $next] = collectTitle($lines, $i, trim($m[2]));
 			$results[] = compact('letter', 'type', 'title');
 			$i = $next;
 			continue;
