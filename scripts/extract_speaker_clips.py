@@ -23,8 +23,9 @@ import os
 import re
 import sys
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROFILES = os.path.join(BASE_DIR, 'data', 'speakers', 'profiles.json')
+BASE_DIR   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SHARED_DIR = os.path.join(BASE_DIR, 'shared')
+PROFILES   = os.path.join(SHARED_DIR, 'speakers', 'profiles.json')
 
 
 def parse_time(t: str) -> float:
@@ -309,7 +310,7 @@ def preview_mode(args):
         print(f'ERROR: No transcript at {txt_path}')
         sys.exit(1)
 
-    speakers_path = os.path.join(BASE_DIR, 'output', 'speakers', board, f'{date}.speakers.json')
+    speakers_path = os.path.join(SHARED_DIR, 'speakers', board, f'{date}.speakers.json')
     names = {}
     if os.path.exists(speakers_path):
         with open(speakers_path) as f:

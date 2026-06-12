@@ -27,8 +27,9 @@ except OSError:
     pass
 
 BASE_DIR   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SHARED_DIR = os.path.join(BASE_DIR, 'shared')
 TOKEN_FILE = os.path.join(BASE_DIR, 'data', 'hf_token')
-PROFILES   = os.path.join(BASE_DIR, 'data', 'speakers', 'profiles.json')
+PROFILES   = os.path.join(SHARED_DIR, 'speakers', 'profiles.json')
 
 
 def load_token() -> str:

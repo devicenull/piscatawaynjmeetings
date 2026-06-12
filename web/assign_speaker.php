@@ -48,8 +48,8 @@ if (!$meeting['MEETINGID']) {
 $board = $meeting['type'];
 $date  = explode(' ', $meeting['date'])[0];
 
-// 1. Update output/speakers/{board}/{date}.speakers.json
-$speakers_dir  = __DIR__.'/../output/speakers/'.$board;
+// 1. Update shared/speakers/{board}/{date}.speakers.json
+$speakers_dir  = __DIR__.'/../shared/speakers/'.$board;
 $speakers_path = $speakers_dir.'/'.$date.'.speakers.json';
 
 if (!is_dir($speakers_dir)) {
@@ -74,7 +74,7 @@ if (file_put_contents($speakers_path, json_encode($speakers, JSON_PRETTY_PRINT |
     exit;
 }
 
-// 2. Optionally register a clip in data/speakers/profiles.json
+// 2. Optionally register a clip in shared/speakers/profiles.json
 $clip_registered = false;
 if ($register_clip) {
     $revai_path = __DIR__.'/../web/files/'.$board.'/'.$date.'.revai.json';
@@ -102,7 +102,7 @@ if ($register_clip) {
         }
 
         if ($best_dur >= 5.0 && $best_start !== null) {
-            $profiles_path = __DIR__.'/../data/speakers/profiles.json';
+            $profiles_path = __DIR__.'/../shared/speakers/profiles.json';
             $profiles = ['speakers' => []];
             if (file_exists($profiles_path)) {
                 $profiles = json_decode(file_get_contents($profiles_path), true) ?? $profiles;

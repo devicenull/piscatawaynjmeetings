@@ -17,7 +17,7 @@ $physical_location = [
 $known_speakers = [];
 $has_revai_json = false;
 if (hasEditAuth()) {
-	$profiles_path = __DIR__.'/../data/speakers/profiles.json';
+	$profiles_path = __DIR__.'/../shared/speakers/profiles.json';
 	if (file_exists($profiles_path)) {
 		$profiles = json_decode(file_get_contents($profiles_path), true) ?? [];
 		foreach ($profiles['speakers'] ?? [] as $id => $info) {

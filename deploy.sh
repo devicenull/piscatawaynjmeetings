@@ -26,7 +26,7 @@ venv/bin/python scripts/build_speaker_profiles.py
 
 echo "Identifying speakers"
 bash scripts/batch_identify_speakers.sh council
-rsync -rt output/speakers/ root@$DEST:/home/piscataway/output/speakers/
+rsync -rt shared/speakers/ root@$DEST:/home/piscataway/shared/speakers/
 
 mysqldump --add-drop-table --ignore-table=piscataway.textcopy piscataway > piscataway.sql
 scp piscataway.sql root@$DEST:/root/

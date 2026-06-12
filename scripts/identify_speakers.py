@@ -30,9 +30,10 @@ try:
 except OSError:
     pass
 
-BASE_DIR   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOKEN_FILE = os.path.join(BASE_DIR, 'data', 'hf_token')
-PROFILES   = os.path.join(BASE_DIR, 'data', 'speakers', 'profiles.json')
+BASE_DIR    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SHARED_DIR  = os.path.join(BASE_DIR, 'shared')
+TOKEN_FILE  = os.path.join(BASE_DIR, 'data', 'hf_token')
+PROFILES    = os.path.join(SHARED_DIR, 'speakers', 'profiles.json')
 
 MIN_CLIP_SECONDS = 2.0   # ignore segments shorter than this when building embedding
 DEFAULT_THRESHOLD = 0.75  # cosine similarity threshold for a confident match
@@ -199,7 +200,7 @@ def main():
     revai_path = os.path.join(BASE_DIR, 'web', 'files', board, f'{date}.revai.json')
     txt_path   = os.path.join(BASE_DIR, 'web', 'files', board, f'{date}.txt')
 
-    out_dir       = os.path.join(BASE_DIR, 'output', 'speakers', board)
+    out_dir       = os.path.join(SHARED_DIR, 'speakers', board)
     os.makedirs(out_dir, exist_ok=True)
     speakers_path = os.path.join(out_dir, f'{date}.speakers.json')
 

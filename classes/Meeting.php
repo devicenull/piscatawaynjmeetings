@@ -117,8 +117,8 @@ class Meeting extends BaseDBObject
 		$link = $this->getLink('transcript');
 		if (!$link) return [];
 		$date = explode(' ', $this['date'])[0];
-		// Check output/speakers/{type}/{date}.speakers.json (written by identify_speakers.py)
-		$path = __DIR__.'/../output/speakers/'.$this['type'].'/'.$date.'.speakers.json';
+		// Check shared/speakers/{type}/{date}.speakers.json (written by identify_speakers.py)
+		$path = __DIR__.'/../shared/speakers/'.$this['type'].'/'.$date.'.speakers.json';
 		if (!file_exists($path)) return [];
 		$data = json_decode(file_get_contents($path), true) ?? [];
 		$names = [];

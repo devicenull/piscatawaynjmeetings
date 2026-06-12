@@ -11,7 +11,7 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BASE_DIR="$SCRIPT_DIR/.."
 FILES_DIR="$BASE_DIR/web/files"
-OUTPUT_DIR="$BASE_DIR/output/speakers"
+OUTPUT_DIR="$BASE_DIR/shared/speakers"
 
 if [ $# -gt 0 ]; then
 	BOARDS=("$@")

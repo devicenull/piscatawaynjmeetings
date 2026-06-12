@@ -26,8 +26,9 @@ import re
 import subprocess
 import sys
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROFILES = os.path.join(BASE_DIR, 'data', 'speakers', 'profiles.json')
+BASE_DIR   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SHARED_DIR = os.path.join(BASE_DIR, 'shared')
+PROFILES   = os.path.join(SHARED_DIR, 'speakers', 'profiles.json')
 
 MIN_CLIP_SECONDS = 10.0   # minimum monologue length to register as a clip
 
