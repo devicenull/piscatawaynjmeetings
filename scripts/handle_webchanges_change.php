@@ -81,7 +81,8 @@ foreach ($output as $url)
 					if (copy($destname, $target))
 					{
 						l("Copied minutes to web/files/$board/$date.pdf");
-						passthru('php '.escapeshellarg(__DIR__.'/import_files.php'));
+						exec('php '.escapeshellarg(__DIR__.'/import_files.php'), $import_output);
+						foreach ($import_output as $line) l($line);
 					}
 					else
 					{

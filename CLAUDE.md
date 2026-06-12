@@ -187,6 +187,7 @@ Located in `/scripts`, typically run via cron:
 - **cad_calls.php** - Parse CAD logs, generate CSV
 - **parse_campaign_expenses.php** - Generate Graphviz visualization of campaign contributions
 - **extract_budget_stats.php** - Extract financial figures from budget/debt statement/financial statement PDFs into `budget_stats` table (run manually when new PDFs added)
+- **handle_webchanges_change.php** - Called by urlwatch as a `run_command` hook when a monitored page changes. Archives the URL to archive.org, downloads any new PDF links (minutes/agendas) into `downloaded/`, then copies matched files into `web/files/`, and invokes `import_files.php` to register them in the database. Logs to `urlwatch.log`.
 
 ## Datasette Integration
 
