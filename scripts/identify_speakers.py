@@ -139,8 +139,9 @@ def load_model(token: str):
     import torch
     from pyannote.audio import Model
     from pyannote.audio.pipelines.speaker_verification import PretrainedSpeakerEmbedding
+    os.environ.setdefault('HF_TOKEN', token)
     device = torch.device('xpu') if torch.xpu.is_available() else torch.device('cpu')
-    model = Model.from_pretrained('pyannote/embedding', use_auth_token=token)
+    model = Model.from_pretrained('pyannote/embedding', token=token)
     model = model.to(device)
     return PretrainedSpeakerEmbedding(embedding=model, device=device)
 
