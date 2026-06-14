@@ -11,7 +11,7 @@ $force_meeting_id = isset($opts['force-meeting-id']) ? (int)$opts['force-meeting
 
 if ($force_meeting_id !== null)
 {
-	$res = $db->Execute('select * from meeting where id = ?', [$force_meeting_id]);
+	$res = $db->Execute('select * from meeting where MEETINGID = ?', [$force_meeting_id]);
 }
 else
 {
