@@ -2,6 +2,9 @@
 
 {% block metadescription %}Piscataway Township, NJ Newsletter Archive{% endblock %}
 {% block title %}Piscataway Township, NJ Newsletter Archive{% endblock %}
+{% block og_title %}{{ block('title') }}{% endblock %}
+{% block og_description %}{{ block('metadescription') }}{% endblock %}
+{% block og_url %}https://piscatawaynjmeetings.com/newsletter.php{% endblock %}
 
 {% block maincontent %}
 	<div class="board-header">

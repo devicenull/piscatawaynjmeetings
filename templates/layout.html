@@ -6,6 +6,12 @@
 		<title>{% block title %}Piscataway, New Jersey Public Meetings{% endblock %}</title>
 		<meta name="description" content="{% block metadescripion %}{% endblock %}"/>
 
+		<meta property="og:site_name" content="Piscataway NJ Public Meetings">
+		<meta property="og:type" content="{% block og_type %}website{% endblock %}">
+		<meta property="og:title" content="{% block og_title %}Piscataway, New Jersey Public Meetings{% endblock %}">
+		<meta property="og:description" content="{% block og_description %}{% endblock %}">
+		<meta property="og:url" content="{% block og_url %}https://piscatawaynjmeetings.com{% endblock %}">
+
 		<link href="/css/bootstrap.min.css" rel="stylesheet">
 		<link href="/css/select2.min.css" rel="stylesheet">
 		<link href="//cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css" rel="stylesheet">

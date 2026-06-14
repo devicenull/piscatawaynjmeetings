@@ -1,8 +1,10 @@
 {% extends 'layout.html' %}
 
 {% block title %}Payments in Lieu of Taxes (PILOTs) — Piscataway, NJ{% endblock %}
-
 {% block metadescripion %}PILOT agreements in Piscataway, NJ. Tracks annual payments, assessed values, and tax savings for each long-term tax exemption agreement from 2017 to present.{% endblock %}
+{% block og_title %}{{ block('title') }}{% endblock %}
+{% block og_description %}{{ block('metadescripion') }}{% endblock %}
+{% block og_url %}https://piscatawaynjmeetings.com/pilots.php{% endblock %}
 
 {% block maincontent %}
 

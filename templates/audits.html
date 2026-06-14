@@ -1,8 +1,10 @@
 {% extends 'layout.html' %}
 
 {% block title %}Piscataway, NJ Annual Audits{% endblock %}
-
 {% block metadescripion %}Annual audit reports for Piscataway Township, New Jersey.{% endblock %}
+{% block og_title %}{{ block('title') }}{% endblock %}
+{% block og_description %}{{ block('metadescripion') }}{% endblock %}
+{% block og_url %}https://piscatawaynjmeetings.com/audits.php{% endblock %}
 
 {% block maincontent %}
 

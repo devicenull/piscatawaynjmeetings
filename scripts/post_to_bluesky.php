@@ -133,7 +133,7 @@ if ($force_meeting_id === null)
 	{
 		$meeting = new Meeting(['record' => $row]);
 		$date = new DateTime($meeting['date']);
-		$transcript_url = 'https://piscatawaynjmeetings.com/transcript.php?MEETINGID='.$meeting['MEETINGID'];
+		$transcript_url = 'https://piscatawaynjmeetings.com/'.$meeting['type'].'/meeting/'.explode(' ', $meeting['date'])[0];
 		$linkmsg = 'transcript';
 		$message = 'The Piscataway Township '.ucfirst($meeting['type']).' meeting from '.$date->format('F j, Y').' now has a ';
 		$facets = [[

@@ -1,6 +1,13 @@
 <?php
 require(__DIR__.'/../init.php');
-$meeting = new Meeting(['MEETINGID' => $_GET['MEETINGID']]);
+if (isset($_GET['MEETINGID'])) {
+	$meeting = new Meeting(['MEETINGID' => $_GET['MEETINGID']]);
+} elseif (isset($_GET['type']) && isset($_GET['date'])) {
+	$meeting = new Meeting(['type' => $_GET['type'], 'date' => $_GET['date']]);
+} else {
+	http_response_code(404);
+	exit;
+}
 $physical_location = [
 	'@type'   => 'Place',
 	'name'    => 'Township of Piscataway Municipal Building',

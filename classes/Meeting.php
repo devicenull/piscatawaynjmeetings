@@ -370,6 +370,44 @@ class Meeting extends BaseDBObject
 		return parent::set($params);
 	}
 
+	public function getEventSchema(): array
+	{
+		$date = new DateTime($this['date']);
+		$schema = [
+			'@context'            => 'https://schema.org',
+			'@type'               => 'Event',
+			'name'                => 'Piscataway Township '.$this['board_type'].' Meeting',
+			'startDate'           => $date->format(DateTime::ATOM),
+			'eventStatus'         => 'https://schema.org/EventScheduled',
+			'eventAttendanceMode' => 'https://schema.org/'.($this['zoom_id'] != '' ? 'MixedEventAttendanceMode' : 'OfflineEventAttendanceMode'),
+			'location'            => [[
+				'@type'   => 'Place',
+				'name'    => 'Township of Piscataway Municipal Building',
+				'address' => [
+					'@type'           => 'PostalAddress',
+					'streetAddress'   => '455 Hoes Lane',
+					'addressLocality' => 'Piscataway',
+					'addressRegion'   => 'NJ',
+					'postalCode'      => '08854',
+					'addressCountry'  => 'US',
+				],
+			]],
+			'organizer' => [
+				'@type' => 'GovernmentOrganization',
+				'name'  => 'Piscataway Township',
+				'url'   => 'https://www.piscatawaynj.org',
+			],
+		];
+		if ($this['zoom_id'] != '')
+		{
+			$schema['location'][] = [
+				'@type' => 'VirtualLocation',
+				'url'   => 'https://zoom.us/j/'.$this['zoom_id'],
+			];
+		}
+		return $schema;
+	}
+
 	public function get($key)
 	{
 		if ($key == 'board_type')

@@ -1,8 +1,10 @@
 {% extends 'layout.html' %}
 
 {% block title %}Piscataway, NJ Municipal Budget Documents{% endblock %}
-
 {% block metadescripion %}Municipal budget documents for Piscataway, New Jersey. Includes taxable property valuations, total debt, and tax levies from 2008 to present.{% endblock %}
+{% block og_title %}{{ block('title') }}{% endblock %}
+{% block og_description %}{{ block('metadescripion') }}{% endblock %}
+{% block og_url %}https://piscatawaynjmeetings.com/budget.php{% endblock %}
 
 {% block maincontent %}
 

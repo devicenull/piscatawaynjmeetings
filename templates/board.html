@@ -1,6 +1,21 @@
 {% extends 'layout.html' %}
 
 {% block title %}Piscataway {{ board.name }} - Meetings &amp; Information{% endblock %}
+{% block og_title %}Piscataway {{ board.name }} - Meetings &amp; Information{% endblock %}
+{% block og_description %}{{ block('metadescripion') }}{% endblock %}
+{% block og_url %}https://piscatawaynjmeetings.com/{{ board.type }}/{% endblock %}
+
+{% block head_extra %}
+{%- set upcoming = [] -%}
+{%- for cur in meetings -%}
+  {%- if cur.date|date('U') > "now"|date('U') -%}
+    {%- set upcoming = upcoming|merge([cur.getEventSchema()]) -%}
+  {%- endif -%}
+{%- endfor -%}
+{% if upcoming %}
+<script type="application/ld+json">{{ upcoming|json_encode|raw }}</script>
+{% endif %}
+{% endblock %}
 
 {% block metadescripion %}
 {%- set recent_items = [] -%}
@@ -104,7 +119,7 @@ Piscataway {{ board.name }} meeting history, recordings, and {% if board.type ==
 					</a>
 					{% endif %}
 					{% if cur.transcript_available == 'yes' %}
-					<a href="/transcript.php?MEETINGID={{ cur.MEETINGID }}" itemprop="transcript" itemscope itemtype="https://schema.org/Transcript">
+					<a href="/{{ cur.type }}/meeting/{{ cur.date|date('Y-m-d') }}" itemprop="transcript" itemscope itemtype="https://schema.org/Transcript">
 						<meta itemprop="name" content="Piscataway {{ board.name }} Transcript {{ cur.date|date('F j, Y') }}">
 						Transcript
 					</a>

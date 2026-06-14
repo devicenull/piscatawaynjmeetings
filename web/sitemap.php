@@ -37,7 +37,7 @@ foreach (Meeting::getAll() as $meeting)
 	}
 	if ($meeting['transcript_available'] == 'yes')
 	{
-		$sitemap->addEntry(BASEURL.'/transcript.php?MEETINGID='.$meeting['MEETINGID'], $meeting['last_updated']);
+		$sitemap->addEntry(BASEURL.'/'.$meeting['type'].'/meeting/'.explode(' ', $meeting['date'])[0], $meeting['last_updated']);
 		$sitemap->addEntry(BASEURL.$meeting->getLink('transcript'), $meeting['last_updated']);
 	}
 }
