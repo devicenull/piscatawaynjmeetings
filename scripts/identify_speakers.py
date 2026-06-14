@@ -24,7 +24,10 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# Must run before torch import so the UR level-zero adapter can enumerate the GPU
+# Required for Intel Arc GPU enumeration via Level Zero
+os.environ.setdefault('ZES_ENABLE_SYSMAN', '1')
+os.environ.setdefault('OMP_NUM_THREADS', '1')
+os.environ.setdefault('MKL_NUM_THREADS', '1')
 try:
     ctypes.CDLL('libze_loader.so.1').zeInit(1)
 except OSError:
@@ -147,6 +150,16 @@ def load_model(token: str):
     return PretrainedSpeakerEmbedding(embedding=model, device=device)
 
 
+def parse_whisperx_segments(data: dict) -> dict[int, list[tuple[float, float]]]:
+    """Return {speaker_num: [(start, end), ...]} from WhisperX JSON."""
+    segments: dict[int, list[tuple[float, float]]] = {}
+    for seg in data.get('segments', []):
+        label = seg.get('speaker', 'SPEAKER_00')
+        sid   = int(label.split('_')[-1])
+        segments.setdefault(sid, []).append((float(seg['start']), float(seg['end'])))
+    return segments
+
+
 def parse_revai_segments(revai: dict) -> dict[int, list[tuple[float, float]]]:
     """Return {speaker_id: [(start, end), ...]} from Rev.ai JSON."""
     segments: dict[int, list[tuple[float, float]]] = {}
@@ -197,8 +210,9 @@ def main():
 
     board, date = args.board, args.date
 
-    revai_path = os.path.join(BASE_DIR, 'web', 'files', board, f'{date}.revai.json')
-    txt_path   = os.path.join(BASE_DIR, 'web', 'files', board, f'{date}.txt')
+    whisperx_path = os.path.join(BASE_DIR, 'web', 'files', board, f'{date}.whisperx.json')
+    revai_path    = os.path.join(BASE_DIR, 'web', 'files', board, f'{date}.revai.json')
+    txt_path      = os.path.join(BASE_DIR, 'web', 'files', board, f'{date}.txt')
 
     out_dir       = os.path.join(SHARED_DIR, 'speakers', board)
     os.makedirs(out_dir, exist_ok=True)
@@ -217,7 +231,12 @@ def main():
 
     rec = recording_path(board, date)
 
-    if os.path.exists(revai_path):
+    if os.path.exists(whisperx_path):
+        with open(whisperx_path) as f:
+            data = json.load(f)
+        segments = parse_whisperx_segments(data)
+        source   = 'whisperx'
+    elif os.path.exists(revai_path):
         with open(revai_path) as f:
             revai = json.load(f)
         segments = parse_revai_segments(revai)
@@ -225,7 +244,7 @@ def main():
     elif os.path.exists(txt_path):
         segments = parse_txt_segments(txt_path)
         source   = 'txt'
-        print(f'NOTE: No .revai.json found, using .txt timestamps (lower boundary precision)')
+        print(f'NOTE: No JSON transcript found, using .txt timestamps (lower boundary precision)')
     else:
         print(f'ERROR: No transcript found for {board}/{date}')
         sys.exit(1)

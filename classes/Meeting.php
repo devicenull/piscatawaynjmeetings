@@ -131,6 +131,39 @@ class Meeting extends BaseDBObject
 	}
 
 	/**
+	 * Parse .whisperx.json into [{speaker_num, ts_float, display_ts, text}, ...].
+	 * Returns null if the file doesn't exist.
+	 */
+	private function loadWhisperxLines(): ?array
+	{
+		$date = explode(' ', $this['date'])[0];
+		$path = __DIR__.'/../web/files/'.$this['type'].'/'.$date.'.whisperx.json';
+		if (!file_exists($path)) return null;
+
+		$data = json_decode(file_get_contents($path), true);
+		if (!$data || empty($data['segments'])) return null;
+
+		$lines = [];
+		foreach ($data['segments'] as $seg) {
+			$text = trim($seg['text'] ?? '');
+			if ($text === '') continue;
+			$ts    = (float)$seg['start'];
+			$h     = (int)($ts / 3600);
+			$m     = (int)(($ts % 3600) / 60);
+			$s     = (int)($ts % 60);
+			$label = $seg['speaker'] ?? 'SPEAKER_00';
+			$num   = (int)substr(strrchr($label, '_'), 1);
+			$lines[] = [
+				'speaker_num' => $num,
+				'ts_float'    => $ts,
+				'display_ts'  => sprintf('%02d:%02d:%02d', $h, $m, $s),
+				'text'        => $text,
+			];
+		}
+		return $lines ?: null;
+	}
+
+	/**
 	 * Parse .revai.json into [{speaker_num, ts_float, display_ts, text}, ...].
 	 * Returns null if the file doesn't exist.
 	 */
@@ -178,15 +211,15 @@ class Meeting extends BaseDBObject
 			$sections[$i]['index']      = $i;
 		}
 
-		// Use .revai.json for sub-second timestamp accuracy when available
-		$revai_lines = $this->loadRevaiLines();
+		// Use .whisperx.json first, then .revai.json, for sub-second timestamp accuracy
+		$json_lines = $this->loadWhisperxLines() ?? $this->loadRevaiLines();
 
 		$segments     = [];
 		$current_html = '';
 		$next         = 0;
 
-		if ($revai_lines !== null) {
-			foreach ($revai_lines as $line) {
+		if ($json_lines !== null) {
+			foreach ($json_lines as $line) {
 				$speaker_num = $line['speaker_num'];
 				$timestamp   = $line['ts_float'];
 				$label       = $speaker_names[$speaker_num] ?? 'Speaker '.$speaker_num;
@@ -208,7 +241,9 @@ class Meeting extends BaseDBObject
 					"</div>\n";
 			}
 		} else {
-			$transcript = file_get_contents(__DIR__.'/../web/'.$this->getLink('transcript'));
+			$link = $this->getLink('transcript');
+			if (!$link) return $segments;
+			$transcript = file_get_contents(__DIR__.'/../web/'.$link);
 			foreach (explode("\n", $transcript) as $line) {
 				if (preg_match('/(Speaker ([0-9]+)\s+)([0-9\:]+)(\s+)(.*)$/', $line, $matches)) {
 					sscanf($matches[3], '%d:%d:%d', $hours, $minutes, $seconds);

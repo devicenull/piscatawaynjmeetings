@@ -26,7 +26,8 @@ if (hasEditAuth()) {
 		usort($known_speakers, fn($a, $b) => strcmp($a['name'], $b['name']));
 	}
 	$date = explode(' ', $meeting['date'])[0];
-	$has_revai_json = file_exists(__DIR__.'/../web/files/'.$meeting['type'].'/'.$date.'.revai.json');
+	$base = __DIR__.'/../web/files/'.$meeting['type'].'/'.$date;
+	$has_revai_json = file_exists($base.'.whisperx.json') || file_exists($base.'.revai.json');
 }
 
 $vars = [

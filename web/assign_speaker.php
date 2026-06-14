@@ -77,13 +77,31 @@ if (file_put_contents($speakers_path, json_encode($speakers, JSON_PRETTY_PRINT |
 // 2. Optionally register a clip in shared/speakers/profiles.json
 $clip_registered = false;
 if ($register_clip) {
-    $revai_path = __DIR__.'/../web/files/'.$board.'/'.$date.'.revai.json';
-    if (file_exists($revai_path)) {
-        $revai      = json_decode(file_get_contents($revai_path), true);
-        $best_start = null;
-        $best_end   = null;
-        $best_dur   = 0.0;
+    $best_start = null;
+    $best_end   = null;
+    $best_dur   = 0.0;
 
+    // Try .whisperx.json first, then .revai.json
+    $whisperx_path = __DIR__.'/../web/files/'.$board.'/'.$date.'.whisperx.json';
+    $revai_path    = __DIR__.'/../web/files/'.$board.'/'.$date.'.revai.json';
+
+    if (file_exists($whisperx_path)) {
+        $data = json_decode(file_get_contents($whisperx_path), true);
+        foreach ($data['segments'] ?? [] as $seg) {
+            $label = $seg['speaker'] ?? 'SPEAKER_00';
+            $num   = (int)substr(strrchr($label, '_'), 1);
+            if ($num !== $speaker_num) continue;
+            $start = (float)$seg['start'];
+            $end   = (float)$seg['end'];
+            $dur   = $end - $start;
+            if ($dur > $best_dur) {
+                $best_dur   = $dur;
+                $best_start = $start;
+                $best_end   = $end;
+            }
+        }
+    } elseif (file_exists($revai_path)) {
+        $revai = json_decode(file_get_contents($revai_path), true);
         foreach ($revai['monologues'] ?? [] as $mono) {
             if ((int)$mono['speaker'] !== $speaker_num) continue;
             $elems = array_values(array_filter(
@@ -100,39 +118,39 @@ if ($register_clip) {
                 $best_end   = $end;
             }
         }
+    }
 
-        if ($best_dur >= 5.0 && $best_start !== null) {
-            $profiles_path = __DIR__.'/../shared/speakers/profiles.json';
-            $profiles = ['speakers' => []];
-            if (file_exists($profiles_path)) {
-                $profiles = json_decode(file_get_contents($profiles_path), true) ?? $profiles;
-            }
-
-            if (!isset($profiles['speakers'][$speaker_id])) {
-                $profiles['speakers'][$speaker_id] = [
-                    'name'      => $display_name,
-                    'boards'    => [$board],
-                    'clips'     => [],
-                    'embedding' => null,
-                ];
-            } else {
-                $profiles['speakers'][$speaker_id]['embedding'] = null;
-                if (!in_array($board, $profiles['speakers'][$speaker_id]['boards'] ?? [])) {
-                    $profiles['speakers'][$speaker_id]['boards'][] = $board;
-                }
-            }
-
-            $clip_key = sprintf('%s/%s:%.1f-%.1f', $board, $date, $best_start, $best_end);
-            if (!in_array($clip_key, $profiles['speakers'][$speaker_id]['clips'])) {
-                $profiles['speakers'][$speaker_id]['clips'][] = $clip_key;
-                $clip_registered = true;
-            }
-
-            file_put_contents(
-                $profiles_path,
-                json_encode($profiles, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)."\n"
-            );
+    if ($best_dur >= 5.0 && $best_start !== null) {
+        $profiles_path = __DIR__.'/../shared/speakers/profiles.json';
+        $profiles = ['speakers' => []];
+        if (file_exists($profiles_path)) {
+            $profiles = json_decode(file_get_contents($profiles_path), true) ?? $profiles;
         }
+
+        if (!isset($profiles['speakers'][$speaker_id])) {
+            $profiles['speakers'][$speaker_id] = [
+                'name'      => $display_name,
+                'boards'    => [$board],
+                'clips'     => [],
+                'embedding' => null,
+            ];
+        } else {
+            $profiles['speakers'][$speaker_id]['embedding'] = null;
+            if (!in_array($board, $profiles['speakers'][$speaker_id]['boards'] ?? [])) {
+                $profiles['speakers'][$speaker_id]['boards'][] = $board;
+            }
+        }
+
+        $clip_key = sprintf('%s/%s:%.1f-%.1f', $board, $date, $best_start, $best_end);
+        if (!in_array($clip_key, $profiles['speakers'][$speaker_id]['clips'])) {
+            $profiles['speakers'][$speaker_id]['clips'][] = $clip_key;
+            $clip_registered = true;
+        }
+
+        file_put_contents(
+            $profiles_path,
+            json_encode($profiles, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)."\n"
+        );
     }
 }
 

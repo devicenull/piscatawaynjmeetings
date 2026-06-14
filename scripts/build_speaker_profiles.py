@@ -20,7 +20,10 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# Must run before torch import so the UR level-zero adapter can enumerate the GPU
+# Required for Intel Arc GPU enumeration via Level Zero
+os.environ.setdefault('ZES_ENABLE_SYSMAN', '1')
+os.environ.setdefault('OMP_NUM_THREADS', '1')
+os.environ.setdefault('MKL_NUM_THREADS', '1')
 try:
     ctypes.CDLL('libze_loader.so.1').zeInit(1)
 except OSError:
