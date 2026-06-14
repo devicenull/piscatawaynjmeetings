@@ -1,5 +1,5 @@
 <?php
-// post on bluesky 24h before the meetings
+// post on bluesky 24h/1h before meetings, and when a transcript becomes available
 // Usage: php post_to_bluesky.php [--force-meeting-id=<id>]
 require_once(__DIR__.'/../init.php');
 
@@ -106,5 +106,43 @@ foreach ($res as $row)
 	if ($bs->post($message, $facets))
 	{
 		$meeting->set(['bluesky_posts' => $next_bluesky_posts]);
+	}
+}
+
+// Post when a transcript becomes available (bluesky_posts < 3 means not yet posted)
+if ($force_meeting_id === null)
+{
+	$now = strftime('%F %T');
+	$transcript_res = $db->Execute('
+		select *
+		from meeting
+		where transcript_available = "yes"
+		  and bluesky_posts < 3
+		  and date < ?
+	', [$now]);
+
+	foreach ($transcript_res as $row)
+	{
+		$meeting = new Meeting(['record' => $row]);
+		$date = new DateTime($meeting['date']);
+		$transcript_url = 'https://piscatawaynjmeetings.com/transcript.php?MEETINGID='.$meeting['MEETINGID'];
+		$linkmsg = 'transcript';
+		$message = 'The Piscataway Township '.ucfirst($meeting['type']).' meeting from '.$date->format('F j, Y').' now has a ';
+		$facets = [[
+			'index' => [
+				'byteStart' => strlen($message),
+				'byteEnd' => strlen($message) + strlen($linkmsg),
+			],
+			'features' => [[
+				'$type' => 'app.bsky.richtext.facet#link',
+				'uri' => $transcript_url,
+			]],
+		]];
+		$message .= $linkmsg.' available.';
+
+		if ($bs->post($message, $facets))
+		{
+			$meeting->set(['bluesky_posts' => 3]);
+		}
 	}
 }
