@@ -40,7 +40,7 @@ rsync -a root@$DEST:/var/log/nginx ./access_logs
 cat textcopy.sql | mysql piscataway
 
 echo "Done with main file sync, syncing to S3"
-rclone -v --delete-excluded --exclude=**youtube** --fast-list -L --config=/home/piscataway/.config/rclone/rclone.conf sync web/files/ cloudflare:piscataway
+rclone -v --delete-excluded --exclude=**youtube** --fast-list -L --disable copy --config=/home/piscataway/.config/rclone/rclone.conf sync web/files/ cloudflare:piscataway
 
 echo "Starting transcription"
 php scripts/transcribe_meetings.php
