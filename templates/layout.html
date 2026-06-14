@@ -211,6 +211,19 @@
 			}
 
 			.qrcode { padding-bottom: 25px; }
+
+		/* Highcharts: darken default gray text against light page background */
+		.highcharts-title text,
+		.highcharts-title tspan,
+		.highcharts-axis-title text,
+		.highcharts-axis-title tspan,
+		.highcharts-axis-labels text,
+		.highcharts-axis-labels tspan,
+		.highcharts-legend-item text,
+		.highcharts-legend-item tspan { fill: #333 !important; color: #333 !important; }
+		.highcharts-grid-line { stroke: #ddd !important; }
+		.highcharts-tick,
+		.highcharts-axis-line { stroke: #aaa !important; }
 		</style>
 
 		<script src="/js/jquery-3.5.1.min.js"></script>

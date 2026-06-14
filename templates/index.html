@@ -100,6 +100,15 @@
 
 </div>
 
+{% if recent_transcripts %}
+<p class="section-heading mt-4">Recent Transcripts</p>
+<ul style="font-size:.88rem; padding-left:1.2rem; margin-bottom:1.5rem">
+	{% for t in recent_transcripts %}
+	<li><a href="/{{ t.type }}/meeting/{{ t.date|date('Y-m-d') }}">Piscataway {{ t.board_type }} meeting transcript — {{ t.date|date('F j, Y') }}</a></li>
+	{% endfor %}
+</ul>
+{% endif %}
+
 <style>
 .pnj-feature-grid {
 	display: grid;

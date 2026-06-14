@@ -427,6 +427,25 @@ class Meeting extends BaseDBObject
 		return parent::get($key);
 	}
 
+	public static function getRecentWithTranscripts(int $limit = 5): array
+	{
+		global $db;
+		$res = $db->Execute('
+			select *
+			from meeting
+			where transcript_available = "yes"
+			  and date < now()
+			order by date desc, type
+			limit ?
+		', [$limit]);
+		$meetings = [];
+		foreach ($res as $cur)
+		{
+			$meetings[] = new Meeting(['record' => $cur]);
+		}
+		return $meetings;
+	}
+
 	public static function getRecent(): iterable
 	{
 		global $db;
