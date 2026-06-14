@@ -6,8 +6,9 @@ require_once(__DIR__.'/../init.php');
 ini_set('date.timezone', 'America/New_York');
 ini_set('display_errors', 1);
 
-$opts = getopt('', ['force-meeting-id:']);
-$force_meeting_id = isset($opts['force-meeting-id']) ? (int)$opts['force-meeting-id'] : null;
+$opts = getopt('', ['force-meeting-id:', 'force-transcript-id:']);
+$force_meeting_id   = isset($opts['force-meeting-id'])   ? (int)$opts['force-meeting-id']   : null;
+$force_transcript_id = isset($opts['force-transcript-id']) ? (int)$opts['force-transcript-id'] : null;
 
 if ($force_meeting_id !== null)
 {
@@ -112,14 +113,21 @@ foreach ($res as $row)
 // Post when a transcript becomes available (bluesky_posts < 3 means not yet posted)
 if ($force_meeting_id === null)
 {
-	$now = strftime('%F %T');
-	$transcript_res = $db->Execute('
-		select *
-		from meeting
-		where transcript_available = "yes"
-		  and bluesky_posts < 3
-		  and date < ?
-	', [$now]);
+	if ($force_transcript_id !== null)
+	{
+		$transcript_res = $db->Execute('select * from meeting where MEETINGID = ?', [$force_transcript_id]);
+	}
+	else
+	{
+		$now = strftime('%F %T');
+		$transcript_res = $db->Execute('
+			select *
+			from meeting
+			where transcript_available = "yes"
+			  and bluesky_posts < 3
+			  and date < ?
+		', [$now]);
+	}
 
 	foreach ($transcript_res as $row)
 	{
