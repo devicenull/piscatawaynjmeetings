@@ -124,6 +124,12 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				&& in_array($parentdirectory, ['council', 'planning', 'zoning']) && empty($meeting['metadata']))
 			{
 				parseMinutes($parentdirectory, __DIR__.'/../web/'.$link);
+				// Parser runs in a subprocess; re-fetch to see if it wrote metadata.
+				// If still empty (no cases found), mark as attempted so we skip next run.
+				$meeting = new Meeting(['MEETINGID' => $meeting['MEETINGID']]);
+				if (empty($meeting['metadata'])) {
+					$meeting->set(['metadata' => '[]']);
+				}
 			}
 
 			$link = $meeting->getLink('recording');

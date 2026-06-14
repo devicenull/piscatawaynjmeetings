@@ -43,7 +43,7 @@ $lines = array_values(array_filter(
 
 // Zoning:   25-ZB-80V, 25-ZB-31/32V  (ends with letter(s))
 // Planning: 25-PB-02                  (ends with digits)
-$casePattern = '/^\d{2}-(ZB|PB)-[\d\/]+[A-Z]?$/';
+$casePattern = '/^\d{2}-(Z\.?B|PB)-[\d\/]+[A-Z]?$/';
 
 $streetSuffixes = 'Avenue|Street|Drive|Road|Terrace|Court|Lane|Boulevard|Way|Place|Circle|Ave|St|Dr|Rd|Ct|Ln|Blvd';
 
