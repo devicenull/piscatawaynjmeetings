@@ -1,36 +1,52 @@
 <?php
 // post on bluesky 24h before the meetings
+// Usage: php post_to_bluesky.php [--force-meeting-id=<id>]
 require_once(__DIR__.'/../init.php');
 
 ini_set('date.timezone', 'America/New_York');
 ini_set('display_errors', 1);
 
-$startdate = strftime('%F %T');
-$enddate = strftime('%F %T', time() + ONE_DAY);
+$opts = getopt('', ['force-meeting-id:']);
+$force_meeting_id = isset($opts['force-meeting-id']) ? (int)$opts['force-meeting-id'] : null;
+
+if ($force_meeting_id !== null)
+{
+	$res = $db->Execute('select * from meeting where id = ?', [$force_meeting_id]);
+}
+else
+{
+	$startdate = strftime('%F %T');
+	$enddate = strftime('%F %T', time() + ONE_DAY);
+	$res = $db->Execute('
+		select *
+		from meeting
+		where date between ? and ?
+	', [
+		$startdate,
+		$enddate,
+	]);
+}
+
 $db->debug = true;
-$res = $db->Execute('
-	select *
-	from meeting
-	where date between ? and ?
-', [
-	$startdate,
-	$enddate,
-]);
 $bs = new BlueSky();
 foreach ($res as $row)
 {
 	$meeting = new Meeting(['record' => $row]);
 	$seconds_until_meeting = strtotime($meeting['date']) - time();
-	// first post is 24h before
-	if ($meeting['bluesky_posts'] == 0)
+
+	if ($force_meeting_id !== null)
 	{
-		// fixme: increment *after* a successful post, not before
-		$meeting->set(['bluesky_posts' => 1]);
+		$next_bluesky_posts = $meeting['bluesky_posts'] + 1;
+	}
+	// first post is 24h before
+	else if ($meeting['bluesky_posts'] == 0)
+	{
+		$next_bluesky_posts = 1;
 	}
 	// second post is 1-2h before
 	else if ($meeting['bluesky_posts'] == 1 && $seconds_until_meeting < 2 * ONE_HOUR)
 	{
-		$meeting->set(['bluesky_posts' => 2]);
+		$next_bluesky_posts = 2;
 	}
 	// otherwise don't post
 	else
@@ -87,5 +103,8 @@ foreach ($res as $row)
 	];
 	$message .= $agendamsg;
 
-	$bs->post($message, $facets);
+	if ($bs->post($message, $facets))
+	{
+		$meeting->set(['bluesky_posts' => $next_bluesky_posts]);
+	}
 }

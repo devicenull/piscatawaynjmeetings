@@ -28,7 +28,7 @@ class BlueSky {
 		}
 	}
 
-	public function post($message, $facets=[])
+	public function post($message, $facets=[]): bool
 	{
 		$date = new \DateTime();
 		curl_setopt_array($this->curl, [
@@ -38,15 +38,20 @@ class BlueSky {
 				'collection' => 'app.bsky.feed.post',
 				'repo' => $this->did,
 				'record' => [
+					'$type'     => 'app.bsky.feed.post',
 					'text'      => $message,
 					'facets'    => $facets,
-					'type'      => 'app.bsky.feed.post',
 					'createdAt' => $date->format(\DateTime::RFC3339),
 				],
 			]),
 		]);
 		$result = json_decode(curl_exec($this->curl), true);
-		var_dump($result);
+		if (!isset($result['uri']))
+		{
+			error_log('BlueSky post failed: '.json_encode($result));
+			return false;
+		}
+		return true;
 	}
 }
 
