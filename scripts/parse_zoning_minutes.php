@@ -43,7 +43,8 @@ $lines = array_values(array_filter(
 
 // Zoning:   25-ZB-80V, 25-ZB-31/32V  (ends with letter(s))
 // Planning: 25-PB-02                  (ends with digits)
-$casePattern = '/^\d{2}-(Z\.?B|PB)-[\d\/]+[A-Z]?$/';
+// Some older PDFs OCR as "19-PB- 43" with a space after the last dash; allow and normalize.
+$casePattern = '/^\d{2}-(Z\.?B|PB)-\s*[\d\/]+[A-Z]?$/';
 
 $streetSuffixes = 'Avenue|Street|Drive|Road|Terrace|Court|Lane|Boulevard|Way|Place|Circle|Ave|St|Dr|Rd|Ct|Ln|Blvd';
 
@@ -56,7 +57,7 @@ for ($i = 0; $i < count($lines); $i++) {
 		continue;
 	}
 
-	$case    = $lines[$i];
+	$case    = preg_replace('/\s+/', '', $lines[$i]);
 	$name    = $lines[$i + 1] ?? '';
 	$address = '';
 
