@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block title %}{% if view == 'month' %}Piscataway, NJ CAD Calls — {{ month_label }}{% else %}Piscataway, NJ CAD Emergency Call Analysis{% endif %}{% endblock %}
-{% block metadescripion %}{% if view == 'month' %}{{ total }} police and emergency calls in Piscataway, NJ in {{ month_label }}. Top call types: {{ top_list }}. Daily breakdown and category analysis.{% else %}Monthly breakdown of police and emergency CAD calls in Piscataway, New Jersey. Browse call volumes and top incident types by month.{% endif %}{% endblock %}
+{% block metadescripion %}{% if view == 'month' %}{{ total }} police and emergency calls in Piscataway, NJ in {{ month_label }}. Top call types: {{ top_list }}. Daily breakdown and category analysis.{% else %}Piscataway NJ police blotter — monthly breakdown of police and emergency CAD calls in Piscataway, New Jersey. Browse call volumes and top incident types by month.{% endif %}{% endblock %}
 {% block og_title %}{{ block('title') }}{% endblock %}
 {% block og_description %}{{ block('metadescripion') }}{% endblock %}
 {% block og_url %}https://piscatawaynjmeetings.com/cad_analysis.php{% endblock %}
@@ -17,7 +17,7 @@
 
 	<p class="section-heading">Calls by Month</p>
 	<p class="text-muted" style="font-size:.85rem; margin-top:-.5rem; margin-bottom:1rem">
-		Complete data available for months listed below. Click a month for a detailed breakdown. Call data is from OPRA requests, as a result some calls are not available for reasons like Daniel's law or other privacy laws.
+		Piscataway NJ police blotter and emergency call data by month. Complete data available for months listed below. Click a month for a detailed breakdown. Call data is from OPRA requests, as a result some calls are not available for reasons like Daniel's law or other privacy laws.
 	</p>
 
 	<div class="cad-month-grid" itemscope itemtype="https://schema.org/Dataset">
