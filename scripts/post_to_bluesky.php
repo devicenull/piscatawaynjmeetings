@@ -104,10 +104,11 @@ foreach ($res as $row)
 	];
 	$message .= $agendamsg;
 
-	if ($bs->post($message, $facets))
-	{
-		$meeting->set(['bluesky_posts' => $next_bluesky_posts]);
-	}
+	// Always advance the counter whether or not the API call returns success.
+	// If post() times out after sending, Bluesky still creates the post server-side,
+	// but a false return would leave bluesky_posts unchanged and cause infinite retries.
+	$bs->post($message, $facets);
+	$meeting->set(['bluesky_posts' => $next_bluesky_posts]);
 }
 
 // Post when a transcript becomes available (bluesky_posts < 3 means not yet posted)

@@ -33,6 +33,7 @@ class BlueSky {
 		$date = new \DateTime();
 		curl_setopt_array($this->curl, [
 			CURLOPT_URL => 'https://bsky.social/xrpc/com.atproto.repo.createRecord',
+			CURLOPT_TIMEOUT => 30,
 			CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: Bearer '.$this->api_key],
 			CURLOPT_POSTFIELDS => json_encode([
 				'collection' => 'app.bsky.feed.post',
