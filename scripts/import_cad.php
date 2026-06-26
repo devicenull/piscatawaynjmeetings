@@ -2,7 +2,8 @@
 ini_set('display_errors', 1);
 require(__DIR__.'/../init.php');
 
-$file = $argv[1];
+$no_geocode = in_array('--no-geocode', $argv);
+$file = end(array_filter($argv, fn($a) => $a[0] !== '-'));
 
 if (pathinfo($file, PATHINFO_EXTENSION) === 'xlsx')
 {
@@ -38,7 +39,7 @@ while (!feof($f))
 		'call_time' => date('Y-m-d H:i:s', strtotime($data[1])),
 		'location'  => trim($data[2].' '.$data[3]),
 		'call_type' => $data[4],
-		'no_geocode' => true,
+		'no_geocode' => $no_geocode,
 	]))
 	{
 		echo "UNABLE TO ADD: \n";
