@@ -3,7 +3,8 @@ ini_set('display_errors', 1);
 require(__DIR__.'/../init.php');
 
 $no_geocode = in_array('--no-geocode', $argv);
-$file = end(array_filter($argv, fn($a) => $a[0] !== '-'));
+$args = array_filter($argv, fn($a) => $a[0] !== '-');
+$file = end($args);
 
 if (pathinfo($file, PATHINFO_EXTENSION) === 'xlsx')
 {
