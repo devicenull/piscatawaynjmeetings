@@ -2,21 +2,43 @@
 ini_set('display_errors', 1);
 require(__DIR__.'/../init.php');
 
+$file = $argv[1];
+
+if (pathinfo($file, PATHINFO_EXTENSION) === 'xlsx')
+{
+	$f = popen('xlsx2csv '.escapeshellarg($file), 'r');
+	$is_pipe = true;
+}
+else
+{
+	$f = fopen($file, 'r');
+	$is_pipe = false;
+}
+
 $lines = 0;
-$f = fopen($argv[1], 'r');
+$row = 0;
 while (!feof($f))
 {
 	$data = fgetcsv($f);
-	if (!empty($data) == 0) continue;
+	if ($data === false) continue;
+
+	$row++;
+
+	// Skip title row ("Dispatch Incident Search") and column header row
+	if ($row <= 2) continue;
+
+	// Skip blank/redacted rows — incident number must be numeric
+	if (empty($data[0]) || !is_numeric($data[0])) continue;
 
 	$cad = new CADCall(['incident' => $data[0]]);
 	if ($cad->isInitialized()) continue;
 
 	if (!$cad->add([
-		'incident' => $data[0],
-		'call_time' => strftime('%F %T', strtotime($data[1])),
-		'location' => trim($data[2].' '.$data[3]),
+		'incident'  => $data[0],
+		'call_time' => date('Y-m-d H:i:s', strtotime($data[1])),
+		'location'  => trim($data[2].' '.$data[3]),
 		'call_type' => $data[4],
+		'no_geocode' => true,
 	]))
 	{
 		echo "UNABLE TO ADD: \n";
@@ -24,4 +46,14 @@ while (!feof($f))
 	}
 	$lines++;
 }
+
+if ($is_pipe)
+{
+	pclose($f);
+}
+else
+{
+	fclose($f);
+}
+
 echo "Scanned $lines lines\n";

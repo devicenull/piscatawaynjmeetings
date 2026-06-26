@@ -98,12 +98,27 @@ class CADCall extends BaseDBObject
 
 	public function add(array $params): bool
 	{
+		$no_geocode = !empty($params['no_geocode']);
+		unset($params['no_geocode']);
+
 		if (!isset($params['ADDRESSID']))
 		{
-			$address = new Address(['address' => $params['location']]);
-			if ($address->isInitialized())
+			if ($no_geocode)
 			{
-				$params['ADDRESSID'] = $address['ADDRESSID'];
+				global $db;
+				$row = $db->GetRow('SELECT ADDRESSID FROM address WHERE address = ?', [trim(strtolower($params['location']))]);
+				if ($row)
+				{
+					$params['ADDRESSID'] = $row['ADDRESSID'];
+				}
+			}
+			else
+			{
+				$address = new Address(['address' => $params['location']]);
+				if ($address->isInitialized())
+				{
+					$params['ADDRESSID'] = $address['ADDRESSID'];
+				}
 			}
 		}
 
