@@ -635,7 +635,7 @@
 				fd.append('display_name', displayName);
 				if (clipCb && clipCb.checked) fd.append('register_clip', '1');
 
-				fetch('assign_speaker.php', { method: 'POST', body: fd })
+				fetch('/assign_speaker.php', { method: 'POST', body: fd })
 					.then(function(r) { return r.json(); })
 					.then(function(data) {
 						if (data.success) {
