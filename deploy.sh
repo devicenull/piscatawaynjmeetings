@@ -25,7 +25,7 @@ echo "Rebuilding speaker embeddings"
 venv/bin/python scripts/build_speaker_profiles.py
 
 echo "Identifying speakers"
-bash scripts/batch_identify_speakers.sh council
+bash scripts/batch_identify_speakers.sh council planning zoning
 rsync -rt shared/speakers/ root@$DEST:/home/piscataway/shared/speakers/
 
 mysqldump --add-drop-table --ignore-table=piscataway.textcopy piscataway > piscataway.sql
