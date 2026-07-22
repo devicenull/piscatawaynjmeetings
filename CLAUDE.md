@@ -263,16 +263,18 @@ Use service classes as templates:
 
 The budget page shows Highcharts trend charts (taxable valuation, total debt, stacked tax levy) plus a document table with links to both the budget PDF and the corresponding debt statement PDF for each year.
 
-**Extraction script**: `scripts/extract_budget_stats.php` — run manually to re-extract when new PDFs are added. Writes to `budget_stats` table. Three data sources in priority order:
+**Extraction script**: `scripts/extract_budget_stats.php` — run manually to re-extract when new PDFs are added. Writes to `budget_stats` table. Four data sources in priority order:
 
 1. **Budget PDFs** (`web/files/budget/`): UFB format (2017+) extracts everything; legacy NJ format (pre-2017, 2022, 2026) extracts taxable valuation and municipal-only tax. Never extract debt from legacy budgets — "Outstanding Balance" is a partial figure (general capital only).
 
 2. **Debt statements** (`web/files/debt_statements/`): Gross debt total. Backfills years missing debt from budget PDFs. Three OCR formats: `Total $X`, `2 Total $X`, and space-embedded numbers (2016: `$   114,       173,057.00`). The budget loop overwrites debt unconditionally; the debt statement loop uses `COALESCE` so it only fills nulls.
 
-3. **Financial statements** (`web/files/financial_statements/`): Net Valuation Taxable. Each statement is certified as of October 1 of year N and feeds the year N+1 budget — so FS file for year N → `budget_stats` row for year N+1. Scanned PDFs produce 20M+ chars of junk; skip files > 5MB of text or with values < $1B. Regex: `NET\s+VALUATION\s+TAXABLE\s+\d{4}\s+([\d,]+)`.
+3. **Audits** (`web/files/audits/`): Gross debt total, lower priority than debt statements — only fills years those couldn't reach (e.g. debt statement PDF is a scanned image with no extractable text). Each audit's "Summary of Statutory Debt Condition" note covers two fiscal years; the undecorated "General Debt" row (vs. "General Debt:" elsewhere in the doc) is followed by a totals line whose first dollar figure is Gross Debt as of Dec 31 of that year, feeding budget year+1. A second comparison table, when present, gives the prior year directly. Many older audits are scanned images (20M+ chars of gs-extracted junk) and are skipped; only audits with real embedded text (e.g. 2011, 2018, 2020+) contribute.
+
+4. **Financial statements** (`web/files/financial_statements/`): Net Valuation Taxable. Each statement is certified as of October 1 of year N and feeds the year N+1 budget — so FS file for year N → `budget_stats` row for year N+1. Scanned PDFs produce 20M+ chars of junk; skip files > 5MB of text or with values < $1B. Regex: `NET\s+VALUATION\s+TAXABLE\s+\d{4}\s+([\d,]+)`.
 
 **Budget format notes**:
-- 2022 is legacy format despite the year (post-UFB era). Its debt extraction is unreliable; 2022 total_debt is intentionally NULL.
+- 2022 is legacy format despite the year (post-UFB era). Its debt is not extractable from the budget PDF itself, but is backfilled from the 2021 audit's comparison table.
 - 2015 and 2016 have no budget PDFs; their rows exist in `budget_stats` via debt statement and financial statement backfill only.
 - The `misc_files` page excludes budget/audit/debt_statement types (they have dedicated pages). `MiscFile::getByTypes(['debt_statements', 'other'])` is used there.
 
@@ -285,8 +287,7 @@ The budget page shows Highcharts trend charts (taxable valuation, total debt, st
 - **Copy logging**: Tracking user text selection for textcopy table (privacy consideration)
 - **Twitter oEmbed**: Relies on Twitter's public API; may break if X/Twitter changes access
 - **Date timezone handling**: Strftime used inconsistently; prefer DateTime class for new code
-- **Budget debt 2022**: No reliable source; debt statement is scanned, budget extraction is partial. Stays NULL.
-- **Budget taxable 2013, 2015**: No usable financial statement for those years; taxable valuation stays NULL.
+- **Budget taxable 2013, 2015**: No usable financial statement for those years; taxable valuation stays NULL. Audits don't help either — they report equalized value (for debt-limit calculations), not net valuation taxable.
 
 ## Documentation (`/docs`)
 

@@ -62,6 +62,35 @@ function extractDebtStatement(string $text): ?int
 	return null;
 }
 
+// Extract Gross Debt totals from an audit's "Summary of Statutory Debt Condition" note.
+// Each audit covers two fiscal years (e.g. "YEARS ENDED DECEMBER 31, 2021 AND 2020") and
+// contains one table (current year only) or two (current + prior-year comparison). The
+// undecorated "General Debt" row (as opposed to the "General Debt:" heading elsewhere in
+// the document) is immediately followed by a totals line whose first dollar figure is the
+// combined Gross Debt. Some older audits render commas as colons ("127:107,043.52") —
+// parseDollar() strips both, so this is harmless as long as the capture group spans them.
+// Returns [budgetYear => grossDebt], mapping Dec 31 of $auditYear to budget year+1 and,
+// if present, Dec 31 of the prior year to budget year $auditYear itself.
+function extractAuditDebt(string $text, int $auditYear): array
+{
+	$lines = preg_split('/\r?\n/', $text);
+	$totals = [];
+	foreach ($lines as $i => $line) {
+		if (!preg_match('/^\s*General Debt\s{2,}/', $line)) continue;
+		for ($j = $i + 1; $j < min($i + 3, count($lines)); $j++) {
+			if (preg_match('/\$\s*([\d,:]+\.\d{2})/', $lines[$j], $m)) {
+				$totals[] = parseDollar($m[1]);
+				break;
+			}
+		}
+	}
+
+	$result = [];
+	if (isset($totals[0])) $result[$auditYear + 1] = $totals[0];
+	if (isset($totals[1])) $result[$auditYear] = $totals[1];
+	return $result;
+}
+
 function extractLegacy(string $text): array
 {
 	$taxable = $raised = $municipal = null;
@@ -169,6 +198,50 @@ foreach ($debtFiles as $path) {
 		   total_debt = COALESCE(total_debt, VALUES(total_debt))',
 		[$year, $debt]
 	);
+}
+
+// Backfill total_debt from audit reports' "Summary of Statutory Debt Condition" note.
+// Lower priority than the dedicated debt statements above — only fills years those
+// couldn't (e.g. when the debt statement PDF itself is a scanned image).
+// Uses COALESCE so existing debt statement / budget-PDF values are never overwritten.
+$auditDir = BASE_FILE_PATH . 'audits';
+$auditFiles = glob("$auditDir/*.pdf");
+sort($auditFiles);
+$seenAuditYears = [];
+
+foreach ($auditFiles as $path) {
+	$auditYear = (int)substr(basename($path, '.pdf'), 0, 4);
+	if ($auditYear < 2000) continue;
+	if (isset($seenAuditYears[$auditYear])) continue;
+	$seenAuditYears[$auditYear] = true;
+
+	echo "Audit $auditYear... ";
+	$text = extractText($path);
+	$len = strlen($text);
+	// Scanned PDFs rendered as bitmaps produce 20M+ chars of whitespace/garbage
+	if ($len < 200 || $len > 5_000_000) {
+		echo "likely scanned, skipping\n";
+		continue;
+	}
+
+	$debts = extractAuditDebt($text, $auditYear);
+	if (!$debts) {
+		echo "no debt table found\n";
+		continue;
+	}
+
+	foreach ($debts as $budgetYear => $debt) {
+		if ($budgetYear < 2008) continue;
+		printf("budget %d debt=%s ", $budgetYear, '$' . number_format($debt));
+		$db->Execute(
+			'INSERT INTO budget_stats (year, total_debt)
+			 VALUES (?, ?)
+			 ON DUPLICATE KEY UPDATE
+			   total_debt = COALESCE(total_debt, VALUES(total_debt))',
+			[$budgetYear, $debt]
+		);
+	}
+	echo "\n";
 }
 
 // Backfill taxable_valuation from financial statement PDFs.
