@@ -40,4 +40,9 @@ User-agent: BLEXBot
 Disallow: /
 
 User-agent: *
-Sitemap: https://piscatawaynjmeetings.com/sitemap.php
+Disallow: /datasette/
+
+Sitemap: https://piscatawaynjmeetings.com/sitemap_council.php
+Sitemap: https://piscatawaynjmeetings.com/sitemap_planning.php
+Sitemap: https://piscatawaynjmeetings.com/sitemap_zoning.php
+Sitemap: https://piscatawaynjmeetings.com/sitemap_other.php

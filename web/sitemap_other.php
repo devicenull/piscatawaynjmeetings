@@ -5,19 +5,27 @@ Header('Content-Type: text/plain');
 
 define('BASEURL', 'https://piscatawaynjmeetings.com');
 
+// Meeting types with their own dedicated sitemap
+const BOARD_SITEMAP_TYPES = ['council', 'planning', 'zoning'];
+
 $sitemap = new SiteMapGenerator();
 $sitemap->addEntry(BASEURL.'/');
+
 foreach (glob(__DIR__.'/../web/*.php') as $file)
 {
 	$filename = basename($file);
 	if (in_array($filename, [
 		'meeting_edit.php',
+		'meeting.php',
 		'transcript.php',
-		'sitemap.php',
+		'assign_speaker.php',
+		'ical.php',
 		'index.php',
 		'copylogger.php',
-		'sendsms.php',
-		'datasette/cad_calls/all_calls',
+		'sitemap_council.php',
+		'sitemap_planning.php',
+		'sitemap_zoning.php',
+		'sitemap_other.php',
 	]))
 	{
 		continue;
@@ -27,18 +35,9 @@ foreach (glob(__DIR__.'/../web/*.php') as $file)
 
 foreach (Meeting::getAll() as $meeting)
 {
-	if ($meeting['minutes_available'] == 'yes')
+	if (!in_array($meeting['type'], BOARD_SITEMAP_TYPES))
 	{
-		$sitemap->addEntry(BASEURL.$meeting->getLink('minutes'), $meeting['last_updated']);
-	}
-	if ($meeting['recording_available'] == 'yes')
-	{
-		$sitemap->addEntry(BASEURL.$meeting->getLink('recording'), $meeting['last_updated']);
-	}
-	if ($meeting['transcript_available'] == 'yes')
-	{
-		$sitemap->addEntry(BASEURL.'/'.$meeting['type'].'/meeting/'.explode(' ', $meeting['date'])[0], $meeting['last_updated']);
-		$sitemap->addEntry(BASEURL.$meeting->getLink('transcript'), $meeting['last_updated']);
+		$meeting->addSitemapEntries($sitemap, BASEURL);
 	}
 }
 

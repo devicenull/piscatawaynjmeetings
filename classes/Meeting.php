@@ -106,6 +106,27 @@ class Meeting extends BaseDBObject
 		return 'Piscataway, New Jersey '.$this['type'].' meeting '.$type.' for '.explode(' ', $this['date'])[0];
 	}
 
+	public function addSitemapEntries(SiteMapGenerator $sitemap, string $baseurl): void
+	{
+		if (!$this->hasHappened())
+		{
+			return;
+		}
+		if ($this['minutes_available'] == 'yes')
+		{
+			$sitemap->addEntry($baseurl.$this->getLink('minutes'), $this['last_updated']);
+		}
+		if ($this['recording_available'] == 'yes')
+		{
+			$sitemap->addEntry($baseurl.$this->getLink('recording'), $this['last_updated']);
+		}
+		if ($this['transcript_available'] == 'yes')
+		{
+			$sitemap->addEntry($baseurl.'/'.$this['type'].'/meeting/'.explode(' ', $this['date'])[0], $this['last_updated']);
+			$sitemap->addEntry($baseurl.$this->getLink('transcript'), $this['last_updated']);
+		}
+	}
+
 	/**
 	 * Returns interleaved transcript segments for the template to render.
 	 * Each item is either:
@@ -233,10 +254,13 @@ class Meeting extends BaseDBObject
 					$next++;
 				}
 
+				sscanf($line['display_ts'], '%d:%d:%d', $dh, $dm, $ds);
+				$duration_iso = sprintf('PT%dH%dM%dS', $dh, $dm, $ds);
+
 				$current_html .=
 					'<div class="ts-line" data-speaker="'.$speaker_num.'">'.
-					'<span class="ts-speaker" title="'.htmlspecialchars($label).'">'.htmlspecialchars($label).'</span>'.
-					'<button class="btn-ts" onclick="changePlayerTime('.$timestamp.')" title="Jump to '.$line['display_ts'].'">'.$line['display_ts'].'</button>'.
+					'<span class="ts-speaker" title="'.htmlspecialchars($label).'">'.htmlspecialchars($label).'</span> '.
+					'<button class="btn-ts" onclick="changePlayerTime('.$timestamp.')" title="Jump to '.$line['display_ts'].'"><time datetime="'.$duration_iso.'">'.$line['display_ts'].'</time></button>'.
 					'<span class="ts-text">'.htmlspecialchars($line['text']).'</span>'.
 					"</div>\n";
 			}
@@ -260,10 +284,12 @@ class Meeting extends BaseDBObject
 						$next++;
 					}
 
+					$duration_iso = sprintf('PT%dH%dM%dS', $hours, $minutes, $seconds);
+
 					$current_html .=
 						'<div class="ts-line" data-speaker="'.$speaker_num.'">'.
-						'<span class="ts-speaker" title="'.htmlspecialchars($label).'">'.htmlspecialchars($label).'</span>'.
-						'<button class="btn-ts" onclick="changePlayerTime('.$timestamp.')" title="Jump to '.$matches[3].'">'.$matches[3].'</button>'.
+						'<span class="ts-speaker" title="'.htmlspecialchars($label).'">'.htmlspecialchars($label).'</span> '.
+						'<button class="btn-ts" onclick="changePlayerTime('.$timestamp.')" title="Jump to '.$matches[3].'"><time datetime="'.$duration_iso.'">'.$matches[3].'</time></button>'.
 						'<span class="ts-text">'.htmlspecialchars(trim($matches[5])).'</span>'.
 						"</div>\n";
 				} else {
@@ -277,6 +303,36 @@ class Meeting extends BaseDBObject
 		}
 
 		return $segments;
+	}
+
+	public function getPlainTranscriptText(): string
+	{
+		$speaker_names = $this->loadSpeakerNames();
+		$json_lines    = $this->loadWhisperxLines() ?? $this->loadRevaiLines();
+		$lines         = [];
+
+		if ($json_lines !== null) {
+			foreach ($json_lines as $line) {
+				$label   = $speaker_names[$line['speaker_num']] ?? 'Speaker '.$line['speaker_num'];
+				$lines[] = $label.' ('.$line['display_ts'].'): '.$line['text'];
+			}
+		} else {
+			$link = $this->getLink('transcript');
+			if ($link) {
+				$transcript = file_get_contents(__DIR__.'/../web/'.$link);
+				foreach (explode("\n", $transcript) as $raw) {
+					if (preg_match('/(Speaker ([0-9]+)\s+)([0-9\:]+)(\s+)(.*)$/', $raw, $matches)) {
+						$speaker_num = (int)$matches[2];
+						$label       = $speaker_names[$speaker_num] ?? trim($matches[1]);
+						$lines[]     = $label.' ('.$matches[3].'): '.trim($matches[5]);
+					} elseif (trim($raw) !== '') {
+						$lines[] = trim($raw);
+					}
+				}
+			}
+		}
+
+		return implode("\n", $lines);
 	}
 
 	public function getTranscriptSections(): array
