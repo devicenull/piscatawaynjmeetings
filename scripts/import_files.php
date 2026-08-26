@@ -1,6 +1,8 @@
 <?php
 require_once(__DIR__.'/../init.php');
 
+define('BASEURL', 'https://piscatawaynjmeetings.com');
+
 /**
 *	Import files into the relevant object types
 */
@@ -46,6 +48,7 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 					ocrPDF($cur);
 				}
 				setExifMetadata($cleanpath, $newsletter->getExifTitle());
+				IndexNow::submitURL(BASEURL.$newsletter->getLink());
 			}
 		break;
 
@@ -64,6 +67,7 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				}
 
 				setExifMetadata($cleanpath, $bid->getExifTitle());
+				IndexNow::submitURL(BASEURL.$bid->getLink());
 			}
 		break;
 
@@ -118,6 +122,8 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 					ocrPDF(__DIR__.'/../web/'.$link);
 					setExifMetadata(__DIR__.'/../web/'.$link, $meeting->getExifTitle('minutes'));
 				}
+
+				IndexNow::submitURL(BASEURL.'/'.$meeting['type'].'/meeting/'.explode(' ', $meeting['date'])[0]);
 			}
 
 			if ($link != '' && str_ends_with($link, '.pdf')
@@ -139,6 +145,13 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				echo $meeting['type']."\t".$meeting['date']."\t"."recording: yes\n";
 				$known_files[] = $link;
 				setMP3Metadata(__DIR__.'/../web/'.$link, $meeting->getExifTitle('recording'));
+
+				IndexNow::submitURL(BASEURL.'/'.$meeting['type'].'/meeting/'.explode(' ', $meeting['date'])[0]);
+			}
+
+			if ($meeting->getLink('transcript') != '' && $meeting['transcript_available'] == 'no')
+			{
+				IndexNow::submitURL(BASEURL.'/'.$meeting['type'].'/meeting/'.explode(' ', $meeting['date'])[0]);
 			}
 		break;
 
@@ -165,6 +178,8 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				{
 					ocrPDF($cur);
 				}
+
+				IndexNow::submitURL(BASEURL.$campaignfile->getLink());
 			}
 		break;
 
@@ -193,6 +208,8 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 					{
 						ocrPDF($cur);
 					}
+
+					IndexNow::submitURL(BASEURL.$miscfile->getLink());
 				}
 
 				continue 2;
