@@ -100,13 +100,58 @@ if ($month !== null) {
 		'top_list'         => $topList,
 	];
 } else {
-	$months = CADCall::getMonthlyTotals();
+	// volume -> hue: 215 (blue, low) -> 5 (red, high)
+	$hue = fn($pct) => 'hsl('.round(215 - 210 * ($pct / 100)).' 70% 42%)';
+
+	$months = CADCall::getMonthlyTotals(); // mo => count, ascending
 	$max    = $months ? max($months) : 1;
+	$total  = array_sum($months);
+
+	$days = 0;
+	foreach (array_keys($months) as $mo) {
+		$days += (int)(new DateTime($mo.'-01'))->format('t');
+	}
+
+	$topTypesByMonth = CADCall::getMonthlyTopTypes(3);
+
+	$monthCards = [];
+	foreach (array_reverse($months, true) as $mo => $count) {
+		$pct = $max ? round($count / $max * 100) : 0;
+		$monthCards[] = [
+			'key'   => $mo,
+			'label' => (new DateTime($mo.'-01'))->format('F Y'),
+			'calls' => $count,
+			'pct'   => $pct,
+			'color' => $hue($pct),
+			'top'   => $topTypesByMonth[$mo] ?? [],
+		];
+	}
+
+	$topTypesRaw = CADCall::getTopTypesOverall(10);
+	$tmax = $topTypesRaw ? max($topTypesRaw) : 1;
+	$topTypes = [];
+	foreach ($topTypesRaw as $code => $n) {
+		$pct = round($n / $tmax * 100);
+		$topTypes[] = [
+			'name'  => CADCall::getTypeName($code),
+			'n'     => $n,
+			'pct'   => $pct,
+			'color' => $hue($pct),
+		];
+	}
+
+	$monthKeys = array_keys($months);
 
 	$vars = [
-		'view'   => 'calendar',
-		'months' => $months,
-		'max'    => $max,
+		'view'             => 'calendar',
+		'month_cards'      => $monthCards,
+		'month_count'      => count($months),
+		'total'            => $total,
+		'per_day'          => $days ? round($total / $days) : 0,
+		'first_month'      => $monthKeys ? (new DateTime(reset($monthKeys).'-01'))->format('F Y') : '',
+		'last_month'       => $monthKeys ? (new DateTime(end($monthKeys).'-01'))->format('F Y') : '',
+		'last_month_short' => $monthKeys ? (new DateTime(end($monthKeys).'-01'))->format('M \'y') : '',
+		'top_types'        => $topTypes,
 	];
 }
 

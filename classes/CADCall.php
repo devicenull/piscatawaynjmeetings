@@ -172,6 +172,43 @@ class CADCall extends BaseDBObject
 		return $types;
 	}
 
+	public static function getMonthlyTopTypes(int $limit = 3): array
+	{
+		global $db;
+		$res = $db->Execute("
+			SELECT DATE_FORMAT(call_time, '%Y-%m') AS mo, call_type, COUNT(*) AS n
+			FROM cad_call
+			WHERE call_time >= '2025-10-01'
+			GROUP BY mo, call_type
+			ORDER BY mo, n DESC
+		");
+		$byMonth = [];
+		foreach ($res as $row) {
+			$mo = $row['mo'];
+			if (!isset($byMonth[$mo])) $byMonth[$mo] = [];
+			if (count($byMonth[$mo]) < $limit) {
+				$byMonth[$mo][] = ['name' => self::getTypeName($row['call_type']), 'n' => (int)$row['n']];
+			}
+		}
+		return $byMonth;
+	}
+
+	public static function getTopTypesOverall(int $limit = 10): array
+	{
+		global $db;
+		$res = $db->Execute("
+			SELECT call_type, COUNT(*) AS n
+			FROM cad_call
+			WHERE call_time >= '2025-10-01'
+			GROUP BY call_type
+			ORDER BY n DESC
+			LIMIT ?
+		", [$limit]);
+		$types = [];
+		foreach ($res as $row) $types[$row['call_type']] = (int)$row['n'];
+		return $types;
+	}
+
 	public static function getMonthTotal(string $yearMonth): int
 	{
 		global $db;

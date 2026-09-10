@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
-{% block title %}{% if view == 'month' %}Piscataway, NJ CAD Calls — {{ month_label }}{% else %}Piscataway, NJ CAD Emergency Call Analysis{% endif %}{% endblock %}
-{% block metadescripion %}{% if view == 'month' %}{{ total }} police and emergency calls in Piscataway, NJ in {{ month_label }}. Top call types: {{ top_list }}. Daily breakdown and category analysis.{% else %}Piscataway NJ police blotter — monthly breakdown of police and emergency CAD calls in Piscataway, New Jersey. Browse call volumes and top incident types by month.{% endif %}{% endblock %}
+{% block title %}{% if view == 'month' %}Piscataway, NJ CAD Calls — {{ month_label }}{% else %}Piscataway Police Blotter — Monthly Call Data{% endif %}{% endblock %}
+{% block metadescripion %}{% if view == 'month' %}{{ total }} police and emergency calls in Piscataway, NJ in {{ month_label }}. Top call types: {{ top_list }}. Daily breakdown and category analysis.{% else %}Every police, fire and EMS call dispatched in Piscataway Township, month by month — {{ total|number_format }} calls from {{ first_month }} through {{ last_month }}.{% endif %}{% endblock %}
 {% block og_title %}{{ block('title') }}{% endblock %}
 {% block og_description %}{{ block('metadescripion') }}{% endblock %}
 {% block og_url %}https://piscatawaynjmeetings.com/cad_analysis.php{% endblock %}
@@ -11,44 +11,97 @@
 {% if view == 'calendar' %}
 
 	<div class="board-header">
-		<h1>CAD Call Analysis</h1>
+		<h1>Piscataway Police Blotter</h1>
 		<a href="/datasette/cad_calls/all_calls">Browse raw call data ↗</a>
 	</div>
 
-	<p class="section-heading">Calls by Month</p>
-	<p class="text-muted" style="font-size:.85rem; margin-top:-.5rem; margin-bottom:1rem">
-		Piscataway NJ police blotter and emergency call data by month. Complete data available for months listed below. Click a month for a detailed breakdown. Call data is from OPRA requests, as a result some calls are not available for reasons like Daniel's law or other privacy laws.
+	<p class="text-muted" style="font-size:.9rem; margin-top:-.5rem; margin-bottom:1.5rem">
+		Every police, fire and EMS call dispatched in Piscataway Township, month by month — {{ total|number_format }} calls from {{ first_month }} through {{ last_month }}. Pick a month for the full log with daily counts and a breakdown by call type, or <a href="/datasette/cad_calls/all_calls">search the raw call data ↗</a>.
 	</p>
 
-	<div class="cad-month-grid" itemscope itemtype="https://schema.org/Dataset">
+	<div class="cad-overview" itemscope itemtype="https://schema.org/Dataset">
 		<meta itemprop="name" content="Piscataway, NJ CAD Emergency Calls">
 		<meta itemprop="description" content="Monthly police and emergency CAD call volumes for Piscataway, New Jersey">
 		<meta itemprop="spatialCoverage" content="Piscataway, NJ">
-		{% for mo, count in months %}
-		{% set intensity = (count / max)|round(2) %}
-		<a href="/cad_analysis.php?month={{ mo }}" class="cad-month-card" style="--intensity: {{ intensity }}"
-		   itemprop="hasPart" itemscope itemtype="https://schema.org/DataFeedItem">
-			<meta itemprop="dateCreated" content="{{ mo }}-01">
-			<div class="cad-month-name">{{ mo|date('F Y') }}</div>
-			<div class="cad-month-count">{{ count|number_format }}</div>
-			<div class="cad-month-label">calls</div>
-		</a>
-		{% endfor %}
+		<div class="cad-stat"><div class="cad-stat-num">{{ total|number_format }}</div><div class="cad-stat-label">total calls</div></div>
+		<div class="cad-stat"><div class="cad-stat-num">{{ month_count }}</div><div class="cad-stat-label">months of data</div></div>
+		<div class="cad-stat"><div class="cad-stat-num">{{ per_day }}</div><div class="cad-stat-label">calls per day, average</div></div>
+		<div class="cad-stat"><div class="cad-stat-num">{{ last_month_short }}</div><div class="cad-stat-label">most recent month</div></div>
+	</div>
+
+	<div class="cad-layout">
+		<section aria-labelledby="months-h">
+			<div style="display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap">
+				<p class="section-heading" id="months-h" style="margin-bottom:.75rem">Blotter by Month</p>
+				<span class="text-muted" style="font-size:.8rem">Newest first · each card opens the full month</span>
+			</div>
+			<div class="cad-month-grid">
+				{% for m in month_cards %}
+				<a href="/cad_analysis.php?month={{ m.key }}" class="cad-month-card" itemprop="hasPart" itemscope itemtype="https://schema.org/DataFeedItem">
+					<meta itemprop="dateCreated" content="{{ m.key }}-01">
+					<div class="cad-month-card-top">
+						<span class="cad-month-name">{{ m.label }}</span>
+						<span class="cad-month-count">{{ m.calls|number_format }} calls</span>
+					</div>
+					<div class="cad-month-bar"><div style="width:{{ m.pct }}%; background:{{ m.color }}"></div></div>
+					<ul class="cad-month-top">
+						{% for t in m.top %}
+						<li><span>{{ t.name }}</span><span>{{ t.n }}</span></li>
+						{% endfor %}
+					</ul>
+					<span class="cad-month-link">View full {{ m.label }} blotter →</span>
+				</a>
+				{% endfor %}
+			</div>
+			<p class="text-muted" style="font-size:.8rem; margin-top:1.1rem">Only months with complete data are listed. Call records come from OPRA requests to the township; some calls are withheld under Daniel's Law and other privacy statutes, so counts are slightly below the true dispatch total.</p>
+		</section>
+
+		<aside aria-labelledby="types-h">
+			<p class="section-heading" id="types-h" style="margin-bottom:.2rem">Most Common Calls</p>
+			<p class="text-muted" style="font-size:.8rem; margin-bottom:.75rem">All months combined</p>
+			<ol class="cad-type-list">
+				{% for t in top_types %}
+				<li>
+					<div class="cad-type-row"><span>{{ t.name }}</span><span>{{ t.n|number_format }}</span></div>
+					<div class="cad-type-bar"><div style="width:{{ t.pct }}%; background:{{ t.color }}"></div></div>
+				</li>
+				{% endfor %}
+			</ol>
+			<p class="text-muted" style="font-size:.8rem">"Sick Person" is an EMS dispatch code, not a crime. Traffic stops and alarms make up most of the police volume. Click into a month to see how types break down day by day.</p>
+		</aside>
 	</div>
 
 	<style>
-		.cad-month-grid { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:.5rem; }
+		.cad-overview { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:#ddd; border:1px solid #ddd; margin-bottom:2rem; }
+		.cad-stat { background:#fff; padding:1rem 1.1rem; }
+		.cad-stat-num { font-size:1.7rem; font-weight:700; letter-spacing:-.01em; }
+		.cad-stat-label { font-size:.8rem; color:#666; margin-top:2px; }
+
+		.cad-layout { display:grid; grid-template-columns:minmax(0,2fr) minmax(240px,1fr); gap:2.5rem; align-items:start; }
+		@media (max-width:768px) { .cad-layout { grid-template-columns:1fr; } }
+
+		.cad-month-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:.75rem; }
 		.cad-month-card {
-			flex: 1 1 160px; max-width:200px;
-			background: rgba(245,192,0,calc(var(--intensity)*.75+.08));
-			border:1px solid #ddd; border-radius:6px; padding:1rem 1.2rem;
-			text-decoration:none; color:var(--pnj-black);
-			transition: transform .12s, box-shadow .12s;
+			display:flex; flex-direction:column; gap:.6rem;
+			background:#fff; border:1px solid #ddd; border-radius:6px; padding:1rem 1.1rem;
+			color:var(--pnj-black); text-decoration:none;
+			transition: border-color .12s, box-shadow .12s;
 		}
-		.cad-month-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.12); text-decoration:none; color:var(--pnj-black); }
-		.cad-month-name { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#555; }
-		.cad-month-count { font-size:2rem; font-weight:700; line-height:1.1; margin-top:.25rem; }
-		.cad-month-label { font-size:.75rem; color:#777; }
+		.cad-month-card:hover { border-color:var(--pnj-black); box-shadow:0 1px 0 var(--pnj-black); text-decoration:none; color:var(--pnj-black); }
+		.cad-month-card-top { display:flex; justify-content:space-between; align-items:baseline; gap:.5rem; }
+		.cad-month-name { font-size:1.05rem; font-weight:700; }
+		.cad-month-count { font-size:.85rem; color:#444; white-space:nowrap; }
+		.cad-month-bar { height:4px; background:#eee; border-radius:2px; overflow:hidden; }
+		.cad-month-bar > div { height:100%; }
+		.cad-month-top { list-style:none; margin:0; padding:0; font-size:.82rem; color:#444; display:flex; flex-direction:column; gap:3px; }
+		.cad-month-top li { display:flex; justify-content:space-between; gap:.6rem; }
+		.cad-month-top li span:last-child { color:#777; font-variant-numeric:tabular-nums; }
+		.cad-month-link { font-size:.82rem; font-weight:700; color:#1d4f91; margin-top:auto; }
+
+		.cad-type-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.6rem; }
+		.cad-type-row { display:flex; justify-content:space-between; font-size:.85rem; margin-bottom:3px; }
+		.cad-type-bar { height:8px; background:#eee; border-radius:2px; overflow:hidden; }
+		.cad-type-bar > div { height:100%; }
 	</style>
 
 {% else %}
