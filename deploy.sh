@@ -28,6 +28,18 @@ echo "Identifying speakers"
 bash scripts/batch_identify_speakers.sh council planning zoning
 rsync -rt shared/speakers/ root@$DEST:/home/piscataway/shared/speakers/
 
+# After import/speaker identification so new files and speaker names are included.
+# A failed build leaves the previous index live everywhere.
+echo "Building search index"
+if php scripts/build_search_docs.php > data/search_docs.ndjson.tmp; then
+	mv data/search_docs.ndjson.tmp data/search_docs.ndjson
+	php scripts/search_cli.php load data/search_docs.ndjson
+	rsync -t data/search_docs.ndjson root@$DEST:/home/piscataway/data/
+	ssh root@$DEST 'php /home/piscataway/scripts/search_cli.php load /home/piscataway/data/search_docs.ndjson'
+else
+	echo "Search document build failed, skipping index update"
+fi
+
 mysqldump --add-drop-table --ignore-table=piscataway.textcopy piscataway > piscataway.sql
 scp piscataway.sql root@$DEST:/root/
 ssh root@$DEST 'mysql piscataway < piscataway.sql'

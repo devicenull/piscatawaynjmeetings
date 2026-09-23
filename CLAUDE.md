@@ -188,6 +188,7 @@ Located in `/scripts`, typically run via cron:
 - **parse_campaign_expenses.php** - Generate Graphviz visualization of campaign contributions
 - **extract_budget_stats.php** - Extract financial figures from budget/debt statement/financial statement PDFs into `budget_stats` table (run manually when new PDFs added)
 - **handle_webchanges_change.php** - Called by urlwatch as a `run_command` hook when a monitored page changes. Archives the URL to archive.org, downloads any new PDF links (minutes/agendas) into `downloaded/`, then copies matched files into `web/files/`, and invokes `import_files.php` to register them in the database. Logs to `urlwatch.log`.
+- **build_search_docs.php** / **search_cli.php** - Build the site search NDJSON and load it into the local Meilisearch (run by `deploy.sh`; see `docs/search.md`)
 
 ## Datasette Integration
 
@@ -298,6 +299,7 @@ troubleshooting that are not easily derivable from the code.
 | File | Covers |
 |------|--------|
 | `docs/speaker-identification.md` | Full pipeline: Rev.ai JSON → pyannote embeddings → `identify_speakers.py` → transcript display. Includes Python env setup, HuggingFace token requirements, clip quality guidance, backfill workflows, and troubleshooting. |
+| `docs/search.md` | Site search: Meilisearch on localhost per host, `build_search_docs.php` → NDJSON → `search_cli.php load` (run over ssh on remote hosts, never tunnel to the HTTP API), what's indexed, ranking, keys, install/upgrade. |
 
 ## Testing & QA
 

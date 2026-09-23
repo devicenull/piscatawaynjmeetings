@@ -1,0 +1,15 @@
+[Unit]
+Description=Meilisearch (site search, see docs/search.md)
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/meilisearch
+EnvironmentFile=/etc/meilisearch.env
+Environment=MEILI_ENV=production MEILI_HTTP_ADDR=127.0.0.1:7700 MEILI_DB_PATH=/var/lib/meilisearch/data.ms MEILI_NO_ANALYTICS=true
+DynamicUser=yes
+StateDirectory=meilisearch
+WorkingDirectory=/var/lib/meilisearch
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
