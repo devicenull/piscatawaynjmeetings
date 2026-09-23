@@ -40,7 +40,7 @@ directly in `web/files/` are not.
 | Meeting minutes / bids (`.doc`, `.docx`) | file | the file |
 | Transcripts | ~2 minutes of speech (`TRANSCRIPT_CHUNK_SECONDS`) | `/{type}/meeting/{date}#t=SECONDS` |
 | AI summary sections (`web/files/{type}/{date}.json`) | section | same, at the section start |
-| Bids, newsletters, misc files, campaign files (PDF) | page | `#page=N` |
+| Bids, newsletters, misc files, redevelopment studies, campaign files (PDF) | page | `#page=N` |
 | Tweets from non-hidden `twitter_user`s | tweet | archive.org copy |
 
 Not indexed: recordings (the transcripts cover them), CAD calls (Datasette has

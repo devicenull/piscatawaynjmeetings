@@ -24,6 +24,7 @@ const RANK = [
 	'audits'               => 2,
 	'debt_statements'      => 2,
 	'financial_statements' => 2,
+	'redevelopment'        => 2,
 	'campaign'             => 1,
 	'bid'                  => 1,
 	'newsletter'           => 1,
@@ -133,6 +134,16 @@ foreach (MiscFile::getAll() as $file)
 		'doc'   => 'misc-'.$file['FILEID'],
 		'title' => $file['type_description'].', '.date('F j, Y', strtotime($file['date'])),
 		'date'  => strtotime($file['date']),
+	]);
+}
+
+foreach (RedevelopmentStudy::getAll() as $study)
+{
+	emitFile($emit, $study->getLink(), [
+		'kind'  => 'redevelopment',
+		'doc'   => 'redevelopment-'.$study['STUDYID'],
+		'title' => 'Redevelopment '.$study['label'].': '.pathinfo($study['filename'], PATHINFO_FILENAME),
+		'date'  => strtotime($study['date']),
 	]);
 }
 

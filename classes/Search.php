@@ -17,19 +17,21 @@ class Search
 		'audits'               => 'Audits',
 		'debt_statements'      => 'Debt Statements',
 		'financial_statements' => 'Financial Statements',
+		'redevelopment'        => 'Redevelopment Studies',
 		'campaign'             => 'Campaign Finance',
 		'tweet'                => 'Tweets',
 	];
 
 	// Filter choices shown to users, each covering one or more kinds
 	const TYPE_FILTERS = [
-		'minutes'     => ['label' => 'Minutes', 'kinds' => ['minutes']],
-		'transcripts' => ['label' => 'Transcripts & Summaries', 'kinds' => ['transcript', 'summary']],
-		'bids'        => ['label' => 'Bids', 'kinds' => ['bid']],
-		'finance'     => ['label' => 'Budgets & Audits', 'kinds' => ['budget', 'audits', 'debt_statements', 'financial_statements']],
-		'campaign'    => ['label' => 'Campaign Finance', 'kinds' => ['campaign']],
-		'newsletters' => ['label' => 'Newsletters', 'kinds' => ['newsletter']],
-		'tweets'      => ['label' => 'Tweets', 'kinds' => ['tweet']],
+		'minutes'       => ['label' => 'Minutes', 'kinds' => ['minutes']],
+		'transcripts'   => ['label' => 'Transcripts & Summaries', 'kinds' => ['transcript', 'summary']],
+		'bids'          => ['label' => 'Bids', 'kinds' => ['bid']],
+		'finance'       => ['label' => 'Budgets & Audits', 'kinds' => ['budget', 'audits', 'debt_statements', 'financial_statements']],
+		'redevelopment' => ['label' => 'Redevelopment Studies', 'kinds' => ['redevelopment']],
+		'campaign'      => ['label' => 'Campaign Finance', 'kinds' => ['campaign']],
+		'newsletters'   => ['label' => 'Newsletters', 'kinds' => ['newsletter']],
+		'tweets'        => ['label' => 'Tweets', 'kinds' => ['tweet']],
 	];
 
 	// Marks matched words; private-use characters survive HTML escaping untouched
