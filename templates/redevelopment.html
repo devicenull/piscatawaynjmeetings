@@ -1,0 +1,32 @@
+{% extends 'layout.html' %}
+
+{% block title %}Piscataway Township, NJ Areas In Need of Redevelopment{% endblock %}
+{% block metadescripion %}Area in need of redevelopment studies and addenda for Piscataway Township, New Jersey.{% endblock %}
+{% block og_title %}{{ block('title') }}{% endblock %}
+{% block og_description %}{{ block('metadescripion') }}{% endblock %}
+{% block og_url %}https://piscatawaynjmeetings.com/redevelopment.php{% endblock %}
+
+{% block maincontent %}
+	<div class="board-header">
+		<h1>Areas In Need of Redevelopment</h1>
+	</div>
+
+	{% for cur in studies %}
+	<div class="item-entry">
+		<div style="display:flex; align-items:baseline; flex-wrap:wrap; gap:.4rem">
+			<span class="date-cell">{{ cur.date }}</span>
+			<span class="item-label">{{ cur.label|upper }}</span>
+			<span class="doc-links"><a href="{{ cur.getLink() }}">View PDF</a></span>
+		</div>
+		<div style="margin-top:.5rem">
+			{% for lot in cur.lots %}
+			<div style="font-size:.88rem; margin-top:.3rem">
+				<span class="case-number" style="font-size:.85rem">Block {{ lot.block }}, Lot {{ lot.lot }}</span>
+				&mdash;
+				<a href="https://www.google.com/maps/search/?api=1&query={{ (lot.street_address ~ ', Piscataway, NJ')|url_encode }}" target="_blank" rel="noopener">{{ lot.street_address }}</a>
+			</div>
+			{% endfor %}
+		</div>
+	</div>
+	{% endfor %}
+{% endblock %}

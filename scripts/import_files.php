@@ -155,6 +155,32 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 			}
 		break;
 
+		case 'redevelopment':
+			if (!preg_match('/^([0-9]{4}-[0-9]{2}-[0-9]{2})-/', $filebasename, $m))
+			{
+				echo "Invalid file name format (expected YYYY-MM-DD-description): $cleanpath\n";
+				continue 2;
+			}
+
+			$study = new RedevelopmentStudy(['filename' => basename($cleanpath)]);
+			if (!$study->isInitialized())
+			{
+				echo "Adding redevelopment study {$cleanpath} -- block/lot/address must be entered manually\n";
+				$study->add([
+					'date'     => $m[1],
+					'filename' => basename($cleanpath),
+				]);
+
+				if ($extension == 'pdf')
+				{
+					ocrPDF($cur);
+				}
+
+				setExifMetadata($cleanpath, $study->getExifTitle());
+				IndexNow::submitURL(BASEURL.$study->getLink());
+			}
+		break;
+
 		case 'campaign':
 			if (count($fileinfo) == 7)
 			{
