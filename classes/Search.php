@@ -21,6 +21,17 @@ class Search
 		'tweet'                => 'Tweets',
 	];
 
+	// Filter choices shown to users, each covering one or more kinds
+	const TYPE_FILTERS = [
+		'minutes'     => ['label' => 'Minutes', 'kinds' => ['minutes']],
+		'transcripts' => ['label' => 'Transcripts & Summaries', 'kinds' => ['transcript', 'summary']],
+		'bids'        => ['label' => 'Bids', 'kinds' => ['bid']],
+		'finance'     => ['label' => 'Budgets & Audits', 'kinds' => ['budget', 'audits', 'debt_statements', 'financial_statements']],
+		'campaign'    => ['label' => 'Campaign Finance', 'kinds' => ['campaign']],
+		'newsletters' => ['label' => 'Newsletters', 'kinds' => ['newsletter']],
+		'tweets'      => ['label' => 'Tweets', 'kinds' => ['tweet']],
+	];
+
 	// Marks matched words; private-use characters survive HTML escaping untouched
 	const MARK_START = "\u{E000}";
 	const MARK_END   = "\u{E001}";
@@ -59,18 +70,13 @@ class Search
 	}
 
 	/**
-	*	$filters: kind (list of KIND_LABELS keys), board (Meeting::BOARD_TYPES key),
+	*	$filters: type (list of TYPE_FILTERS keys), board (Meeting::BOARD_TYPES key),
 	*	from/to (years). $sort: relevance|newest
 	*/
 	public static function query(string $q, array $filters=[], string $sort='relevance', int $page=1): array
 	{
 		// Only whitelisted values reach the filter expression, so no quoting issues
 		$filter = [];
-		$kinds = array_values(array_intersect($filters['kind'] ?? [], array_keys(self::KIND_LABELS)));
-		if ($kinds)
-		{
-			$filter[] = 'kind IN ['.implode(', ', array_map(fn($k) => '"'.$k.'"', $kinds)).']';
-		}
 		if (isset(Meeting::BOARD_TYPES[$filters['board'] ?? '']))
 		{
 			$filter[] = 'board = "'.$filters['board'].'"';
@@ -83,20 +89,36 @@ class Search
 		{
 			$filter[] = 'year <= '.(int)$filters['to'];
 		}
+		$kinds = [];
+		foreach ($filters['type'] ?? [] as $type)
+		{
+			$kinds = array_merge($kinds, self::TYPE_FILTERS[$type]['kinds'] ?? []);
+		}
+		$type_filter = $kinds ? ['kind IN ['.implode(', ', array_map(fn($k) => '"'.$k.'"', $kinds)).']'] : [];
 
-		$response = self::request('POST', '/indexes/'.self::INDEX.'/search', [
-			'q'                     => $q,
-			'filter'                => $filter,
-			'sort'                  => $sort == 'newest' ? ['date:desc'] : [],
-			'facets'                => ['kind', 'board'],
-			'page'                  => max(1, $page),
-			'hitsPerPage'           => self::PER_PAGE,
-			'attributesToRetrieve'  => ['doc', 'kind', 'board', 'title', 'url', 'anchor', 'date', 'speakers'],
-			'attributesToHighlight' => ['title'],
-			'attributesToCrop'      => ['body:40'],
-			'highlightPreTag'       => self::MARK_START,
-			'highlightPostTag'      => self::MARK_END,
-		]);
+		// Second query counts every type ignoring the type filter, so unchecked types still show their counts
+		[$response, $counts] = self::request('POST', '/multi-search', ['queries' => [
+			[
+				'indexUid'              => self::INDEX,
+				'q'                     => $q,
+				'filter'                => array_merge($filter, $type_filter),
+				'sort'                  => $sort == 'newest' ? ['date:desc'] : [],
+				'page'                  => max(1, $page),
+				'hitsPerPage'           => self::PER_PAGE,
+				'attributesToRetrieve'  => ['doc', 'kind', 'board', 'title', 'url', 'anchor', 'date', 'speakers'],
+				'attributesToHighlight' => ['title', 'body'],
+				'attributesToCrop'      => ['body:40'],
+				'highlightPreTag'       => self::MARK_START,
+				'highlightPostTag'      => self::MARK_END,
+			],
+			[
+				'indexUid'    => self::INDEX,
+				'q'           => $q,
+				'filter'      => $filter,
+				'facets'      => ['kind'],
+				'hitsPerPage' => 0,
+			],
+		]])['results'];
 
 		$hits = [];
 		foreach ($response['hits'] as $hit)
@@ -106,7 +128,8 @@ class Search
 				'title_html'   => self::markToHtml($hit['_formatted']['title']),
 				'snippet'      => self::stripMarks($hit['_formatted']['body'] ?? ''),
 				'snippet_html' => self::markToHtml($hit['_formatted']['body'] ?? ''),
-				'url'          => $hit['url'].$hit['anchor'],
+				// site paths contain raw filenames ("/files/bids/2022-ROAD PROGRAM ... & ADA.pdf")
+				'url'          => ($hit['url'][0] == '/' ? implode('/', array_map('rawurlencode', explode('/', $hit['url']))) : $hit['url']).$hit['anchor'],
 				'kind'         => $hit['kind'],
 				'kind_label'   => self::KIND_LABELS[$hit['kind']] ?? $hit['kind'],
 				'board'        => $hit['board'],
@@ -116,12 +139,18 @@ class Search
 			];
 		}
 
+		$type_counts = [];
+		foreach (self::TYPE_FILTERS as $type => $info)
+		{
+			$type_counts[$type] = array_sum(array_intersect_key($counts['facetDistribution']['kind'] ?? [], array_flip($info['kinds'])));
+		}
+
 		return [
 			'hits'        => $hits,
 			'total'       => $response['totalHits'],
 			'page'        => $response['page'],
 			'total_pages' => $response['totalPages'],
-			'facets'      => $response['facetDistribution'] ?? [],
+			'type_counts' => $type_counts,
 			'ms'          => $response['processingTimeMs'],
 		];
 	}

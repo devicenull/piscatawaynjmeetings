@@ -1,0 +1,120 @@
+{% extends 'layout.html' %}
+
+{% block metadescripion %}Search Piscataway Township, NJ meeting minutes, transcripts, bids, budgets and other public records{% endblock %}
+{% block title %}{% if q %}{{ q }} - {% endif %}Search Piscataway, NJ Public Records{% endblock %}
+{% block og_title %}{{ block('title') }}{% endblock %}
+{% block og_description %}{{ block('metadescripion') }}{% endblock %}
+{% block og_url %}https://piscatawaynjmeetings.com/search.php{% endblock %}
+{% block head_extra %}
+		{% if q %}<meta name="robots" content="noindex, follow">{% endif %}
+		<style>
+			.search-hit { padding: .8rem 0; border-bottom: 1px solid #eee; }
+			.search-hit h2 { font-size: 1.05rem; margin: 0 0 .2rem; }
+			.search-snippet { font-size: .88rem; color: #333; margin: .25rem 0 0; }
+			.search-hit mark, .search-hit h2 mark { background: var(--pnj-yellow-light); padding: 0 1px; font-weight: 600; }
+			.search-filters { font-size: .88rem; }
+			.search-filters .form-check { margin-bottom: .2rem; }
+			.search-count { color: #888; font-size: .8rem; }
+		</style>
+{% endblock %}
+
+{% block maincontent %}
+	<div class="board-header">
+		<h1>Search</h1>
+	</div>
+
+	<form action="/search.php" method="get" role="search">
+		<div class="input-group mb-3">
+			<label for="search-q" class="sr-only">Search terms</label>
+			<input id="search-q" type="search" name="q" class="form-control" value="{{ q }}" placeholder="Search minutes, transcripts, bids, budgets..." autofocus>
+			<div class="input-group-append">
+				<button class="btn btn-dark" type="submit">Search</button>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-md-3 search-filters mb-3">
+				<fieldset class="mb-3">
+					<legend class="section-heading">Type</legend>
+					{% for key, info in type_filters %}
+					<div class="form-check">
+						<input class="form-check-input" type="checkbox" name="type[]" value="{{ key }}" id="type-{{ key }}" {% if key in filters.type %}checked{% endif %} onchange="this.form.submit()">
+						<label class="form-check-label" for="type-{{ key }}">
+							{{ info.label }}{% if results %} <span class="search-count">({{ results.type_counts[key] }})</span>{% endif %}
+						</label>
+					</div>
+					{% endfor %}
+				</fieldset>
+
+				<label for="search-board" class="section-heading d-block">Board</label>
+				<select id="search-board" name="board" class="form-control form-control-sm mb-3" onchange="this.form.submit()">
+					<option value="">Any board</option>
+					{% for key, label in boards %}
+					<option value="{{ key }}" {% if filters.board == key %}selected{% endif %}>{{ label }}</option>
+					{% endfor %}
+				</select>
+
+				<fieldset class="mb-3">
+					<legend class="section-heading">Year</legend>
+					<div class="d-flex align-items-center">
+						<label for="search-from" class="sr-only">From year</label>
+						<input id="search-from" type="number" name="from" class="form-control form-control-sm" min="2000" max="2100" placeholder="From" value="{{ filters.from }}">
+						<span class="mx-1">&ndash;</span>
+						<label for="search-to" class="sr-only">To year</label>
+						<input id="search-to" type="number" name="to" class="form-control form-control-sm" min="2000" max="2100" placeholder="To" value="{{ filters.to }}">
+					</div>
+				</fieldset>
+
+				<label for="search-sort" class="section-heading d-block">Sort</label>
+				<select id="search-sort" name="sort" class="form-control form-control-sm mb-3" onchange="this.form.submit()">
+					<option value="relevance" {% if sort == 'relevance' %}selected{% endif %}>Most relevant</option>
+					<option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest first</option>
+				</select>
+
+				<button class="btn btn-sm btn-outline-dark" type="submit">Apply filters</button>
+			</div>
+
+			<div class="col-md-9">
+				{% if search_error %}
+					<div class="alert alert-danger" role="alert">{{ search_error }}</div>
+				{% elseif results %}
+					<p class="search-count" role="status">
+						{% if results.total >= 1000 %}1000+{% else %}{{ results.total }}{% endif %} result{% if results.total != 1 %}s{% endif %}
+						{% if results.total_pages > 1 %}&middot; page {{ results.page }} of {{ results.total_pages }}{% endif %}
+					</p>
+
+					{% for hit in results.hits %}
+					<article class="search-hit">
+						<h2><a href="{{ hit.url }}">{{ hit.title_html|raw }}</a></h2>
+						<div>
+							<span class="item-label">{{ hit.kind_label }}</span>
+							{% if hit.board_label %}<span class="item-type">{{ hit.board_label }}</span>{% endif %}
+							<time class="item-type" datetime="{{ hit.date }}">{{ hit.date|date('F j, Y') }}</time>
+							{% if hit.speakers %}<span class="item-type">&middot; {{ hit.speakers|join(', ') }}</span>{% endif %}
+						</div>
+						{% if hit.snippet_html %}<p class="search-snippet">{{ hit.snippet_html|raw }}</p>{% endif %}
+					</article>
+					{% else %}
+					<p>No results found. Try fewer words, or remove some filters.</p>
+					{% endfor %}
+
+					{% if results.total_pages > 1 %}
+					<nav aria-label="Search result pages" class="my-3">
+						<ul class="pagination pagination-sm">
+							<li class="page-item {% if results.page <= 1 %}disabled{% endif %}">
+								<a class="page-link" href="/search.php?{{ query|merge({'page': results.page - 1})|url_encode }}">Previous</a>
+							</li>
+							<li class="page-item {% if results.page >= results.total_pages %}disabled{% endif %}">
+								<a class="page-link" href="/search.php?{{ query|merge({'page': results.page + 1})|url_encode }}">Next</a>
+							</li>
+						</ul>
+					</nav>
+					{% endif %}
+				{% else %}
+					<p>Search the full text of meeting minutes, meeting transcripts and summaries, bid packages, budgets, audits, campaign finance reports, newsletters and township tweets.</p>
+					<p class="search-count">Tips: use quotes for an exact phrase (<code>"sewer bond"</code>). Small typos are fine.</p>
+				{% endif %}
+			</div>
+		</div>
+	</form>
+{% endblock %}

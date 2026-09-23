@@ -183,6 +183,7 @@
 			transition: background .1s;
 		}
 		.ts-line:hover { background: rgba(0,0,0,.03); }
+		.ts-line.ts-target { background: var(--pnj-yellow-light); border-left-color: var(--pnj-yellow); }
 		.ts-speaker {
 			font-weight: 600;
 			font-size: .82rem;
@@ -298,6 +299,23 @@
 			document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
 				new bootstrap.Tooltip(el);
 			});
+
+			// #t=SECONDS (from search results): scroll to that line and cue the audio there
+			var hashTime = location.hash.match(/^#t=(\d+)$/);
+			if (hashTime) {
+				var target = parseInt(hashTime[1], 10);
+				var lines = document.querySelectorAll('.ts-line[data-ts]');
+				var targetLine = null;
+				for (var i = 0; i < lines.length && parseInt(lines[i].dataset.ts, 10) <= target; i++) {
+					targetLine = lines[i];
+				}
+				if (targetLine) {
+					targetLine.classList.add('ts-target');
+					targetLine.scrollIntoView({block: 'center'});
+				}
+				var cueAudio = document.getElementById('audioplayer');
+				if (cueAudio) cueAudio.currentTime = target;
+			}
 
 			var audio = document.getElementById('audioplayer');
 			if (!audio) return;
