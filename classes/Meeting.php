@@ -27,6 +27,15 @@ class Meeting extends BaseDBObject
 	const DB_KEY = 'MEETINGID';
 	const DB_TABLE = 'meeting';
 
+	const BOARD_TYPES = [
+		'zoning'     => 'Zoning Board',
+		'planning'   => 'Planning Board',
+		'council'    => 'Township Council',
+		're-warding' => 'Re-warding Commission',
+		'ems'        => 'EMS Advisory Council',
+		'library'    => 'Library',
+	];
+
 	public function __construct($params=[])
 	{
 		if (isset($params['type']) && isset($params['date']))
@@ -490,16 +499,7 @@ class Meeting extends BaseDBObject
 	{
 		if ($key == 'board_type')
 		{
-			$descriptions = [
-				'zoning'     => 'Zoning Board',
-				'planning'   => 'Planning Board',
-				'council'    => 'Township Council',
-				're-warding' => 'Re-warding Commission',
-				'ems'        => 'EMS Advisory Council',
-				'library'    => 'Library',
-			];
-
-			return $descriptions[$this['type']] ?? $this['type'];
+			return self::BOARD_TYPES[$this['type']] ?? $this['type'];
 		}
 
 		return parent::get($key);
