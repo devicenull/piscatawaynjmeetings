@@ -258,7 +258,7 @@ class Meeting extends BaseDBObject
 				$duration_iso = sprintf('PT%dH%dM%dS', $dh, $dm, $ds);
 
 				$current_html .=
-					'<div class="ts-line" data-speaker="'.$speaker_num.'">'.
+					'<div class="ts-line" data-speaker="'.$speaker_num.'" data-ts="'.(int)$timestamp.'">'.
 					'<span class="ts-speaker" title="'.htmlspecialchars($label).'">'.htmlspecialchars($label).'</span> '.
 					'<button class="btn-ts" onclick="changePlayerTime('.$timestamp.')" title="Jump to '.$line['display_ts'].'"><time datetime="'.$duration_iso.'">'.$line['display_ts'].'</time></button>'.
 					'<span class="ts-text">'.htmlspecialchars($line['text']).'</span>'.
@@ -287,7 +287,7 @@ class Meeting extends BaseDBObject
 					$duration_iso = sprintf('PT%dH%dM%dS', $hours, $minutes, $seconds);
 
 					$current_html .=
-						'<div class="ts-line" data-speaker="'.$speaker_num.'">'.
+						'<div class="ts-line" data-speaker="'.$speaker_num.'" data-ts="'.(int)$timestamp.'">'.
 						'<span class="ts-speaker" title="'.htmlspecialchars($label).'">'.htmlspecialchars($label).'</span> '.
 						'<button class="btn-ts" onclick="changePlayerTime('.$timestamp.')" title="Jump to '.$matches[3].'"><time datetime="'.$duration_iso.'">'.$matches[3].'</time></button>'.
 						'<span class="ts-text">'.htmlspecialchars(trim($matches[5])).'</span>'.
@@ -307,14 +307,31 @@ class Meeting extends BaseDBObject
 
 	public function getPlainTranscriptText(): string
 	{
+		$lines = [];
+		foreach ($this->getTranscriptLines() as $line) {
+			$lines[] = $line['speaker'] === null ? $line['text'] : $line['speaker'].' ('.$line['display_ts'].'): '.$line['text'];
+		}
+		return implode("\n", $lines);
+	}
+
+	/**
+	 * Transcript as [{speaker, ts (seconds), display_ts, text}, ...].
+	 * Unparseable lines from a plain .txt transcript have speaker/ts null.
+	 */
+	public function getTranscriptLines(): array
+	{
 		$speaker_names = $this->loadSpeakerNames();
 		$json_lines    = $this->loadWhisperxLines() ?? $this->loadRevaiLines();
 		$lines         = [];
 
 		if ($json_lines !== null) {
 			foreach ($json_lines as $line) {
-				$label   = $speaker_names[$line['speaker_num']] ?? 'Speaker '.$line['speaker_num'];
-				$lines[] = $label.' ('.$line['display_ts'].'): '.$line['text'];
+				$lines[] = [
+					'speaker'    => $speaker_names[$line['speaker_num']] ?? 'Speaker '.$line['speaker_num'],
+					'ts'         => $line['ts_float'],
+					'display_ts' => $line['display_ts'],
+					'text'       => $line['text'],
+				];
 			}
 		} else {
 			$link = $this->getLink('transcript');
@@ -322,17 +339,22 @@ class Meeting extends BaseDBObject
 				$transcript = file_get_contents(__DIR__.'/../web/'.$link);
 				foreach (explode("\n", $transcript) as $raw) {
 					if (preg_match('/(Speaker ([0-9]+)\s+)([0-9\:]+)(\s+)(.*)$/', $raw, $matches)) {
+						sscanf($matches[3], '%d:%d:%d', $h, $m, $s);
 						$speaker_num = (int)$matches[2];
-						$label       = $speaker_names[$speaker_num] ?? trim($matches[1]);
-						$lines[]     = $label.' ('.$matches[3].'): '.trim($matches[5]);
+						$lines[] = [
+							'speaker'    => $speaker_names[$speaker_num] ?? trim($matches[1]),
+							'ts'         => ($h * 3600) + ($m * 60) + $s,
+							'display_ts' => $matches[3],
+							'text'       => trim($matches[5]),
+						];
 					} elseif (trim($raw) !== '') {
-						$lines[] = trim($raw);
+						$lines[] = ['speaker' => null, 'ts' => null, 'display_ts' => null, 'text' => trim($raw)];
 					}
 				}
 			}
 		}
 
-		return implode("\n", $lines);
+		return $lines;
 	}
 
 	public function getTranscriptSections(): array
