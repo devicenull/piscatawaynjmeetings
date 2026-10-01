@@ -1,6 +1,6 @@
 <?php
 /**
-*	Extract searchable text from every registered meeting/file/tweet into
+*	Extract searchable text from every registered meeting/file into
 *	NDJSON for Meilisearch. Runs on pre-prod (needs web/files), then the output
 *	is loaded on each host with scripts/search_cli.php load.
 *
@@ -28,7 +28,6 @@ const RANK = [
 	'campaign'             => 1,
 	'bid'                  => 1,
 	'newsletter'           => 1,
-	'tweet'                => 0,
 ];
 
 if (($argv[1] ?? '') == '--selftest')
@@ -156,25 +155,6 @@ foreach (CampaignFile::getAll() as $file)
 		'doc'   => 'campaign-'.$file['CAMPAIGNFILEID'],
 		'title' => $file['year'].' Campaign Finance: '.pathinfo($file['filename'], PATHINFO_FILENAME),
 		'date'  => $date,
-	]);
-}
-
-$res = $db->Execute('
-	select *
-	from tweet
-	left join twitter_user using (TWITTERUID)
-	where hidden="no"
-');
-foreach ($res as $tweet)
-{
-	$emit([
-		'id'    => 'tweet-'.$tweet['TWEETID'],
-		'doc'   => 'tweet-'.$tweet['TWEETID'],
-		'kind'  => 'tweet',
-		'title' => '@'.$tweet['username'].' on '.date('F j, Y', strtotime($tweet['date'])),
-		'body'  => html_entity_decode($tweet['content'], ENT_QUOTES | ENT_HTML5),
-		'url'   => $tweet['archive_url'] ?: 'https://twitter.com/'.$tweet['username'].'/status/'.$tweet['TWEETID'],
-		'date'  => strtotime($tweet['date']),
 	]);
 }
 

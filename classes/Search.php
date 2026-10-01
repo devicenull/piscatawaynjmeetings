@@ -19,7 +19,6 @@ class Search
 		'financial_statements' => 'Financial Statements',
 		'redevelopment'        => 'Redevelopment Studies',
 		'campaign'             => 'Campaign Finance',
-		'tweet'                => 'Tweets',
 	];
 
 	// Filter choices shown to users, each covering one or more kinds
@@ -31,7 +30,6 @@ class Search
 		'redevelopment' => ['label' => 'Redevelopment Studies', 'kinds' => ['redevelopment']],
 		'campaign'      => ['label' => 'Campaign Finance', 'kinds' => ['campaign']],
 		'newsletters'   => ['label' => 'Newsletters', 'kinds' => ['newsletter']],
-		'tweets'        => ['label' => 'Tweets', 'kinds' => ['tweet']],
 	];
 
 	// Marks matched words; private-use characters survive HTML escaping untouched

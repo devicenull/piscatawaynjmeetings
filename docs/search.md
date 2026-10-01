@@ -1,8 +1,8 @@
 # Site search
 
 Full-text search over meeting minutes, transcripts, AI meeting summaries, bids,
-budgets/audits/financial statements, campaign finance reports, newsletters and
-tweets, served at `/search.php`. Backed by [Meilisearch](https://www.meilisearch.com/)
+budgets/audits/financial statements, redevelopment studies, campaign finance
+reports and newsletters, served at `/search.php`. Backed by [Meilisearch](https://www.meilisearch.com/)
 running on each host, bound to `127.0.0.1:7700` only.
 
 ## How it fits together
@@ -41,10 +41,9 @@ directly in `web/files/` are not.
 | Transcripts | ~2 minutes of speech (`TRANSCRIPT_CHUNK_SECONDS`) | `/{type}/meeting/{date}#t=SECONDS` |
 | AI summary sections (`web/files/{type}/{date}.json`) | section | same, at the section start |
 | Bids, newsletters, misc files, redevelopment studies, campaign files (PDF) | page | `#page=N` |
-| Tweets from non-hidden `twitter_user`s | tweet | archive.org copy |
 
 Not indexed: recordings (the transcripts cover them), CAD calls (Datasette has
-them). PDFs without a text layer are logged as `No text:` during the build — run
+them), tweets (deliberately excluded). PDFs without a text layer are logged as `No text:` during the build — run
 them through `ocrmypdf` like `import_files.php` does.
 
 Every record has `doc` (the parent file/transcript). It's the index's
