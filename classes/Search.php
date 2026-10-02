@@ -103,6 +103,8 @@ class Search
 				'q'                     => $q,
 				'filter'                => array_merge($filter, $type_filter),
 				'sort'                  => $sort == 'newest' ? ['date:desc'] : [],
+				// sorting by date overrides relevance, so don't pad results with partial matches
+				'matchingStrategy'      => $sort == 'newest' ? 'all' : 'last',
 				'page'                  => max(1, $page),
 				'hitsPerPage'           => self::PER_PAGE,
 				'attributesToRetrieve'  => ['doc', 'kind', 'board', 'title', 'url', 'anchor', 'date', 'speakers'],

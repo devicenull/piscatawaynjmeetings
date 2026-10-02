@@ -23,25 +23,28 @@ const SETTINGS = [
 	'sortableAttributes'   => ['date'],
 	// one result per file/transcript, using its best page/section
 	'distinctAttribute'    => 'doc',
+	// sort first so "newest" is strictly by date (it's a no-op when no sort is requested);
 	// rank/date only break ties between equally good text matches
-	'rankingRules'         => ['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness', 'rank:desc', 'date:desc'],
+	'rankingRules'         => ['sort', 'words', 'typo', 'proximity', 'attribute', 'exactness', 'rank:desc', 'date:desc'],
 	// ordinance, block and lot numbers should match exactly
 	'typoTolerance'        => ['disableOnNumbers' => true],
 	'pagination'           => ['maxTotalHits' => 1000],
 	'synonyms'             => [
-		'twp'      => ['township'],
-		'township' => ['twp'],
-		'ave'      => ['avenue'],
-		'avenue'   => ['ave'],
-		'rd'       => ['road'],
-		'road'     => ['rd'],
-		'st'       => ['street'],
-		'street'   => ['st'],
-		'ln'       => ['lane'],
-		'lane'     => ['ln'],
-		'hwy'      => ['highway'],
-		'highway'  => ['hwy'],
-		'ord'      => ['ordinance'],
+		'twp'       => ['township'],
+		'township'  => ['twp'],
+		'ave'       => ['avenue'],
+		'avenue'    => ['ave'],
+		'rd'        => ['road'],
+		'road'      => ['rd'],
+		'st'        => ['street'],
+		'street'    => ['st'],
+		'ln'        => ['lane'],
+		'lane'      => ['ln'],
+		'hwy'       => ['highway'],
+		'highway'   => ['hwy'],
+		'ord'       => ['ordinance'],
+		'warehouse' => ['logistics'],
+		'logistics' => ['warehouse'],
 	],
 ];
 
