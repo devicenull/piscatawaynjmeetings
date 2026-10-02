@@ -4,4 +4,3 @@ numpy
 scipy
 soundfile
 omegaconf
-anthropic

@@ -10,7 +10,7 @@
 
 require(__DIR__.'/../init.php');
 
-$claude_bin = __DIR__.'/claude_api_client.py';
+$claude_bin = '/root/.local/bin/claude';
 
 function usage(): never
 {
@@ -143,12 +143,11 @@ $cmd = implode(' ', [
 ]);
 
 echo "Running Claude Haiku...\n";
-$env = array_merge(getenv() ?: [], defined('ANTHROPIC_API_KEY') ? ['ANTHROPIC_API_KEY' => ANTHROPIC_API_KEY] : []);
 $proc = proc_open($cmd, [
 	0 => ['pipe', 'r'],
 	1 => ['pipe', 'w'],
 	2 => ['pipe', 'w'],
-], $pipes, null, $env);
+], $pipes);
 
 if (!is_resource($proc)) {
 	fwrite(STDERR, "Failed to launch claude CLI.\n");
