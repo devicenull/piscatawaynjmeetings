@@ -1,26 +1,57 @@
 # planning
 Mayor Wahler
 Wahler
-Chairman Chaill
+Chairman Cahill
 Cahill
 Corcoran-Gardella
 Saunders
+Carol Saunders
 Espinosa
 Buckley
+Laura Buckley
 Barlow
+Thomas Barlow
+Chairperson Smith
+Brenda Smith
+Reverend Kenney
+Henry Kenney
+Kenney
+Alex Adkins
+Adkins
+Basheer Ahammed
+Ahammed
+Philip Echevarria
+Echevarria
+Mike Foster
+Reinertsen
+Ron Reinertsen
 # zoning
 Blount
+Rodney Blount
 O'Reggio
+Roy O'Reggio
 Kalpesh
 Patel
 Weisman
+Steve Weisman
 Mitterando
+Bill Mitterando
 Waqar
+Waqar Ali
 Kinneally
+James Kinneally
+Tillery
+Jeff Tillery
+Hayducka
+Artie Hayducka
+Misrahi
+Jonathan Misrahi
+Shawn Cahill
 Shah
 Council President Shah
 Dawn Corcoran
 Chadwick
+John Chadwick
 # council
 Councilwoman Cahill
 Councilman Shah
@@ -30,7 +61,23 @@ Lombardi
 Councilman Rouse
 Rouse
 Councilman Uhrin
+Councilmember Uhrin
+Frank Uhrin
 Uhrin
+Council President Lombardi
+Michele Lombardi
+Councilmember Leibowitz
+Leibowitz
+Councilmember Rashid
+Sarah Rashid
+Rashid
+Councilmember Carmichael
+Sharon Carmichael
+Carmichael
+Councilmember Espinosa
+Dennis Espinosa
+Melissa Seader
+Seader
 Councilman Bullard
 Bullard
 Councilman Cahn
@@ -38,6 +85,8 @@ Cahn
 Raj Goomer
 # misc
 Hinterstein
+Henry Hinterstein
+Metlar
 Randolphville
 Rutgers
 Senator Smith

@@ -1,0 +1,46 @@
+# Misheard / misspelled forms found in transcripts, as
+#   Correct spelling: variant, variant, >variant
+# Used as search synonyms by scripts/search_cli.php: either spelling finds both,
+# except ">variant" (a common word, e.g. "cedar"), which is only found when
+# searching for the correct spelling. Don't use "Mr. X" phrases: Meilisearch
+# treats the period as a sentence break, so they never match.
+#
+# Keep these OUT of vocabulary.txt: that file is sent to Rev.ai and Tesseract,
+# which would then learn the wrong spellings. Put correct spellings there instead.
+
+# zoning
+Hayducka: Heka, Haka, Hika, Hidaka, Duka, Duku
+Blount: Blanc, Blunt, Bayland, Blo, Bla
+O'Reggio: Regio, Reggio, Reio
+Tillery: >Hillary
+Weisman: Weitzman, Weissmann
+Waqar: Wagar
+Ali: >Riley, >Raleigh, Elli, Ellie
+Misrahi: Mizrahi
+Kinneally: Keneally, Conneely, Kenley, Kinnealy
+
+# planning
+Adkins: Atkins, Atkin, Akin, Aken, Aiken
+Ahammed: Ahamed, Ahmed, Hammed
+Echevarria: Echeveria, Echeverria
+Kenney: reverend kinneally, rev kinneally
+Corcoran: Cochran
+Saunders: Sanders
+Hinterstein: Henderson, Hinter
+Barlow: Barrow, Barley
+
+# council / administration
+Cahill: Caho, Keho, McCahill, Chaill
+Wahler: Waller
+Uhrin: Rin, Irin, Earnin, >Earn, >Owen
+Leibowitz: Liebowitz, Lebowitz, Leitz
+Rashid: Rasheed
+Espinosa: Espinoza, Esposa, Espinoso
+Shah: >Shaw
+Seader: Seater, >Cedar
+Dacey: Dacy, >Daisy
+Goomer: Groomer, Gomer
+Bullard: Bellard
+
+# places
+Metlar: Mettler

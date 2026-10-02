@@ -59,6 +59,12 @@ Title matches beat speaker-name matches, which beat body matches
 (ordinance, block and lot numbers match exactly). Synonyms (twp/township, rd/road,
 ...) are in `search_cli.php`.
 
+Transcription mistakes for names (e.g. Hayducka heard as "Heka"/"Hidaka", Uhrin
+as "Rin") are listed in `vocabulary_misheard.txt` and loaded as synonyms, so
+searching the correct spelling finds the misheard transcripts. Add new ones there
+(correct spellings also go in `vocabulary.txt`, which Rev.ai uses for future
+transcripts); they take effect on the next `search_cli.php load`.
+
 ## Keys and config
 
 `config.php` defines `MEILI_URL`, `MEILI_MASTER_KEY` (used by `search_cli.php`)

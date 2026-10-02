@@ -48,6 +48,45 @@ const SETTINGS = [
 	],
 ];
 
+/**
+*	Synonyms from vocabulary_misheard.txt ("Correct: variant, >variant"). Both directions,
+*	except ">variant" (a common word) only matches when searching for the correct spelling.
+*/
+function misheardSynonyms(): array
+{
+	$synonyms = [];
+	foreach (file(__DIR__.'/../vocabulary_misheard.txt', FILE_IGNORE_NEW_LINES) as $line)
+	{
+		if (trim($line) === '' || $line[0] == '#' || !str_contains($line, ':'))
+		{
+			continue;
+		}
+		[$correct, $variants] = explode(':', $line, 2);
+		$correct = strtolower(trim($correct));
+		foreach (array_filter(array_map('trim', explode(',', strtolower($variants)))) as $variant)
+		{
+			$one_way = $variant[0] == '>';
+			$variant = ltrim($variant, '> ');
+			$synonyms[$correct][] = $variant;
+			if (!$one_way)
+			{
+				$synonyms[$variant][] = $correct;
+			}
+		}
+	}
+	return $synonyms;
+}
+
+function settings(): array
+{
+	$settings = SETTINGS;
+	foreach (misheardSynonyms() as $word => $alternatives)
+	{
+		$settings['synonyms'][$word] = array_values(array_unique(array_merge($settings['synonyms'][$word] ?? [], $alternatives)));
+	}
+	return $settings;
+}
+
 function admin(string $method, string $path, $body=null, string $content_type='application/json'): array
 {
 	return Search::request($method, $path, $body, MEILI_MASTER_KEY, $content_type);
@@ -101,7 +140,7 @@ function load(string $file): void
 		waitForTask(admin('DELETE', '/indexes/'.NEW_INDEX));
 	}
 	waitForTask(admin('POST', '/indexes', ['uid' => NEW_INDEX, 'primaryKey' => 'id']));
-	waitForTask(admin('PATCH', '/indexes/'.NEW_INDEX.'/settings', SETTINGS));
+	waitForTask(admin('PATCH', '/indexes/'.NEW_INDEX.'/settings', settings()));
 
 	$tasks = [];
 	$batch = '';
