@@ -47,19 +47,13 @@ Artie Hayducka
 Misrahi
 Jonathan Misrahi
 Shawn Cahill
-Shah
-Council President Shah
 Dawn Corcoran
 Chadwick
 John Chadwick
 # council
 Councilwoman Cahill
-Councilman Shah
-Shah
 Councilwoman Lombardi
 Lombardi
-Councilman Rouse
-Rouse
 Councilman Uhrin
 Councilmember Uhrin
 Frank Uhrin
@@ -78,10 +72,6 @@ Councilmember Espinosa
 Dennis Espinosa
 Melissa Seader
 Seader
-Councilman Bullard
-Bullard
-Councilman Cahn
-Cahn
 Raj Goomer
 # misc
 Hinterstein
