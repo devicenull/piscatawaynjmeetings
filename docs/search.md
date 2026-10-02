@@ -27,7 +27,6 @@ leaves the previous index live.
 | `scripts/search_cli.php` | `load <file>`, `stats`, `tasks`, `search <query>` against the local instance. Index settings (ranking, synonyms, typo rules) live here. |
 | `classes/Search.php` | `Search::query()` used by the web page and `search_cli.php search`. |
 | `web/search.php`, `templates/search.html` | Search page. `?format=json` returns the same results as JSON (intended for a future MCP server). |
-| `meilisearch.service` | systemd unit for pre-prod/prod (dev runs Meilisearch in Docker). |
 
 ## What gets indexed
 
@@ -68,26 +67,37 @@ Pre-prod and prod share a `config.php`, so they must share the master key and
 create the search key with the same uid — Meilisearch derives a key's value from
 its uid and the master key.
 
-## Installing on pre-prod/prod
+## Installing
 
-Manual, once per host:
+Each host runs Meilisearch with Docker Compose (managed outside this repo):
 
-1. `echo "deb [trusted=yes] https://apt.fury.io/meilisearch/ /" > /etc/apt/sources.list.d/fury.list`,
-   `apt update && apt install meilisearch && apt-mark hold meilisearch`
-2. `install -m 600 /dev/null /etc/meilisearch.env` and put `MEILI_MASTER_KEY=<key>` in it
-3. `cp /home/piscataway/meilisearch.service /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now meilisearch`
-4. Create the search key (same uid on both hosts):
-   ```bash
-   curl -s -X POST http://127.0.0.1:7700/keys \
-     -H "Authorization: Bearer <master key>" -H 'Content-Type: application/json' \
-     -d '{"uid":"<uid>","name":"web search","actions":["search"],"indexes":["docs"],"expiresAt":null}'
-   ```
-5. `php scripts/search_cli.php load data/search_docs.ndjson` (or run `deploy.sh`)
+```yaml
+services:
+  meilisearch:
+    image: getmeili/meilisearch:v1.54
+    ports:
+      - "127.0.0.1:7700:7700"   # never expose publicly
+    environment:
+      MEILI_MASTER_KEY: "<master key>"
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - ./meili_data:/meili_data
+```
 
-**Upgrading:** unhold, upgrade, re-hold; then stop the service, delete
-`/var/lib/meilisearch/data.ms` (newer versions may refuse an older database),
-start it, repeat step 4 and reload. The index is always rebuilt from the NDJSON,
-so nothing is lost.
+Then create the search key (same uid on every host sharing a `config.php`):
+
+```bash
+curl -s -X POST http://127.0.0.1:7700/keys \
+  -H "Authorization: Bearer <master key>" -H 'Content-Type: application/json' \
+  -d '{"uid":"<uid>","name":"web search","actions":["search"],"indexes":["docs"],"expiresAt":null}'
+```
+
+and load: `php scripts/search_cli.php load data/search_docs.ndjson` (or run `deploy.sh`).
+
+**Upgrading:** bump the image tag, `docker compose down`, delete `meili_data/`
+(newer versions may refuse an older database), `docker compose up -d`, recreate
+the search key and reload. The index is always rebuilt from the NDJSON, so
+nothing is lost.
 
 ## Troubleshooting
 
