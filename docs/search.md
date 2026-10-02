@@ -23,7 +23,7 @@ leaves the previous index live.
 
 | File | Purpose |
 |------|---------|
-| `scripts/build_search_docs.php` | Extracts text into NDJSON (pre-prod only, needs `web/files`). `--selftest` checks the transcript chunker and PDF page splitter. |
+| `scripts/build_search_docs.php` | Extracts text into NDJSON (pre-prod only, needs `web/files`). Extracted text is cached per file in `data/search_cache/` keyed on size+mtime, so only new/changed files are re-read (full extract ~2.5 min, cached ~2 s). Delete the directory to force a full re-extract; `deploy.sh` doesn't sync it to prod. `--selftest` checks the transcript chunker and PDF page splitter. |
 | `scripts/search_cli.php` | `load <file>`, `stats`, `tasks`, `search <query>` against the local instance. Index settings (ranking, synonyms, typo rules) live here. |
 | `classes/Search.php` | `Search::query()` used by the web page and `search_cli.php search`. |
 | `web/search.php`, `templates/search.html` | Search page. `?format=json` returns the same results as JSON (intended for a future MCP server). |

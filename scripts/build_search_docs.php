@@ -12,6 +12,8 @@
 require_once(__DIR__.'/../init.php');
 
 const WEB_DIR = __DIR__.'/../web';
+// extracted text per file, so unchanged files aren't re-read every build
+const SEARCH_CACHE_DIR = __DIR__.'/../data/search_cache';
 // seconds of transcript per search record
 const TRANSCRIPT_CHUNK_SECONDS = 120;
 
@@ -176,7 +178,7 @@ function emitFile(callable $emit, string $link, array $doc): void
 		return;
 	}
 
-	$pages = extractPages($path);
+	$pages = cachedPages($path);
 	$emitted = 0;
 	foreach ($pages as $i => $text)
 	{
@@ -198,6 +200,30 @@ function emitFile(callable $emit, string $link, array $doc): void
 	{
 		fwrite(STDERR, "No text: $link\n");
 	}
+}
+
+/**
+*	extractPages(), skipping the (slow) extraction when the file's size and mtime
+*	match the cached copy. Deleting SEARCH_CACHE_DIR just forces a full re-extract.
+*/
+function cachedPages(string $path): array
+{
+	$stat = stat($path);
+	$cache_file = SEARCH_CACHE_DIR.'/'.md5(realpath($path)).'.json';
+	$cached = is_file($cache_file) ? json_decode(file_get_contents($cache_file), true) : null;
+	if ($cached && $cached['size'] == $stat['size'] && $cached['mtime'] == $stat['mtime'])
+	{
+		return $cached['pages'];
+	}
+
+	$pages = extractPages($path);
+	if (!is_dir(SEARCH_CACHE_DIR))
+	{
+		mkdir(SEARCH_CACHE_DIR, 0755, true);
+	}
+	// ponytail: entries for deleted files are never pruned; rm -r the dir if it ever matters
+	file_put_contents($cache_file, json_encode(['size' => $stat['size'], 'mtime' => $stat['mtime'], 'pages' => $pages], JSON_INVALID_UTF8_SUBSTITUTE));
+	return $pages;
 }
 
 /**
@@ -253,8 +279,9 @@ function isUsefulText(string $text): bool
 	{
 		return false;
 	}
+	// not mb_strlen(): without the mbstring extension it's symfony's polyfill, ~60x slower here
 	$letters = preg_match_all('/\pL/u', $text);
-	return $letters / max(1, mb_strlen($text)) > 0.5;
+	return $letters / max(1, preg_match_all('/./su', $text)) > 0.5;
 }
 
 /**
