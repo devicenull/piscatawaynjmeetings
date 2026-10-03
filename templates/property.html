@@ -1,0 +1,87 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ property.property_location }} (Block {{ property.block }} Lot {{ property.lot }}) - Piscataway, NJ Property Taxes{% endblock %}
+{% block metadescripion %}Property tax and assessment history for {{ property.property_location }}, Block {{ property.block }} Lot {{ property.lot }}, Piscataway, New Jersey.{% endblock %}
+{% block og_title %}{{ block('title') }}{% endblock %}
+{% block og_description %}{{ block('metadescripion') }}{% endblock %}
+{% block og_url %}https://piscatawaynjmeetings.com/property.php?pamspin={{ property.pamspin|url_encode }}{% endblock %}
+
+{% block maincontent %}
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+
+<div class="board-header">
+	<h1>{{ property.property_location }}</h1>
+</div>
+<p>
+	<a href="/properties.php">&larr; All properties</a>
+	&middot; <a href="https://www.google.com/maps/search/?api=1&amp;query={{ (property.property_location ~ ', Piscataway, NJ')|url_encode }}" target="_blank" rel="noopener">View on Google Maps</a>
+</p>
+
+<div class="row">
+	<div class="col-md-5 mb-3">
+		<table class="table table-sm pnj-table">
+			<caption class="sr-only">Property details</caption>
+			<tbody>
+				<tr><th scope="row">Block / Lot</th><td>{{ property.block }} / {{ property.lot }}{% if property.qual %} ({{ property.qual }}){% endif %}</td></tr>
+				<tr><th scope="row">Class</th><td>{{ property.class_name }} ({{ property.property_class_code }})</td></tr>
+				<tr><th scope="row">Building</th><td>{{ property.building_description ?: '—' }}</td></tr>
+				<tr><th scope="row">Year Built</th><td>{{ property.year_built ?: '—' }}</td></tr>
+				<tr><th scope="row">Building Sq Ft</th><td>{{ property.building_sqft ? property.building_sqft|number_format : '—' }}</td></tr>
+				<tr><th scope="row">Land</th><td>{{ property.land_description ?: '—' }}</td></tr>
+				<tr><th scope="row">Last Sale</th><td>{% if property.sale_date %}{{ property.sale_date|date('M j, Y') }}{% if property.sale_price %} for ${{ property.sale_price|number_format }}{% endif %}{% else %}—{% endif %}</td></tr>
+				<tr><th scope="row">Assessment at Sale</th><td>{{ property.sale_assessment ? '$' ~ property.sale_assessment|number_format : '—' }}</td></tr>
+				{% if property.facility %}<tr><th scope="row">Facility</th><td>{{ property.facility }}</td></tr>{% endif %}
+				{% if property.exempt_statute_number %}<tr><th scope="row">Exemption Statute</th><td>N.J.S.A. {{ property.exempt_statute_number }}</td></tr>{% endif %}
+			</tbody>
+		</table>
+	</div>
+	<div class="col-md-7 mb-3">
+		<div id="chart-history" style="height:320px"></div>
+	</div>
+</div>
+
+<p class="section-heading">History</p>
+<p style="font-size:.82rem; color:#777; margin-top:-.5rem">
+	Assessments before 2014 predate the township-wide revaluation and are not comparable to later years. Tax data for 2022&ndash;2024 is not yet available.
+</p>
+<table class="table table-sm pnj-table">
+	<caption class="sr-only">Assessment and tax history</caption>
+	<thead>
+		<tr><th>Year</th><th>Land</th><th>Improvements</th><th>Total Assessed</th><th>Taxes</th></tr>
+	</thead>
+	<tbody>
+		{% for year, h in history|reverse(true) %}
+		<tr>
+			<td class="date-cell">{{ year }}</td>
+			<td>{{ h.land_value is null ? '—' : '$' ~ h.land_value|number_format }}</td>
+			<td>{{ h.improvement_value is null ? '—' : '$' ~ h.improvement_value|number_format }}</td>
+			<td>{{ h.land_value is null ? '—' : '$' ~ (h.land_value + h.improvement_value)|number_format }}</td>
+			<td>{{ h.taxes is null ? '—' : '$' ~ h.taxes|number_format(2) }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+<script>
+Highcharts.chart('chart-history', {
+	chart: { backgroundColor: 'transparent', style: { fontFamily: 'inherit' }, animation: false },
+	title: { text: 'Assessment & Taxes', style: { fontSize: '1rem', fontWeight: '700' } },
+	xAxis: { categories: {{ chart_years|raw }}, crosshair: true },
+	yAxis: [
+		{ title: { text: 'Assessed Value ($)' }, min: 0 },
+		{ title: { text: 'Taxes ($)' }, min: 0, opposite: true }
+	],
+	tooltip: { shared: true, valuePrefix: '$', valueDecimals: 0 },
+	credits: { enabled: false },
+	plotOptions: { column: { stacking: 'normal', borderWidth: 0 } },
+	series: [
+		{ type: 'column', name: 'Improvements', data: {{ chart_improvement|raw }}, color: '#111111' },
+		{ type: 'column', name: 'Land', data: {{ chart_land|raw }}, color: '#cccccc' },
+		{ type: 'line', name: 'Taxes', data: {{ chart_taxes|raw }}, yAxis: 1, color: '#F5C000', lineWidth: 3,
+			marker: { enabled: true, radius: 4 }, tooltip: { valueDecimals: 2 } }
+	]
+});
+</script>
+
+{% endblock %}

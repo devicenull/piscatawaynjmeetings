@@ -1,0 +1,67 @@
+{% extends 'layout.html' %}
+
+{% block title %}Piscataway, NJ Property Tax Records{% endblock %}
+{% block metadescripion %}Property tax and assessment records for every parcel in Piscataway, New Jersey.{% endblock %}
+{% block og_title %}{{ block('title') }}{% endblock %}
+{% block og_description %}{{ block('metadescripion') }}{% endblock %}
+{% block og_url %}https://piscatawaynjmeetings.com/properties.php{% endblock %}
+
+{% block maincontent %}
+
+<div class="board-header">
+	<h1>Property Tax Records</h1>
+</div>
+
+<p style="font-size:.82rem; color:#777">
+	{{ year }} assessments and taxes for every parcel in Piscataway. Search by address, block, or lot; click a parcel for its history.
+</p>
+
+<table class="table table-sm pnj-table" id="properties" style="width:100%">
+	<caption class="sr-only">Piscataway property tax records</caption>
+	<thead>
+		<tr>
+			<th>Block</th>
+			<th>Lot</th>
+			<th>Qual</th>
+			<th>Location</th>
+			<th>Class</th>
+			<th>Building</th>
+			<th>Built</th>
+			<th>Sq Ft</th>
+			<th>{{ year }} Assessed</th>
+			<th>{{ year }} Taxes</th>
+		</tr>
+	</thead>
+</table>
+
+<script>
+$(function() {
+	var money = $.fn.dataTable.render.number(',', '.', 0, '$');
+	var esc = function(d) { return $('<div>').text(d).html(); };
+	var blank = function(d) { return d === null || d === '' ? '&#8212;' : esc(d); };
+	$('#properties').DataTable({
+		data: {{ rows|raw }},
+		deferRender: true,
+		pageLength: 25,
+		order: [[ 3, 'asc' ]],
+		columns: [
+			{ data: 1, render: blank },
+			{ data: 2, render: blank },
+			{ data: 3, render: blank },
+			{ data: 4, render: function(d, type, row) {
+				return type === 'display'
+					? '<a href="/property.php?pamspin=' + encodeURIComponent(row[0]) + '">' + esc(d) + '</a>'
+					: d;
+			} },
+			{ data: 5, render: blank },
+			{ data: 6, render: blank },
+			{ data: 7, render: blank },
+			{ data: 8, render: function(d, type) { return type === 'display' && d ? Number(d).toLocaleString() : blank(d); } },
+			{ data: 9, render: money },
+			{ data: 10, render: money }
+		]
+	});
+});
+</script>
+
+{% endblock %}
