@@ -27,6 +27,7 @@ const RANK = [
 	'debt_statements'      => 2,
 	'financial_statements' => 2,
 	'redevelopment'        => 2,
+	'property'             => 2,
 	'campaign'             => 1,
 	'bid'                  => 1,
 	'newsletter'           => 1,
@@ -42,8 +43,8 @@ $counts = [];
 $emit = function (array $doc) use (&$counts)
 {
 	$doc['rank'] = RANK[$doc['kind']];
-	$doc['year'] = (int)date('Y', $doc['date']);
-	$doc += ['board' => null, 'speakers' => [], 'anchor' => ''];
+	$doc['year'] = isset($doc['date']) ? (int)date('Y', $doc['date']) : null;
+	$doc += ['date' => null, 'board' => null, 'speakers' => [], 'anchor' => '', 'body' => ''];
 	$counts[$doc['kind']] = ($counts[$doc['kind']] ?? 0) + 1;
 	echo json_encode($doc, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE)."\n";
 };
@@ -157,6 +158,20 @@ foreach (CampaignFile::getAll() as $file)
 		'doc'   => 'campaign-'.$file['CAMPAIGNFILEID'],
 		'title' => $file['year'].' Campaign Finance: '.pathinfo($file['filename'], PATHINFO_FILENAME),
 		'date'  => $date,
+	]);
+}
+
+// Only the address is searchable; properties have no date, so year filters exclude them
+foreach ($db->GetAll('SELECT pamspin, property_location FROM property') as $p)
+{
+	$emit([
+		'id'     => 'property-'.preg_replace('/[^A-Za-z0-9_-]/', '-', $p['pamspin']),
+		'doc'    => 'property-'.$p['pamspin'],
+		'kind'   => 'property',
+		'title'  => $p['property_location'],
+		'url'    => '/property.php',
+		// anchor is appended unencoded (url's path segments get encoded)
+		'anchor' => '?pamspin='.urlencode($p['pamspin']),
 	]);
 }
 

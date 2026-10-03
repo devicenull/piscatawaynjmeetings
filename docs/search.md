@@ -40,6 +40,10 @@ directly in `web/files/` are not.
 | Transcripts | ~2 minutes of speech (`TRANSCRIPT_CHUNK_SECONDS`) | `/{type}/meeting/{date}#t=SECONDS` |
 | AI summary sections (`web/files/{type}/{date}.json`) | section | same, at the section start |
 | Bids, newsletters, misc files, redevelopment studies, campaign files (PDF) | page | `#page=N` |
+| Properties (`property` table) | parcel; only the address is searchable, no date | `/property.php?pamspin=...` |
+
+Properties are only searched when the Properties type filter is checked (a street name
+alone matches hundreds of parcels and would bury everything else).
 
 Not indexed: recordings (the transcripts cover them), CAD calls (Datasette has
 them), tweets (deliberately excluded). PDFs without a text layer are logged as `No text:` during the build — run

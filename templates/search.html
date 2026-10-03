@@ -89,7 +89,7 @@
 						<div>
 							<span class="item-label">{{ hit.kind_label }}</span>
 							{% if hit.board_label %}<span class="item-type">{{ hit.board_label }}</span>{% endif %}
-							<time class="item-type" datetime="{{ hit.date }}">{{ hit.date|date('F j, Y') }}</time>
+							{% if hit.date %}<time class="item-type" datetime="{{ hit.date }}">{{ hit.date|date('F j, Y') }}</time>{% endif %}
 							{% if hit.speakers %}<span class="item-type">&middot; {{ hit.speakers|join(', ') }}</span>{% endif %}
 						</div>
 						{% if hit.snippet_html %}<p class="search-snippet">{{ hit.snippet_html|raw }}</p>{% endif %}
@@ -111,7 +111,7 @@
 					</nav>
 					{% endif %}
 				{% else %}
-					<p>Search the full text of meeting minutes, meeting transcripts and summaries, bid packages, budgets, audits, campaign finance reports and newsletters.</p>
+					<p>Search the full text of meeting minutes, meeting transcripts and summaries, bid packages, budgets, audits, campaign finance reports and newsletters, plus property tax records by address.</p>
 					<p class="search-count">Tips: use quotes for an exact phrase (<code>"sewer bond"</code>). Small typos are fine.</p>
 				{% endif %}
 			</div>

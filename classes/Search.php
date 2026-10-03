@@ -19,6 +19,7 @@ class Search
 		'financial_statements' => 'Financial Statements',
 		'redevelopment'        => 'Redevelopment Studies',
 		'campaign'             => 'Campaign Finance',
+		'property'             => 'Properties',
 	];
 
 	// Filter choices shown to users, each covering one or more kinds
@@ -30,6 +31,7 @@ class Search
 		'redevelopment' => ['label' => 'Redevelopment Studies', 'kinds' => ['redevelopment']],
 		'campaign'      => ['label' => 'Campaign Finance', 'kinds' => ['campaign']],
 		'newsletters'   => ['label' => 'Newsletters', 'kinds' => ['newsletter']],
+		'properties'    => ['label' => 'Properties', 'kinds' => ['property']],
 	];
 
 	// Marks matched words; private-use characters survive HTML escaping untouched
@@ -94,7 +96,8 @@ class Search
 		{
 			$kinds = array_merge($kinds, self::TYPE_FILTERS[$type]['kinds'] ?? []);
 		}
-		$type_filter = $kinds ? ['kind IN ['.implode(', ', array_map(fn($k) => '"'.$k.'"', $kinds)).']'] : [];
+		// Every street name matches dozens of parcels, so properties are only searched when asked for
+		$type_filter = $kinds ? ['kind IN ['.implode(', ', array_map(fn($k) => '"'.$k.'"', $kinds)).']'] : ['kind != "property"'];
 
 		// Second query counts every type ignoring the type filter, so unchecked types still show their counts
 		[$response, $counts] = self::request('POST', '/multi-search', ['queries' => [
@@ -136,7 +139,7 @@ class Search
 				'kind_label'   => self::KIND_LABELS[$hit['kind']] ?? $hit['kind'],
 				'board'        => $hit['board'],
 				'board_label'  => Meeting::BOARD_TYPES[$hit['board']] ?? null,
-				'date'         => date('Y-m-d', $hit['date']),
+				'date'         => $hit['date'] !== null ? date('Y-m-d', $hit['date']) : null,
 				'speakers'     => $hit['speakers'],
 			];
 		}
