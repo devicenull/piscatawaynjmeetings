@@ -1,0 +1,127 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ campaign.name }} ({{ campaign.year }} {{ campaign.election_description }}) - Piscataway Campaign Finance{% endblock %}
+{% block metadescripion %}NJ ELEC campaign finance filings, contributions, and expenditures for {{ campaign.name }}, {{ campaign.year }} {{ campaign.election_description }}.{% endblock %}
+{% block og_title %}{{ block('title') }}{% endblock %}
+{% block og_description %}{{ block('metadescripion') }}{% endblock %}
+{% block og_url %}https://piscatawaynjmeetings.com/campaign_files.php?year={{ campaign.year }}&amp;campaign={{ campaign.slug|url_encode }}{% endblock %}
+
+{% block maincontent %}
+	<style>
+		.money { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+		.campaign-stats { display:flex; flex-wrap:wrap; gap:.6rem; margin-bottom:1.5rem; }
+		.campaign-stat { background:#fff; border:1px solid #e0e0e0; border-top:3px solid var(--pnj-yellow); border-radius:4px; padding:.5rem .9rem; min-width:9rem; }
+		.campaign-stat .value { font-size:1.25rem; font-weight:700; font-variant-numeric:tabular-nums; }
+		.campaign-stat .label { font-size:.75rem; color:#666; text-transform:uppercase; letter-spacing:.04em; }
+		.campaign-section { margin-top:2rem; }
+	</style>
+
+	<div class="board-header">
+		<h1>{{ campaign.name }}</h1>
+		<a href="/campaign_files.php#year-{{ campaign.year }}">← All campaigns</a>
+	</div>
+
+	<div class="campaign-stats">
+		<div class="campaign-stat"><div class="value">{{ campaign.year }}</div><div class="label">{{ campaign.election_description }}</div></div>
+		{% if campaign.raised is not null %}
+		<div class="campaign-stat"><div class="value">${{ campaign.raised|number_format(0) }}</div><div class="label">Raised (itemized)</div></div>
+		{% endif %}
+		{% if campaign.spent is not null %}
+		<div class="campaign-stat"><div class="value">${{ campaign.spent|number_format(0) }}</div><div class="label">Spent (itemized)</div></div>
+		{% endif %}
+		{% if campaign.reports %}
+		<div class="campaign-stat"><div class="value">{{ campaign.reports|length }}</div><div class="label">Filings</div></div>
+		{% endif %}
+	</div>
+
+	{% if campaign.reports %}
+	<section class="campaign-section">
+		<p class="section-heading">Filings</p>
+		<table class="table table-sm pnj-table">
+			<caption class="sr-only">Reports filed by {{ campaign.name }}</caption>
+			<thead>
+				<tr>
+					<th style="width:8em">Filed</th>
+					<th>Form</th>
+					<th style="width:8em">Download</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for r in campaign.reports %}
+				<tr>
+					<td class="date-cell">{{ r.date }}</td>
+					<td>
+						<span class="item-label">{{ r.form }}</span>
+						{{ r.form_description }}
+						{% if r.amend %}<span class="text-muted">&mdash; amendment {{ r.amend }}</span>{% endif %}
+					</td>
+					<td class="doc-links"><a href="{{ r.file.getLink() }}">PDF</a></td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</section>
+	{% endif %}
+
+	{% if campaign.contributions is defined %}
+	<section class="campaign-section">
+		<p class="section-heading">Contributions</p>
+		<p class="doc-links"><a href="{{ campaign.data.contributions.getLink() }}">Download CSV</a></p>
+		<table class="table table-sm pnj-table campaign-data" style="width:100%">
+			<caption class="sr-only">Contributions to {{ campaign.name }}</caption>
+			<thead>
+				<tr>
+					<th>Date</th>
+					<th>Contributor</th>
+					<th>Employer / Occupation</th>
+					<th>Type</th>
+					<th class="money">Amount</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for r in campaign.contributions %}
+				<tr>
+					<td class="date-cell" data-order="{{ r.ContributionDate|date('Y-m-d') }}">{{ r.ContributionDate }}</td>
+					<td>{{ r.NonIndName ?: [r.FirstName, r.MI, r.LastName, r.Suffix]|filter(v => v)|join(' ') }}</td>
+					<td>{{ [r.EmpName, r.OccupationName]|filter(v => v)|join(' / ') }}</td>
+					<td>{{ r.ContributorType }}{% if r.ContributionType != 'MONETARY' %} ({{ r.ContributionType }}){% endif %}</td>
+					<td class="money" data-order="{{ r.ContributionAmount }}">${{ r.ContributionAmount|number_format(2) }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</section>
+	{% endif %}
+
+	{% if campaign.expenditures is defined %}
+	<section class="campaign-section">
+		<p class="section-heading">Expenditures</p>
+		<p class="doc-links"><a href="{{ campaign.data.expenditures.getLink() }}">Download CSV</a></p>
+		<table class="table table-sm pnj-table campaign-data" style="width:100%">
+			<caption class="sr-only">Expenditures by {{ campaign.name }}</caption>
+			<thead>
+				<tr>
+					<th>Date</th>
+					<th>Payee</th>
+					<th>Description</th>
+					<th class="money">Amount</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for r in campaign.expenditures %}
+				<tr>
+					<td class="date-cell" data-order="{{ r.ExpenseDate|date('Y-m-d') }}">{{ r.ExpenseDate }}</td>
+					<td>{{ r.NonIndName ?: [r.FirstName, r.MI, r.LastName, r.Suffix]|filter(v => v)|join(' ') }}</td>
+					<td>{{ r.ExpenseDesc }}</td>
+					<td class="money" data-order="{{ r.ExpenseAmount }}">${{ r.ExpenseAmount|number_format(2) }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</section>
+	{% endif %}
+
+	<script>
+		$('.campaign-data').DataTable({ order: [[0, 'desc']], pageLength: 25 });
+	</script>
+{% endblock %}

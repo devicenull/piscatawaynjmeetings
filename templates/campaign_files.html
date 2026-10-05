@@ -1,37 +1,67 @@
 {% extends 'layout.html' %}
 
 {% block title %}Piscataway Campaign Finance{% endblock %}
+{% block metadescripion %}Campaign finance reports, contributions, and expenditures for Piscataway Township, NJ candidates and party organizations.{% endblock %}
 {% block og_title %}{{ block('title') }}{% endblock %}
+{% block og_description %}{{ block('metadescripion') }}{% endblock %}
 {% block og_url %}https://piscatawaynjmeetings.com/campaign_files.php{% endblock %}
 
 {% block maincontent %}
+	<style>
+		.year-nav { display:flex; flex-wrap:wrap; gap:.3rem; margin-bottom:1.5rem; }
+		.year-nav a { font-size:.82rem; font-weight:600; color:#333; border:1px solid #ccc; border-radius:3px; padding:2px 8px; text-decoration:none; }
+		.year-nav a:hover { background:var(--pnj-yellow); border-color:var(--pnj-yellow); color:var(--pnj-black); }
+		.campaign-year { scroll-margin-top:1rem; margin-top:2rem; }
+		.money { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+		.campaign-name a { font-weight:600; color:var(--pnj-black); }
+	</style>
+
 	<div class="board-header">
 		<h1>Campaign Finance</h1>
 		<a href="https://www.njelecefilesearch.com/searchcandidatereports" target="_blank" rel="noopener">NJ Election Law Enforcement Commission ↗</a>
 	</div>
 
-	<p class="section-heading">Finance Documents</p>
-	<table class="table table-sm pnj-table">
-		<caption class="sr-only">Piscataway Campaign Finance Documents</caption>
-		<thead>
-			<tr>
-				<th>Type</th>
-				<th style="width:8em">Campaign Year</th>
-				<th style="width:14em">Download</th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for cur in campaign_files %}
-			<tr>
-				<td>{{ cur.type_description }}</td>
-				<td>{{ cur.year }}</td>
-				<td class="doc-links"><a href="{{ cur.getLink() }}">{{ cur.filename }}</a></td>
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
-
-	<p class="text-muted" style="font-size:.85rem">
-		Candidate, committee, and party organization finance reports from the <a href="https://www.njelecefilesearch.com/searchcandidatereports">NJ ELEC</a>, mirrored here for easier access. ELEC only publishes report PDFs from 2021 on; the contribution/expenditure CSVs cover earlier years.
+	<p>
+		Reports filed with the <a href="https://www.njelecefilesearch.com/searchcandidatereports">NJ ELEC</a> by Piscataway candidates, joint campaign committees,
+		and the local party organizations, mirrored here for easier access. Select a campaign to see its filings and itemized contributions and expenditures.
 	</p>
+	<p class="text-muted" style="font-size:.85rem">
+		ELEC only publishes report PDFs from 2021 on; contribution and expenditure data goes back to 2009. Totals are itemized amounts only,
+		so campaigns that file a sworn statement (spending under the reporting threshold) show none.
+	</p>
+
+	<nav class="year-nav" aria-label="Campaign years">
+		{% for year, year_campaigns in campaigns %}
+		<a href="#year-{{ year }}">{{ year }}</a>
+		{% endfor %}
+	</nav>
+
+	{% for year, year_campaigns in campaigns %}
+	<section class="campaign-year" id="year-{{ year }}">
+		<p class="section-heading">{{ year }}</p>
+		<table class="table table-sm pnj-table">
+			<caption class="sr-only">{{ year }} Piscataway campaigns</caption>
+			<thead>
+				<tr>
+					<th>Committee</th>
+					<th style="width:11em">Election</th>
+					<th class="money" style="width:8em">Raised</th>
+					<th class="money" style="width:8em">Spent</th>
+					<th class="money" style="width:6em">Filings</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for c in year_campaigns %}
+				<tr>
+					<td class="campaign-name"><a href="/campaign_files.php?year={{ c.year }}&amp;campaign={{ c.slug|url_encode }}">{{ c.name }}</a></td>
+					<td>{{ c.election_description }}</td>
+					<td class="money">{{ c.raised is null ? '—' : '$' ~ c.raised|number_format(0) }}</td>
+					<td class="money">{{ c.spent is null ? '—' : '$' ~ c.spent|number_format(0) }}</td>
+					<td class="money">{{ c.reports|length ?: '—' }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</section>
+	{% endfor %}
 {% endblock %}

@@ -60,4 +60,12 @@ foreach (CampaignFile::getAll() as $file)
 {
 	$sitemap->addEntry(BASEURL.$file->getLink());
 }
+
+foreach (CampaignFile::getCampaigns() as $year => $campaigns)
+{
+	foreach ($campaigns as $campaign)
+	{
+		$sitemap->addEntry(BASEURL.'/campaign_files.php?'.http_build_query(['year' => $year, 'campaign' => $campaign['slug']]));
+	}
+}
 $sitemap->finish();
