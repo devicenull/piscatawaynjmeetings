@@ -10,6 +10,7 @@ $twig = new \Twig\Environment($loader, [
 	'strict_variables' => true,
 	'autoescape' => 'html',
 ]);
+$twig->addFilter(new \Twig\TwigFilter('name_case', 'CampaignFile::nameCase'));
 
 spl_autoload_register(function ($class_name) {
 	$class_name = basename($class_name);

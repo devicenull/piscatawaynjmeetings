@@ -181,6 +181,18 @@ class CampaignFile extends BaseDBObject
 		return $rows;
 	}
 
+	/**
+	*	ELEC uppercases everything: "MCLELLAND-CRAWLEY REBECCA" -> "McLelland-Crawley Rebecca"
+	*/
+	public static function nameCase(string $name): string
+	{
+		$name = ucwords(strtolower($name), " \t-&/(.'");
+		$name = preg_replace_callback('/\bMc([a-z])/', fn($m) => 'Mc'.strtoupper($m[1]), $name);
+		$name = preg_replace_callback('/\.(Com|Net|Org)\b/', fn($m) => strtolower($m[0]), $name);
+		// roman numerals and abbreviations that should stay uppercase
+		return preg_replace_callback('/\b(Ii|Iii|Iv|Llc|Llp|Pc|Pa|Nj|Na|Efo|Cte|Pac|Pdo|Ptro|Usa)\b/', fn($m) => strtoupper($m[1]), $name);
+	}
+
 	public static function getAll()
 	{
 		global $db;

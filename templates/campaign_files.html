@@ -53,7 +53,7 @@
 			<tbody>
 				{% for c in year_campaigns %}
 				<tr>
-					<td class="campaign-name"><a href="/campaign_files.php?year={{ c.year }}&amp;campaign={{ c.slug|url_encode }}">{{ c.name }}</a></td>
+					<td class="campaign-name"><a href="/campaign_files.php?year={{ c.year }}&amp;campaign={{ c.slug|url_encode }}">{{ c.name|name_case }}</a></td>
 					<td>{{ c.election_description }}</td>
 					<td class="money">{{ c.raised is null ? '—' : '$' ~ c.raised|number_format(0) }}</td>
 					<td class="money">{{ c.spent is null ? '—' : '$' ~ c.spent|number_format(0) }}</td>
