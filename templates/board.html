@@ -70,9 +70,12 @@ Piscataway {{ board.name }} meeting history, recordings, and {% if board.type ==
 		<tbody>
 			{% for cur in meetings %}
 			<tr itemscope itemtype="https://schema.org/Event">
-				<meta itemprop="name" content="Piscataway {{ board.name }} Meeting">
-				<meta itemprop="organizer" content="Piscataway Township">
-				<td itemprop="startDate" content="{{ cur.date }}" data-order="{{ cur.date|date('U') }}" class="date-cell">{{ cur.date|date('M j, Y') }}</td>
+				<td data-order="{{ cur.date|date('U') }}" class="date-cell">
+					<meta itemprop="name" content="Piscataway {{ board.name }} Meeting">
+					<span itemprop="organizer" itemscope itemtype="https://schema.org/GovernmentOrganization"><meta itemprop="name" content="Piscataway Township"></span>
+					{% include '_event_location.html' %}
+					<time itemprop="startDate" datetime="{{ cur.date|date('c') }}">{{ cur.date|date('M j, Y') }}</time>
+				</td>
 				<td>
 					{% if board.type == 'council' %}
 						{% for c in cur.getCases() %}
