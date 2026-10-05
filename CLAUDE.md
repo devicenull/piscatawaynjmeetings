@@ -186,6 +186,7 @@ Located in `/scripts`, typically run via cron:
 - **post_to_bluesky.php** - Auto-post meeting summaries to Bluesky
 - **cad_calls.php** - Parse CAD logs, generate CSV
 - **fetch_campaign_reports.php** - Download all Piscataway candidate, committee, and party org (PDO/PTRO) report PDFs (2021+) and contribution/expenditure CSVs (back to 1984) from the ELEC eFile search into `web/files/campaign/YEAR/`; run `import_files.php` afterwards
+- **fetch_financial_disclosures.php** - Download Piscataway Township financial disclosure statements from the NJ DCA FDS search into `web/files/financial_disclosures/YEAR/` (`php fetch_financial_disclosures.php 2020 2021 ...`, defaults to current year; skips existing files)
 - **parse_campaign_expenses.php** - Generate Graphviz visualization of campaign contributions
 - **extract_budget_stats.php** - Extract financial figures from budget/debt statement/financial statement PDFs into `budget_stats` table (run manually when new PDFs added)
 - **handle_webchanges_change.php** - Called by urlwatch as a `run_command` hook when a monitored page changes. Archives the URL to archive.org, downloads any new PDF links (minutes/agendas) into `downloaded/`, then copies matched files into `web/files/`, and invokes `import_files.php` to register them in the database. Logs to `urlwatch.log`.
