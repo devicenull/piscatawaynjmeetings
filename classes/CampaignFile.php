@@ -109,7 +109,8 @@ class CampaignFile extends BaseDBObject
 		foreach (self::getAll() as $file)
 		{
 			$info = self::parseFilename($file['filename']);
-			if (!$info)
+			// fire commissioner races are almost all sworn statements with no money, just noise here
+			if (!$info || $info['election'] == 'FIRE COMMISSIONER')
 			{
 				continue;
 			}
