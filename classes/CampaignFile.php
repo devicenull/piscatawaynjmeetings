@@ -16,6 +16,7 @@ class CampaignFile extends BaseDBObject
 
 	const TYPE_DESCRIPTION = [
 		'finance_statement' => 'Campaign Finance Statements',
+		'summary_data'      => 'Contribution/Expenditure Data (CSV)',
 	];
 
 	public function __construct($params=[])

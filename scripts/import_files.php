@@ -187,15 +187,17 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				// these are some scratch files
 				continue 2;
 			}
+			// CSVs are the contribution/expenditure exports from scripts/fetch_campaign_reports.php
+			$campaign_type = $extension == 'csv' ? 'summary_data' : 'finance_statement';
 			$campaignfile = new CampaignFile([
-				'type'     => 'finance_statement',
+				'type'     => $campaign_type,
 				'filename' => $filebasename.'.'.$extension,
 			]);
 
 			if (!$campaignfile->isInitialized())
 			{
 				$campaignfile->add([
-					'type'     => 'finance_statement',
+					'type'     => $campaign_type,
 					'year'     => basename($fileinfo[6]),
 					'filename' => $filebasename.'.'.$extension,
 				]);

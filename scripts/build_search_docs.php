@@ -250,6 +250,8 @@ function extractPages(string $path): array
 	{
 		case 'pdf':
 			return splitPages(shell_exec('pdftotext -q '.escapeshellarg($path).' - 2>/dev/null') ?? '');
+		case 'csv':
+			return [normalizeText(file_get_contents($path))];
 		case 'doc':
 			return [normalizeText(shell_exec('antiword -w 0 '.escapeshellarg($path).' 2>/dev/null') ?? '')];
 		case 'docx':
