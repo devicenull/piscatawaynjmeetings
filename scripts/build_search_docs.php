@@ -223,6 +223,12 @@ function emitFile(callable $emit, string $link, array $doc): void
 */
 function cachedPages(string $path): array
 {
+	// CSVs are cheap to read, and skipping the cache keeps text extracted by older code from sticking around
+	if (str_ends_with($path, '.csv'))
+	{
+		return extractPages($path);
+	}
+
 	$stat = stat($path);
 	$cache_file = SEARCH_CACHE_DIR.'/'.md5(realpath($path)).'.json';
 	$cached = is_file($cache_file) ? json_decode(file_get_contents($cache_file), true) : null;
@@ -251,7 +257,12 @@ function extractPages(string $path): array
 		case 'pdf':
 			return splitPages(shell_exec('pdftotext -q '.escapeshellarg($path).' - 2>/dev/null') ?? '');
 		case 'csv':
-			return [normalizeText(file_get_contents($path))];
+			// only distinct text cells (names, employers, descriptions); amounts, dates, and
+			// commas would make isUsefulText() reject it as OCR noise
+			$rows = array_map('str_getcsv', file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES));
+			array_shift($rows);
+			$cells = array_unique(array_filter(array_merge([], ...$rows), fn($cell) => preg_match('/\pL{2}/u', $cell)));
+			return [normalizeText(implode(' ', $cells))];
 		case 'doc':
 			return [normalizeText(shell_exec('antiword -w 0 '.escapeshellarg($path).' 2>/dev/null') ?? '')];
 		case 'docx':
