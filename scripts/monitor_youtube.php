@@ -1,6 +1,13 @@
 <?php
 require(__DIR__.'/../init.php');
 
+// a long download can outlast the cron interval; don't let a second run fight over the same .part file
+$lock = fopen(__FILE__, 'r');
+if (!flock($lock, LOCK_EX | LOCK_NB))
+{
+	exit(0);
+}
+
 $c = curl_init('https://www.youtube.com/feeds/videos.xml?channel_id=UClvOfAfDVKKd8T-becTCVow');
 curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
 $data = curl_exec($c);
@@ -29,7 +36,14 @@ foreach ($xml->entry as $item)
 		$videodate = explode(' ', $params['published'])[0];
 
 		$basepath = __DIR__.'/../web/files/youtube/'.$videodate.'/';
-		passthru('OPENSSL_CONF=/etc/ssl/ '.__DIR__.'/yt-dlp -o "'.$basepath.'%(id)s" '.escapeshellarg('https://www.youtube.com/watch?v='.$ytid));
+		passthru('OPENSSL_CONF=/etc/ssl/ '.__DIR__.'/yt-dlp -o "'.$basepath.'%(id)s" '.escapeshellarg('https://www.youtube.com/watch?v='.$ytid), $ret);
+
+		// Leave failed/partial downloads out of the DB so the next run retries them (yt-dlp resumes the .part)
+		if ($ret != 0 || glob($basepath.$ytid.'*.part'))
+		{
+			echo "Download of ".$ytid." incomplete (exit ".$ret."), will retry next run\n";
+			continue;
+		}
 
 		if (file_exists($basepath.$ytid.'.mp4'))
 		{
