@@ -161,6 +161,50 @@ class Meeting extends BaseDBObject
 	}
 
 	/**
+	 * Returns fn(speaker number, seconds, fallback label) => display label.
+	 * Names come per turn from {date}.turns.json, since one number can hold several people.
+	 * A manual label covers its number, except turns identify_speakers.py marked as clearly someone else.
+	 * Meetings without a turns file use the per-number names.
+	 */
+	private function speakerLabeler(): callable
+	{
+		$names = $this->loadSpeakerNames();
+		$base  = __DIR__.'/../shared/speakers/'.$this['type'].'/'.explode(' ', $this['date'])[0];
+
+		$manual = [];
+		$data   = file_exists($base.'.speakers.json') ? json_decode(file_get_contents($base.'.speakers.json'), true) : [];
+		foreach ($data ?? [] as $num => $info) {
+			if ($info && !empty($info['manual'])) {
+				$manual[(int)$num] = $info['name'];
+			}
+		}
+
+		$turns = [];
+		$data  = file_exists($base.'.turns.json') ? json_decode(file_get_contents($base.'.turns.json'), true) : [];
+		foreach ($data ?? [] as $turn) {
+			$turns[(int)$turn['speaker']][] = $turn;
+		}
+
+		return function (int $num, float $ts, string $fallback) use ($names, $manual, $turns): string {
+			$found = null;
+			foreach ($turns[$num] ?? [] as $turn) {
+				// .txt timestamps are whole seconds, so allow one second before the turn's exact start
+				if ($turn['start'] - 1 <= $ts && $ts <= $turn['end']) {
+					$found = $turn;
+					break;
+				}
+			}
+			if (isset($manual[$num]) && empty($found['override'])) {
+				return $manual[$num];
+			}
+			if ($found) {
+				return $found['name'] ?? $fallback;
+			}
+			return $names[$num] ?? $fallback;
+		};
+	}
+
+	/**
 	 * Parse .whisperx.json into [{speaker_num, ts_float, display_ts, text}, ...].
 	 * Returns null if the file doesn't exist.
 	 */
@@ -231,7 +275,7 @@ class Meeting extends BaseDBObject
 	public function getTranscriptSegments(): array
 	{
 		$sections      = $this->loadTranscriptSections();
-		$speaker_names = $this->loadSpeakerNames();
+		$label_for     = $this->speakerLabeler();
 
 		$section_starts = [];
 		foreach ($sections as $i => $s) {
@@ -252,7 +296,7 @@ class Meeting extends BaseDBObject
 			foreach ($json_lines as $line) {
 				$speaker_num = $line['speaker_num'];
 				$timestamp   = $line['ts_float'];
-				$label       = $speaker_names[$speaker_num] ?? 'Speaker '.$speaker_num;
+				$label       = $label_for($speaker_num, $timestamp, 'Speaker '.$speaker_num);
 
 				while ($next < count($sections) && $timestamp >= $section_starts[$next]) {
 					if ($current_html !== '') {
@@ -282,7 +326,7 @@ class Meeting extends BaseDBObject
 					sscanf($matches[3], '%d:%d:%d', $hours, $minutes, $seconds);
 					$timestamp   = ($hours * 3600) + ($minutes * 60) + $seconds;
 					$speaker_num = (int)$matches[2];
-					$label       = $speaker_names[$speaker_num] ?? trim($matches[1]);
+					$label       = $label_for($speaker_num, $timestamp, trim($matches[1]));
 
 					while ($next < count($sections) && $timestamp >= $section_starts[$next]) {
 						if ($current_html !== '') {
@@ -329,14 +373,14 @@ class Meeting extends BaseDBObject
 	 */
 	public function getTranscriptLines(): array
 	{
-		$speaker_names = $this->loadSpeakerNames();
-		$json_lines    = $this->loadWhisperxLines() ?? $this->loadRevaiLines();
-		$lines         = [];
+		$label_for  = $this->speakerLabeler();
+		$json_lines = $this->loadWhisperxLines() ?? $this->loadRevaiLines();
+		$lines      = [];
 
 		if ($json_lines !== null) {
 			foreach ($json_lines as $line) {
 				$lines[] = [
-					'speaker'    => $speaker_names[$line['speaker_num']] ?? 'Speaker '.$line['speaker_num'],
+					'speaker'    => $label_for($line['speaker_num'], $line['ts_float'], 'Speaker '.$line['speaker_num']),
 					'ts'         => $line['ts_float'],
 					'display_ts' => $line['display_ts'],
 					'text'       => $line['text'],
@@ -350,9 +394,10 @@ class Meeting extends BaseDBObject
 					if (preg_match('/(Speaker ([0-9]+)\s+)([0-9\:]+)(\s+)(.*)$/', $raw, $matches)) {
 						sscanf($matches[3], '%d:%d:%d', $h, $m, $s);
 						$speaker_num = (int)$matches[2];
+						$ts          = ($h * 3600) + ($m * 60) + $s;
 						$lines[] = [
-							'speaker'    => $speaker_names[$speaker_num] ?? trim($matches[1]),
-							'ts'         => ($h * 3600) + ($m * 60) + $s,
+							'speaker'    => $label_for($speaker_num, $ts, trim($matches[1])),
+							'ts'         => $ts,
 							'display_ts' => $matches[3],
 							'text'       => trim($matches[5]),
 						];

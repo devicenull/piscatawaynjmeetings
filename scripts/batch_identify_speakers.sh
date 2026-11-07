@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run identify_speakers.py for all meetings that have a .revai.json (or .txt fallback),
-# a local recording, and no .speakers.json output yet.
+# a local recording, and no up-to-date .turns.json output.
 #
 # Usage: batch_identify_speakers.sh [board ...]  (default: council planning zoning)
 #
@@ -41,9 +41,11 @@ for board in "${BOARDS[@]}"; do
 	for revai in "${revai_files[@]}"; do
 		date=$(basename "$revai" .revai.json)
 		speakers_file="$board_output/$date.speakers.json"
+		turns_file="$board_output/$date.turns.json"
 
-		if [ -f "$speakers_file" ]; then
-			echo "[$board/$date] already done, skipping"
+		# Rerun when profiles or manual labels changed since this meeting was last named.
+		if [ -f "$turns_file" ] && [ "$turns_file" -nt "$OUTPUT_DIR/profiles.json" ] && { [ ! -f "$speakers_file" ] || [ ! "$speakers_file" -nt "$turns_file" ]; }; then
+			echo "[$board/$date] up to date, skipping"
 			(( skipped_count++ )) || true
 			continue
 		fi

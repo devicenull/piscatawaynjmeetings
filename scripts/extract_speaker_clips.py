@@ -74,6 +74,8 @@ def add_clip(data: dict, speaker_id: str, board: str, date: str,
         print(f'  Clip already registered: {clip_key}')
         return False
     clips.append(clip_key)
+    # Same as assign_speaker.php: null the embedding so build_speaker_profiles.py rebuilds it
+    speakers[speaker_id]['embedding'] = None
     print(f'  Added clip: {clip_key}  ({end - start:.1f}s)')
     return True
 

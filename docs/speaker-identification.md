@@ -11,18 +11,35 @@ real names in the transcript display.
    - `.txt` — human-readable, used for display
    - `.revai.json` — word-level timestamps and speaker IDs, used for clip extraction
 
-2. Known speakers accumulate audio clips in `data/speakers/profiles.json`. Each clip is a
+2. Known speakers accumulate audio clips in `shared/speakers/profiles.json`. Each clip is a
    `board/date:start-end` reference into the meeting recording.
 
-3. `build_speaker_profiles.py` extracts those clips via ffmpeg, runs them through the
-   pyannote speaker embedding model, and stores a 512-d voiceprint per person.
+3. `build_speaker_profiles.py` embeds each clip of 3 seconds or more with
+   `pyannote/wespeaker-voxceleb-resnet34-LM` on CPU and stores their average as a 256-d
+   voiceprint. A profile with no clip that long has no voiceprint and is never matched.
 
-4. `identify_speakers.py` processes a meeting: for each speaker number it gathers all their
-   audio, computes an embedding, and matches against known profiles by cosine similarity.
-   Output goes to `output/speakers/{board}/{date}.speakers.json`.
+4. `identify_speakers.py` names each **turn** by voice, because Rev.ai sometimes gives several
+   people one speaker number. Long turns are scored in pieces of up to 10 seconds, against
+   profiles for that meeting's board, with a cosine threshold of 0.60. A name needs most of the
+   turn's seconds. Turns under 1.5 seconds take their number's name, if that number is one person.
+   - `shared/speakers/{board}/{date}.turns.json` holds the name for each turn.
+   - `shared/speakers/{board}/{date}.speakers.json` holds the name for each number.
+   - `data/speaker_embeddings/{board}/{date}.npz` caches embeddings, so a rerun takes under a second.
 
-5. `Meeting.php` loads that JSON and substitutes names for `Speaker N` labels in the
-   transcript view. Unmatched speakers remain as `Speaker N`.
+5. `Meeting.php` looks up each transcript line's turn by speaker number and time, which also
+   works for whole-second `.txt` timestamps. Unmatched turns remain as `Speaker N`. Meetings with
+   no turns file use the per-number names.
+
+### Manual labels
+
+A manual label covers its whole number. The exception is a turn whose voice is at least 0.20
+closer to another profile than to the labeled person, which keeps that other name. This handles
+a number that holds two people.
+
+### Reruns
+
+`batch_identify_speakers.sh` reruns a meeting when `profiles.json` or its `.speakers.json` is
+newer than its `.turns.json`. It only covers meetings with a `.revai.json`.
 
 ## Environment architecture
 
@@ -44,7 +61,7 @@ for the admin UI and `deploy.sh` to work correctly.
    with a null embedding (triggers a rebuild on next deploy).
 4. On next `deploy.sh` run (on pre-prod):
    - `build_speaker_profiles.py` detects the null embedding and rebuilds it.
-   - `batch_identify_speakers.sh` re-identifies any unprocessed meetings.
+   - `batch_identify_speakers.sh` re-identifies any meeting older than those changes.
    - The updated files are rsynced to production.
 
 ## Prerequisites
@@ -57,12 +74,11 @@ uv pip install --python venv/bin/python -r requirements.txt
 ```
 
 ### HuggingFace token
-The pyannote embedding model is gated. You need to:
+Some pyannote models are gated. You need to:
 1. Create an account at https://huggingface.co
-2. Accept the license at https://hf.co/pyannote/embedding
-3. Accept the license at https://hf.co/pyannote/segmentation-3.0
-4. Put your token in `data/hf_token` (one line, no newline required, already populated)
-5. Also add `define('HUGGINGFACE_TOKEN', '...')` to `config.php` for PHP access
+2. Accept the license at https://hf.co/pyannote/segmentation-3.0
+3. Put your token in `data/hf_token` (one line, no newline required, already populated)
+4. Also add `define('HUGGINGFACE_TOKEN', '...')` to `config.php` for PHP access
 
 ## Regular workflow: identifying a new meeting
 
@@ -82,26 +98,23 @@ turn boundaries are whole-second rather than word-level.
 ### Step 2 — run identification
 
 ```bash
-venv/bin/python scripts/identify_speakers.py zoning 2026-04-23 --threshold 0.70
+venv/bin/python scripts/identify_speakers.py zoning 2026-04-23
 ```
 
-The output file is written to `output/speakers/zoning/2026-04-23.speakers.json`.
-
-Check the results. Known regulars (Cahill, Rahi, Kinneally, Laura the clerk) should
-match confidently (≥ 0.80). Board members who only speak briefly score lower.
-
-For `.txt`-only meetings, threshold 0.60 may be needed for regulars who narrowly miss 0.70.
+The output files are written to `shared/speakers/zoning/`. Check that known regulars
+(Cahill, Rahi, Kinneally, Laura the clerk) are named.
 
 ### Step 3 — deploy
 
-`output/speakers/` is included in `deploy.sh`'s rsync, so running `./deploy.sh` pushes
-the speaker mappings to production where they're read by the transcript page.
+`shared/speakers/` is included in `deploy.sh`'s rsync, so running `./deploy.sh` pushes
+the speaker names to production where they're read by the transcript page.
 
 ## Improving profiles
 
 The quality of identification depends directly on the quality and quantity of registered
-clips. Short "yes/here" clips (~0.7 s) are nearly useless. Clips of 10–45 seconds of
-natural speech work well.
+clips. Clips under 3 seconds, such as "yes/here", are not used. Clips of 10–45 seconds of
+natural speech work well. The admin page registers a number's longest turn, so check that
+turn is one person before ticking its register-clip box, or the wrong voice joins the profile.
 
 ### Finding good clips in a meeting
 
@@ -157,8 +170,8 @@ Speaker IDs in use:
 
 ### Auto-extracting roll call clips
 
-Roll call responses ("here" / "yes") are short but accumulate across meetings. After
-collecting enough of them per person, the averaged embedding becomes more reliable.
+Roll call responses ("here" / "yes") are too short to build a voiceprint, so these clips
+are ignored until the person also has a clip of 3 seconds or more.
 
 ```bash
 # Interactive — prompts for each candidate
@@ -196,19 +209,19 @@ If `.revai.json` exists (last ~9 meetings), use it for best accuracy:
 for f in web/files/zoning/*.revai.json; do
     date=$(basename "$f" .revai.json)
     echo "=== $date ==="
-    venv/bin/python scripts/identify_speakers.py zoning "$date" --threshold 0.70
+    venv/bin/python scripts/identify_speakers.py zoning "$date"
 done
 ```
 
 For older meetings (`.txt` only — 116 zoning meetings going back to 2020), the script
-falls back to `.txt` timestamps automatically. Use a slightly lower threshold:
+falls back to `.txt` timestamps automatically:
 
 ```bash
 for f in web/files/zoning/*.txt; do
     date=$(basename "$f" .txt)
-    [ -f "output/speakers/zoning/${date}.speakers.json" ] && continue   # already done
+    [ -f "shared/speakers/zoning/${date}.turns.json" ] && continue   # already done
     echo "=== $date ==="
-    venv/bin/python scripts/identify_speakers.py zoning "$date" --threshold 0.60
+    venv/bin/python scripts/identify_speakers.py zoning "$date"
 done
 ```
 
@@ -218,17 +231,15 @@ done
 It parses the `Speaker N  HH:MM:SS  text` lines and uses each line's timestamp as the
 segment start, with the next line's timestamp as the end. Boundary precision is ~1 second
 (vs word-level with `.revai.json`), which is negligible for long turns but may slightly
-reduce scores for short turns. Regulars who score 0.80+ on `.revai.json` typically score
-0.70–0.75 on `.txt`. Use `--threshold 0.60` if known regulars are not matching.
+reduce scores for short turns.
 
 ## Troubleshooting
 
 **All scores below threshold** — profiles need longer clips. Run `longturns` on a meeting
 where you can identify the speaker from context, register the clip, rebuild, retry.
 
-**Wrong person matched** — usually means a profile has noisy clips (short "yes" responses
-dominating the average). Use `build_speaker_profiles.py --speaker ID` after removing bad
-clips from `profiles.json` manually, or register a longer clip to dilute the noise.
+**Wrong person matched** — usually means a profile has a clip of someone else. Remove the
+bad clip from `profiles.json`, then run `build_speaker_profiles.py --speaker ID`.
 
 **`.revai.json` missing** — Rev.ai jobs expire after 30 days. Run `fetch_revai_json.php`
 immediately after a transcript becomes available. Going forward, `monitor_revai_progress.php`

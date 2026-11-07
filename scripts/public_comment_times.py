@@ -41,13 +41,13 @@ OFFICIAL_MIN = 30       # seconds of speech outside public portions that make so
 SPEAKER_MIN = 10        # seconds of speech below which a voice in a public portion is ignored
 WORD_GAP_MAX = 2        # longer silences inside a turn are not counted as talking
 
-OPEN_RE = re.compile(r"state your name|have three minutes|unmute|(?<!be )(?<!it'll )open(ing)?\b.{0,20}\bpublic", re.I)
+OPEN_RE = re.compile(r"state your name|have three minutes|unmute|(?<!be )(?<!it'll )(?<!it's )open(ing)?\b.{0,20}\bpublic", re.I)
 CLOSE_RE = re.compile(r"(clos(e|ed|ing)\b.{0,30}\b(public|portion)|portion is (now )?closed|public portion is)", re.I)
 WARN_RE = re.compile(r"wrap (it|this|that) up|wrap up what|sum (it |this )?up|finish up|time('s| is) up|out of time|exceeded|over (your |the )?(three|3|time)|past (your )?(three|3)|your (three|3) minutes", re.I)
 
 INTRO_RE = re.compile(r"my name|name's|\bthis is\b|\bI'm [A-Z]|\bI live|resident|\b\d+ \w+ (road|rd|avenue|ave|street|drive|court|lane|terrace|place)\b", re.I)
+# An official citing an address makes a bogus row, which review catches. Missing a resident would be silent.
 NEW_PERSON_RE = re.compile(r"my name|name's|\bI live\b|\b\d+ (\w+ ){1,4}(road|rd|avenue|ave|street|drive|court|lane|terrace|place|circle|boulevard|blvd)\b", re.I)
-OFFICIAL_INTRO_RE = re.compile(r"my name|\bI live\b", re.I)   # officials also cite addresses
 
 CSV_PATH = os.path.join(BASE_DIR, 'shared', 'public_comment_times.csv')
 CSV_FIELDS = ['meeting_date', 'board', 'portion', 'speaker', 'start', 'floor', 'floor_seconds', 'over', 'total',
@@ -187,8 +187,7 @@ def split_people(window, officials):
     people, count, out = {}, 0, []
     for t in window:
         base = t['speaker']
-        intro_re = OFFICIAL_INTRO_RE if base in officials else NEW_PERSON_RE
-        if intro_re.search(t['text'][:120]):
+        if NEW_PERSON_RE.search(t['text'][:120]):
             count += 1
             people = {base: f'{base}.{count}'}
         out.append({**t, 'speaker': people.get(base, base)})
@@ -287,6 +286,9 @@ def self_check():
     assert [r['speaker'] for r in resident] == ['5.1', '9.2'], resident
     assert resident[0]['floor'] == 40 and resident[0]['warned'] == 42, resident[0]
     assert resident[0]['after_warning'] == 0, resident[0]    # stopped when told
+    by_address = measure([turn(0, 0, 5, 'state your name'), turn(5, 5, 45, 'Pat Doe, 12 Main Street')], 0, 1, {0, 5})
+    assert [r['speaker'] for r in by_address] == ['5.1'], by_address
+    assert not OPEN_RE.search("the concert, it's open to the public")
 
     with tempfile.TemporaryDirectory() as tmp:
         path = os.path.join(tmp, 'times.csv')
