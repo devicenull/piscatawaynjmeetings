@@ -541,7 +541,7 @@
 					</div>
 
 					<canvas id="clip-canvas" aria-label="Waveform. Drag to select audio, or use the start and end fields."></canvas>
-					<div class="small text-muted mb-2">Drag across the waveform to select, or drag an edge to adjust. Colored bars show the transcript's speaker numbers.</div>
+					<div class="small text-muted mb-2">Drag across the waveform to select, or drag an edge to adjust. <strong>Shift+click to listen from any point</strong> without changing the selection. Colored bars show the transcript's speaker numbers.</div>
 
 					<div class="d-flex flex-wrap align-items-end clip-row mb-2">
 						<div>
@@ -777,6 +777,10 @@
 			return null;
 		}
 		canvas.addEventListener('pointerdown', function(e) {
+			if (e.shiftKey) {
+				if (audio) startPreview(timeAt(e), Infinity);
+				return;
+			}
 			canvas.setPointerCapture(e.pointerId);
 			var edge = edgeAt(e);
 			drag = edge === 'a' ? { anchor: sel.b } : edge === 'b' ? { anchor: sel.a } : { anchor: timeAt(e) };
@@ -820,6 +824,13 @@
 
 		el('clip-play').disabled = !audio;
 
+		function startPreview(from, until) {
+			audio.currentTime = from;
+			stopAt = until;
+			audio.play();
+			el('clip-play').innerHTML = '&#9632; Stop';
+		}
+
 		function stopPreview() {
 			if (stopAt !== null && audio) audio.pause();
 			stopAt = null;
@@ -828,10 +839,7 @@
 		el('clip-play').addEventListener('click', function() {
 			if (!audio) return;
 			if (stopAt !== null) { stopPreview(); return; }
-			audio.currentTime = sel.a;
-			stopAt = sel.b;
-			audio.play();
-			el('clip-play').innerHTML = '&#9632; Stop';
+			startPreview(sel.a, sel.b);
 		});
 		if (audio) {
 			audio.addEventListener('timeupdate', function() {
