@@ -11,8 +11,10 @@ import json
 import struct
 import subprocess
 
-SAMPLE_RATE = 200   # Hz for ffmpeg extraction
-WINDOW_SIZE = 200   # samples per peak pair = 1 second resolution
+# ffmpeg low-passes at half the output rate, so this must stay high enough to keep
+# speech (at 200 Hz everything above 100 Hz was filtered out and voices vanished)
+SAMPLE_RATE = 2000  # Hz for ffmpeg extraction
+WINDOW_SIZE = 2000  # samples per peak pair = 1 second resolution
 
 
 def generate_peaks(input_path: str, output_path: str) -> None:
