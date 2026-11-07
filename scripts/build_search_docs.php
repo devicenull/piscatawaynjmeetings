@@ -234,7 +234,8 @@ function cachedPages(string $path): array
 	$cached = is_file($cache_file) ? json_decode(file_get_contents($cache_file), true) : null;
 	if ($cached && $cached['size'] == $stat['size'] && $cached['mtime'] == $stat['mtime'])
 	{
-		return $cached['pages'];
+		// re-normalize so normalizeText() changes apply without clearing the cache
+		return array_map('normalizeText', $cached['pages']);
 	}
 
 	$pages = extractPages($path);
