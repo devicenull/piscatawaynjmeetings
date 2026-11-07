@@ -7,7 +7,6 @@
  *   speaker_num  - integer speaker number from the Rev.ai transcript
  *   speaker_id   - slug for profiles.json (e.g. "carmichael")
  *   display_name - human-readable label (e.g. "Carmichael (Councilwoman)")
- *   register_clip - 1 to also add the speaker's longest turn as a voice-profile clip
  */
 require(__DIR__.'/../init.php');
 
@@ -23,7 +22,6 @@ $meeting_id   = (int)($_POST['MEETINGID']     ?? 0);
 $speaker_num  = (int)($_POST['speaker_num']   ?? -1);
 $speaker_id   = trim($_POST['speaker_id']     ?? '');
 $display_name = trim($_POST['display_name']   ?? '');
-$register_clip = !empty($_POST['register_clip']);
 
 if (!$meeting_id || $speaker_num < 0 || !$speaker_id || !$display_name) {
     http_response_code(400);
@@ -48,7 +46,7 @@ if (!$meeting['MEETINGID']) {
 $board = $meeting['type'];
 $date  = explode(' ', $meeting['date'])[0];
 
-// 1. Update shared/speakers/{board}/{date}.speakers.json
+// Update shared/speakers/{board}/{date}.speakers.json
 $speakers_dir  = __DIR__.'/../shared/speakers/'.$board;
 $speakers_path = $speakers_dir.'/'.$date.'.speakers.json';
 
@@ -74,88 +72,7 @@ if (file_put_contents($speakers_path, json_encode($speakers, JSON_FORCE_OBJECT |
     exit;
 }
 
-// 2. Optionally register a clip in shared/speakers/profiles.json
-$clip_registered = false;
-if ($register_clip) {
-    $best_start = null;
-    $best_end   = null;
-    $best_dur   = 0.0;
-
-    // Try .whisperx.json first, then .revai.json
-    $whisperx_path = __DIR__.'/../web/files/'.$board.'/'.$date.'.whisperx.json';
-    $revai_path    = __DIR__.'/../web/files/'.$board.'/'.$date.'.revai.json';
-
-    if (file_exists($whisperx_path)) {
-        $data = json_decode(file_get_contents($whisperx_path), true);
-        foreach ($data['segments'] ?? [] as $seg) {
-            $label = $seg['speaker'] ?? 'SPEAKER_00';
-            $num   = (int)substr(strrchr($label, '_'), 1);
-            if ($num !== $speaker_num) continue;
-            $start = (float)$seg['start'];
-            $end   = (float)$seg['end'];
-            $dur   = $end - $start;
-            if ($dur > $best_dur) {
-                $best_dur   = $dur;
-                $best_start = $start;
-                $best_end   = $end;
-            }
-        }
-    } elseif (file_exists($revai_path)) {
-        $revai = json_decode(file_get_contents($revai_path), true);
-        foreach ($revai['monologues'] ?? [] as $mono) {
-            if ((int)$mono['speaker'] !== $speaker_num) continue;
-            $elems = array_values(array_filter(
-                $mono['elements'],
-                fn($e) => $e['type'] === 'text' && isset($e['ts'])
-            ));
-            if (!$elems) continue;
-            $start = (float)$elems[0]['ts'];
-            $end   = (float)end($elems)['end_ts'];
-            $dur   = $end - $start;
-            if ($dur > $best_dur) {
-                $best_dur   = $dur;
-                $best_start = $start;
-                $best_end   = $end;
-            }
-        }
-    }
-
-    if ($best_dur >= 5.0 && $best_start !== null) {
-        $profiles_path = __DIR__.'/../shared/speakers/profiles.json';
-        $profiles = ['speakers' => []];
-        if (file_exists($profiles_path)) {
-            $profiles = json_decode(file_get_contents($profiles_path), true) ?? $profiles;
-        }
-
-        if (!isset($profiles['speakers'][$speaker_id])) {
-            $profiles['speakers'][$speaker_id] = [
-                'name'      => $display_name,
-                'boards'    => [$board],
-                'clips'     => [],
-                'embedding' => null,
-            ];
-        } else {
-            $profiles['speakers'][$speaker_id]['embedding'] = null;
-            if (!in_array($board, $profiles['speakers'][$speaker_id]['boards'] ?? [])) {
-                $profiles['speakers'][$speaker_id]['boards'][] = $board;
-            }
-        }
-
-        $clip_key = sprintf('%s/%s:%.1f-%.1f', $board, $date, $best_start, $best_end);
-        if (!in_array($clip_key, $profiles['speakers'][$speaker_id]['clips'])) {
-            $profiles['speakers'][$speaker_id]['clips'][] = $clip_key;
-            $clip_registered = true;
-        }
-
-        file_put_contents(
-            $profiles_path,
-            json_encode($profiles, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)."\n"
-        );
-    }
-}
-
 echo json_encode([
     'success'          => true,
     'name'             => $display_name,
-    'clip_registered'  => $clip_registered,
 ]);

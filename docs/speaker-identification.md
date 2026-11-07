@@ -54,12 +54,17 @@ for the admin UI and `deploy.sh` to work correctly.
 
 ### Admin UI assignment flow
 
-1. Admin views a transcript on pre-prod and clicks a `Speaker N` label.
-2. The dropdown saves via AJAX to `assign_speaker.php`, which writes to pre-prod's
-   `output/speakers/{board}/{date}.speakers.json` (with `manual: true`).
-3. Optionally, the assignment also appends a clip reference to `data/speakers/profiles.json`
-   with a null embedding (triggers a rebuild on next deploy).
-4. On next `deploy.sh` run (on pre-prod):
+1. Admin views a transcript on pre-prod and clicks a speaker name, which opens a popup at
+   that line. The popup shows a detailed waveform from `clip_peaks.php`, the transcript lines
+   in view, and a person picker.
+2. Admin drags across the waveform or clicks a transcript line to select audio, then plays it
+   back. The popup warns when a selection crosses speakers.
+3. Saving calls `register_voice_clip.php`, which adds that exact range to the person's clips
+   in `shared/speakers/profiles.json` with a null embedding (triggers a rebuild on next deploy).
+   Clips must be 3 seconds to 5 minutes long.
+4. Optionally, the popup also labels the whole speaker number through `assign_speaker.php`,
+   which writes `shared/speakers/{board}/{date}.speakers.json` (with `manual: true`).
+5. On next `deploy.sh` run (on pre-prod):
    - `build_speaker_profiles.py` detects the null embedding and rebuilds it.
    - `batch_identify_speakers.sh` re-identifies any meeting older than those changes.
    - The updated files are rsynced to production.
@@ -113,8 +118,8 @@ the speaker names to production where they're read by the transcript page.
 
 The quality of identification depends directly on the quality and quantity of registered
 clips. Clips under 3 seconds, such as "yes/here", are not used. Clips of 10–45 seconds of
-natural speech work well. The admin page registers a number's longest turn, so check that
-turn is one person before ticking its register-clip box, or the wrong voice joins the profile.
+natural speech work well. Each clip should be one person only, so listen to the selection in
+the admin popup before saving it.
 
 ### Finding good clips in a meeting
 

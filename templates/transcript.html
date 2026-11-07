@@ -217,44 +217,6 @@
 			font-style: normal;
 			font-weight: normal;
 		}
-		.speaker-edit-form {
-			display: flex;
-			align-items: center;
-			gap: .3rem;
-			grid-column: 1;
-		}
-		.speaker-edit-select {
-			font-size: .78rem;
-			padding: .15rem .3rem;
-			border: 1px solid #86b7fe;
-			border-radius: 4px;
-			max-width: 240px;
-		}
-		.speaker-edit-select:focus { border-color: #0d6efd; outline: none; box-shadow: 0 0 0 2px rgba(13,110,253,.2); }
-		.speaker-edit-input {
-			width: 180px;
-			font-size: .78rem;
-			padding: .15rem .3rem;
-			border: 1px solid #86b7fe;
-			border-radius: 4px;
-			outline: none;
-		}
-		.speaker-edit-input:focus { border-color: #0d6efd; box-shadow: 0 0 0 2px rgba(13,110,253,.2); }
-		.speaker-edit-btn {
-			background: none;
-			border: 1px solid #ccc;
-			border-radius: 4px;
-			padding: .1rem .35rem;
-			font-size: .8rem;
-			cursor: pointer;
-			line-height: 1.3;
-		}
-		.speaker-edit-btn.save  { border-color: #198754; color: #198754; }
-		.speaker-edit-btn.save:hover  { background: #198754; color: #fff; }
-		.speaker-edit-btn.cancel { border-color: #dc3545; color: #dc3545; }
-		.speaker-edit-btn.cancel:hover { background: #dc3545; color: #fff; }
-		.speaker-clip-row { display: flex; align-items: center; gap: .25rem; font-size: .72rem; color: #666; }
-
 		@media (max-width: 575px) {
 			.ts-line { display: block; border-left-width: 2px; padding: .25rem .4rem; }
 			.ts-speaker { display: inline; }
@@ -542,175 +504,453 @@
 	</div>{# /transcript-root #}
 
 	{% if has_edit_auth %}
+	<style>
+		body.modal-open #floating-player { z-index: 1040; }   /* behind Bootstrap's backdrop, or it covers Save */
+		#clip-canvas { display: block; width: 100%; height: 130px; cursor: crosshair; touch-action: none; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; }
+		#clip-lines { max-height: 190px; overflow-y: auto; font-size: .85rem; }
+		.clip-row > * { margin-right: .75rem; margin-top: .25rem; }
+		#clip-lines button { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; width: 100%; text-align: left; background: none; border: 0; border-left: 4px solid #ccc; padding: .2rem .5rem; margin-bottom: 2px; }
+		#clip-lines button:hover { background: #eef4ff; }
+		#clip-lines button.in-selection { background: #fff4cc; }
+		#clip-lines .who { font-weight: 600; }
+		#clip-lines .when { color: #666; font-variant-numeric: tabular-nums; }
+		.clip-time { width: 7rem; }
+	</style>
+
+	<div class="modal fade" id="clip-modal" tabindex="-1" aria-labelledby="clip-title" aria-hidden="true" data-nosnippet>
+		<div class="modal-dialog modal-xl modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h2 class="modal-title h5" id="clip-title">Assign audio to a person</h2>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				</div>
+				<div class="modal-body">
+					<div class="d-flex flex-wrap align-items-center clip-row mb-2">
+						<div class="btn-group btn-group-sm" role="group" aria-label="Move the view">
+							<button type="button" class="btn btn-outline-secondary" id="clip-back">&laquo; Earlier</button>
+							<button type="button" class="btn btn-outline-secondary" id="clip-forward">Later &raquo;</button>
+						</div>
+						<label class="small mb-0" for="clip-zoom">Show</label>
+						<select id="clip-zoom" class="custom-select custom-select-sm w-auto">
+							<option value="30">30 seconds</option>
+							<option value="60" selected>1 minute</option>
+							<option value="120">2 minutes</option>
+							<option value="300">5 minutes</option>
+						</select>
+						<span class="small text-muted" id="clip-view"></span>
+					</div>
+
+					<canvas id="clip-canvas" aria-label="Waveform. Drag to select audio, or use the start and end fields."></canvas>
+					<div class="small text-muted mb-2">Drag across the waveform to select, or drag an edge to adjust. Colored bars show the transcript's speaker numbers.</div>
+
+					<div class="d-flex flex-wrap align-items-end clip-row mb-2">
+						<div>
+							<label class="small mb-0" for="clip-start">Start (seconds)</label>
+							<input type="number" id="clip-start" class="form-control form-control-sm clip-time" step="0.1" min="0">
+						</div>
+						<div>
+							<label class="small mb-0" for="clip-end">End (seconds)</label>
+							<input type="number" id="clip-end" class="form-control form-control-sm clip-time" step="0.1" min="0">
+						</div>
+						<button type="button" class="btn btn-sm btn-outline-primary" id="clip-play">&#9654; Play selection</button>
+						<span class="small" id="clip-summary" aria-live="polite"></span>
+					</div>
+					<div class="alert alert-warning py-1 px-2 small" id="clip-mixed" hidden></div>
+
+					<div id="clip-lines" class="mb-3" aria-label="Transcript lines in view. Choose one to select it."></div>
+
+					<div class="form-row align-items-end">
+						<div class="col-sm-6">
+							<label class="small mb-0" for="clip-person">Person</label>
+							<select id="clip-person" class="custom-select custom-select-sm"></select>
+						</div>
+						<div class="col-sm-6" id="clip-new-wrap" hidden>
+							<label class="small mb-0" for="clip-new">New person's display name</label>
+							<input type="text" id="clip-new" class="form-control form-control-sm" placeholder="Jane Doe (Role)">
+						</div>
+					</div>
+
+					<div class="form-check mt-3">
+						<input class="form-check-input" type="checkbox" id="clip-add" checked>
+						<label class="form-check-label" for="clip-add">Add the selected audio to this person's voice profile</label>
+					</div>
+					<div class="form-check">
+						<input class="form-check-input" type="checkbox" id="clip-label">
+						<label class="form-check-label" for="clip-label" id="clip-label-text"></label>
+					</div>
+					<div class="alert py-1 px-2 small mt-2 mb-0" id="clip-result" role="status" hidden></div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-sm btn-primary" id="clip-save">Save</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<script>
 	(function() {
 		var MEETING_ID    = {{ meeting.MEETINGID }};
-		var HAS_REVAI     = {{ has_revai_json ? 'true' : 'false' }};
 		var knownSpeakers = {{ known_speakers|json_encode|raw }};
+		var MIN_SECONDS   = 3;   // build_speaker_profiles.py ignores shorter clips
+		var MAX_SECONDS   = 300; // register_voice_clip.php refuses longer ones
+		var EDGE_PX       = 7;
 
+		var el = function(id) { return document.getElementById(id); };
+		var modalEl = el('clip-modal');
+		var canvas  = el('clip-canvas');
+		var audio   = el('audioplayer');
+		var modal   = null;
+
+		var view = { start: 0, len: 60, peaks: [], perSecond: 50 };
+		var sel  = { a: 0, b: 0 };
+		var speakerNum = null;
+		var peakRequest = 0;
+		var stopAt = null;
+
+		function clock(s) {
+			var whole = Math.floor(s);
+			var h = Math.floor(whole / 3600), m = Math.floor(whole % 3600 / 60);
+			var sec = String(whole % 60).padStart(2, '0');
+			return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + sec;
+		}
+
+		function maxTime() {
+			return audio && audio.duration > 0 ? audio.duration : Infinity;
+		}
+
+		// Transcript lines with their end time, which is where the next line starts.
+		function transcriptLines() {
+			var nodes = Array.prototype.slice.call(document.querySelectorAll('#transcript-root .ts-line'));
+			return nodes.map(function(node, i) {
+				var next = nodes[i + 1];
+				return {
+					node:    node,
+					start:   parseFloat(node.dataset.ts),
+					end:     next ? parseFloat(next.dataset.ts) : parseFloat(node.dataset.ts) + 30,
+					speaker: node.dataset.speaker,
+					name:    node.querySelector('.ts-speaker').textContent.trim(),
+					text:    node.querySelector('.ts-text').textContent.trim(),
+					color:   node.style.borderLeftColor || '#ccc'
+				};
+			});
+		}
+		var lines = [];
+
+		function draw() {
+			var rect = canvas.getBoundingClientRect();
+			var ratio = window.devicePixelRatio || 1;
+			canvas.width  = Math.max(1, Math.round(rect.width * ratio));
+			canvas.height = Math.max(1, Math.round(rect.height * ratio));
+			var ctx = canvas.getContext('2d');
+			ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+			var w = rect.width, h = rect.height, stripe = 8, mid = (h - stripe) / 2;
+			var x = function(t) { return (t - view.start) / view.len * w; };
+			ctx.clearRect(0, 0, w, h);
+
+			lines.forEach(function(l) {
+				if (l.end <= view.start || l.start >= view.start + view.len) return;
+				ctx.fillStyle = l.color;
+				ctx.fillRect(x(l.start), h - stripe, Math.max(1, x(l.end) - x(l.start) - 1), stripe);
+			});
+
+			ctx.fillStyle = 'rgba(245, 192, 0, .35)';
+			ctx.fillRect(x(sel.a), 0, x(sel.b) - x(sel.a), h - stripe);
+
+			ctx.fillStyle = '#555';
+			var loudest = Math.max.apply(null, view.peaks.concat([0.05]));
+			var step = view.len / w * view.perSecond;
+			for (var px = 0; px < w; px++) {
+				var from = Math.floor(px * step), to = Math.max(from + 1, Math.floor((px + 1) * step)), peak = 0;
+				for (var i = from; i < to && i < view.peaks.length; i++) peak = Math.max(peak, view.peaks[i]);
+				var bar = peak / loudest * (mid - 2);
+				if (bar > 0) ctx.fillRect(px, mid - bar, 1, bar * 2);
+			}
+
+			ctx.fillStyle = '#b58900';
+			ctx.fillRect(x(sel.a) - 1, 0, 2, h - stripe);
+			ctx.fillRect(x(sel.b) - 1, 0, 2, h - stripe);
+
+			if (audio && !audio.paused) {
+				ctx.fillStyle = '#d33';
+				ctx.fillRect(x(audio.currentTime), 0, 1, h - stripe);
+			}
+		}
+
+		function loadPeaks() {
+			var request = ++peakRequest;
+			view.peaks = [];
+			draw();
+			fetch('/clip_peaks.php?MEETINGID=' + MEETING_ID + '&start=' + view.start + '&len=' + view.len)
+				.then(function(r) { return r.json(); })
+				.then(function(data) {
+					if (request !== peakRequest || !data.peaks) return;
+					view.peaks = data.peaks;
+					view.perSecond = data.per_second;
+					draw();
+				})
+				.catch(function() {
+					if (request === peakRequest) showResult('The waveform could not be loaded. You can still use the start and end fields.', 'warning');
+				});
+		}
+
+		function setView(start, len) {
+			view.len = len;
+			var limit = maxTime();
+			view.start = Math.max(0, Math.min(start, limit === Infinity ? start : Math.max(0, limit - len)));
+			el('clip-view').textContent = clock(view.start) + ' – ' + clock(view.start + view.len);
+			renderLines();
+			loadPeaks();
+		}
+
+		function renderLines() {
+			var box = el('clip-lines');
+			box.textContent = '';
+			lines.forEach(function(l) {
+				if (l.end <= view.start || l.start >= view.start + view.len) return;
+				var b = document.createElement('button');
+				b.type = 'button';
+				b.style.borderLeftColor = l.color;
+				var when = document.createElement('span');
+				when.className = 'when';
+				when.textContent = clock(l.start) + ' ';
+				var who = document.createElement('span');
+				who.className = 'who';
+				who.textContent = l.name + ': ';
+				b.appendChild(when);
+				b.appendChild(who);
+				b.appendChild(document.createTextNode(l.text));
+				b.addEventListener('click', function() { setSelection(l.start, Math.min(l.end, l.start + 60)); });
+				l.button = b;
+				box.appendChild(b);
+			});
+			markLines();
+		}
+
+		function overlapping() {
+			return lines.filter(function(l) { return Math.min(l.end, sel.b) - Math.max(l.start, sel.a) >= 0.5; });
+		}
+
+		function markLines() {
+			var inside = overlapping();
+			lines.forEach(function(l) {
+				if (l.button) l.button.classList.toggle('in-selection', inside.indexOf(l) !== -1);
+			});
+			var names = [];
+			inside.forEach(function(l) { if (names.indexOf(l.name) === -1) names.push(l.name); });
+			var mixed = el('clip-mixed');
+			mixed.hidden = names.length < 2;
+			mixed.textContent = names.length < 2 ? '' : 'This selection crosses ' + names.join(', ') + '. A voice clip should be one person only, so listen before saving.';
+		}
+
+		function setSelection(a, b) {
+			var limit = maxTime();
+			a = Math.max(0, a);
+			b = Math.min(limit, Math.max(a, b));
+			sel.a = Math.round(a * 10) / 10;
+			sel.b = Math.round(b * 10) / 10;
+			el('clip-start').value = sel.a.toFixed(1);
+			el('clip-end').value   = sel.b.toFixed(1);
+			var seconds = sel.b - sel.a;
+			var summary = el('clip-summary');
+			summary.textContent = clock(sel.a) + ' – ' + clock(sel.b) + ', ' + seconds.toFixed(1) + ' seconds' +
+				(seconds < MIN_SECONDS ? ' (a voice clip needs at least ' + MIN_SECONDS + ')' : '') +
+				(seconds > MAX_SECONDS ? ' (a voice clip can be at most ' + MAX_SECONDS + ')' : '');
+			summary.classList.toggle('text-danger', seconds < MIN_SECONDS || seconds > MAX_SECONDS);
+			markLines();
+			updateSave();
+			draw();
+		}
+
+		// Dragging: an edge resizes the selection, anywhere else starts a new one.
+		var drag = null;
+		function timeAt(e) {
+			var rect = canvas.getBoundingClientRect();
+			var frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+			return view.start + frac * view.len;
+		}
+		function edgeAt(e) {
+			var rect = canvas.getBoundingClientRect();
+			var px = function(t) { return rect.left + (t - view.start) / view.len * rect.width; };
+			if (Math.abs(e.clientX - px(sel.a)) <= EDGE_PX) return 'a';
+			if (Math.abs(e.clientX - px(sel.b)) <= EDGE_PX) return 'b';
+			return null;
+		}
+		canvas.addEventListener('pointerdown', function(e) {
+			canvas.setPointerCapture(e.pointerId);
+			var edge = edgeAt(e);
+			drag = edge === 'a' ? { anchor: sel.b } : edge === 'b' ? { anchor: sel.a } : { anchor: timeAt(e) };
+			if (!edge) setSelection(drag.anchor, drag.anchor);
+		});
+		canvas.addEventListener('pointermove', function(e) {
+			if (drag) {
+				var t = timeAt(e);
+				setSelection(Math.min(t, drag.anchor), Math.max(t, drag.anchor));
+			} else {
+				canvas.style.cursor = edgeAt(e) ? 'ew-resize' : 'crosshair';
+			}
+		});
+		canvas.addEventListener('pointerup', function() { drag = null; });
+		canvas.addEventListener('pointercancel', function() { drag = null; });
+
+		function typedSelection(moved) {
+			var a = parseFloat(el('clip-start').value), b = parseFloat(el('clip-end').value);
+			if (isNaN(a) || isNaN(b)) return;
+			// A start past the end moves the end along, keeping the same length, and the reverse.
+			var length = sel.b - sel.a;
+			if (a > b) {
+				if (moved === 'start') b = a + length;
+				else a = b - length;
+			}
+			setSelection(a, b);
+			if (sel.a < view.start || sel.b > view.start + view.len) {
+				setView(Math.max(0, sel.a - 5), Math.max(view.len, Math.min(300, sel.b - sel.a + 10)));
+				el('clip-zoom').value = [30, 60, 120, 300].filter(function(n) { return n >= view.len; })[0];
+			}
+		}
+		el('clip-start').addEventListener('change', function() { typedSelection('start'); });
+		el('clip-end').addEventListener('change', function() { typedSelection('end'); });
+
+		el('clip-back').addEventListener('click', function() { setView(view.start - view.len / 2, view.len); });
+		el('clip-forward').addEventListener('click', function() { setView(view.start + view.len / 2, view.len); });
+		el('clip-zoom').addEventListener('change', function() {
+			var len = parseInt(this.value, 10);
+			setView((sel.a + sel.b) / 2 - len / 2, len);
+		});
+
+		el('clip-play').disabled = !audio;
+
+		function stopPreview() {
+			if (stopAt !== null && audio) audio.pause();
+			stopAt = null;
+			el('clip-play').innerHTML = '&#9654; Play selection';
+		}
+		el('clip-play').addEventListener('click', function() {
+			if (!audio) return;
+			if (stopAt !== null) { stopPreview(); return; }
+			audio.currentTime = sel.a;
+			stopAt = sel.b;
+			audio.play();
+			el('clip-play').innerHTML = '&#9632; Stop';
+		});
+		if (audio) {
+			audio.addEventListener('timeupdate', function() {
+				if (stopAt !== null && audio.currentTime >= stopAt) stopPreview();
+				if (modalEl.classList.contains('show')) draw();
+			});
+		}
+
+		function fillPeople(currentName) {
+			var select = el('clip-person');
+			select.textContent = '';
+			var none = new Option('Choose a person', '');
+			none.disabled = true;
+			select.appendChild(none);
+			knownSpeakers.forEach(function(s) { select.appendChild(new Option(s.name, s.id)); });
+			select.appendChild(new Option('+ Add a new person', '__new__'));
+			var match = knownSpeakers.filter(function(s) { return s.name === currentName; })[0];
+			select.value = match ? match.id : '';
+			el('clip-new').value = '';
+			el('clip-new-wrap').hidden = true;
+		}
 		function slugify(name) {
-			return name.replace(/\s*\(.*?\)\s*/g, ' ')
-				.trim().toLowerCase()
-				.replace(/[^a-z0-9]+/g, '_')
-				.replace(/^_|_$/g, '');
+			return name.replace(/\s*\(.*?\)\s*/g, ' ').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+		}
+		function person() {
+			var select = el('clip-person');
+			if (select.value === '__new__') {
+				var name = el('clip-new').value.trim();
+				return slugify(name) ? { id: slugify(name), name: name } : null;
+			}
+			return select.value ? { id: select.value, name: select.options[select.selectedIndex].text } : null;
+		}
+		function updateSave() {
+			var add = el('clip-add').checked, label = el('clip-label').checked;
+			el('clip-save').disabled = !person() || (!add && !label) || (add && (sel.b - sel.a < MIN_SECONDS || sel.b - sel.a > MAX_SECONDS));
+		}
+		el('clip-person').addEventListener('change', function() {
+			el('clip-new-wrap').hidden = this.value !== '__new__';
+			if (this.value === '__new__') el('clip-new').focus();
+			updateSave();
+		});
+		el('clip-new').addEventListener('input', updateSave);
+		el('clip-add').addEventListener('change', updateSave);
+		el('clip-label').addEventListener('change', updateSave);
+
+		function showResult(message, kind) {
+			var box = el('clip-result');
+			box.hidden = false;
+			box.className = 'alert py-1 px-2 small mt-2 mb-0 alert-' + kind;
+			box.textContent = message;
 		}
 
-		function closeAllForms() {
-			document.querySelectorAll('#transcript-root .ts-speaker.editing').forEach(function(el) {
-				el.innerHTML = '';
-				el.textContent = el.dataset.originalName || '';
-				el.classList.remove('editing');
-				delete el.dataset.originalName;
+		function post(url, fields) {
+			var fd = new FormData();
+			fd.append('MEETINGID', MEETING_ID);
+			Object.keys(fields).forEach(function(k) { fd.append(k, fields[k]); });
+			return fetch(url, { method: 'POST', body: fd }).then(function(r) { return r.json(); }).then(function(data) {
+				if (!data.success) throw new Error(data.error || 'Unknown error');
+				return data;
 			});
 		}
 
-		function openEditForm(labelEl) {
-			if (labelEl.classList.contains('editing')) return;
-			closeAllForms();
+		el('clip-save').addEventListener('click', function() {
+			var who = person(), add = el('clip-add').checked, label = el('clip-label').checked;
+			if (!who) return;
+			var save = el('clip-save');
+			save.disabled = true;
 
-			var speakerNum  = labelEl.closest('.ts-line').dataset.speaker;
-			var currentName = labelEl.textContent.trim();
-			labelEl.dataset.originalName = currentName;
-			labelEl.classList.add('editing');
-
-			var form = document.createElement('div');
-			form.className = 'speaker-edit-form';
-
-			// Dropdown of known speakers
-			var select = document.createElement('select');
-			select.className = 'speaker-edit-select';
-			var placeholder = new Option('— assign speaker —', '');
-			placeholder.disabled = true;
-			placeholder.selected = true;
-			select.appendChild(placeholder);
-			knownSpeakers.forEach(function(s) {
-				select.appendChild(new Option(s.name, s.id));
-			});
-			var divider = new Option('─────────────', '__sep__');
-			divider.disabled = true;
-			select.appendChild(divider);
-			select.appendChild(new Option('+ Add new person…', '__new__'));
-
-			// New-person name input (hidden until needed)
-			var input = document.createElement('input');
-			input.type        = 'text';
-			input.className   = 'speaker-edit-input';
-			input.placeholder = 'Display name';
-			input.style.display = 'none';
-
-			var saveBtn = document.createElement('button');
-			saveBtn.className   = 'speaker-edit-btn save';
-			saveBtn.textContent = '✓';
-			saveBtn.title       = 'Save';
-			saveBtn.style.display = 'none';
-
-			var cancelBtn = document.createElement('button');
-			cancelBtn.className   = 'speaker-edit-btn cancel';
-			cancelBtn.textContent = '✗';
-			cancelBtn.title       = 'Cancel';
-
-			form.appendChild(select);
-			form.appendChild(input);
-			form.appendChild(saveBtn);
-			form.appendChild(cancelBtn);
-
-			// Voice clip checkbox
-			var clipCb = null;
-			if (HAS_REVAI) {
-				var clipRow = document.createElement('div');
-				clipRow.className = 'speaker-clip-row';
-				clipCb = document.createElement('input');
-				clipCb.type    = 'checkbox';
-				clipCb.id      = 'reg-clip-' + speakerNum;
-				clipCb.checked = true;
-				var clipLbl = document.createElement('label');
-				clipLbl.htmlFor     = clipCb.id;
-				clipLbl.textContent = 'Register voice clip';
-				clipRow.appendChild(clipCb);
-				clipRow.appendChild(clipLbl);
-				form.appendChild(clipRow);
-			}
-
-			labelEl.innerHTML = '';
-			labelEl.appendChild(form);
-			select.focus();
-
-			function restore() {
-				labelEl.innerHTML = '';
-				labelEl.textContent = currentName;
-				labelEl.classList.remove('editing');
-				delete labelEl.dataset.originalName;
-			}
-
-			function doSave(displayName, speakerId) {
-				if (!displayName || !speakerId) return;
-				select.disabled = input.disabled = saveBtn.disabled = cancelBtn.disabled = true;
-				saveBtn.textContent = '…';
-
-				var fd = new FormData();
-				fd.append('MEETINGID',    MEETING_ID);
-				fd.append('speaker_num',  speakerNum);
-				fd.append('speaker_id',   speakerId);
-				fd.append('display_name', displayName);
-				if (clipCb && clipCb.checked) fd.append('register_clip', '1');
-
-				fetch('/assign_speaker.php', { method: 'POST', body: fd })
-					.then(function(r) { return r.json(); })
-					.then(function(data) {
-						if (data.success) {
-							document.querySelectorAll('.ts-line[data-speaker="' + speakerNum + '"] .ts-speaker')
-								.forEach(function(el) {
-									el.classList.remove('editing');
-									delete el.dataset.originalName;
-									el.innerHTML = '';
-									el.textContent = displayName;
-									el.title = displayName;
-								});
-						} else {
-							alert('Error: ' + (data.error || 'Unknown error'));
-							restore();
-						}
-					})
-					.catch(function() { alert('Request failed'); restore(); });
-			}
-
-			// Selecting a known person saves immediately; "Add new" reveals the text input
-			select.addEventListener('change', function() {
-				var val = select.value;
-				if (!val) return;
-				if (val === '__new__') {
-					input.style.display  = '';
-					saveBtn.style.display = '';
-					input.focus();
-				} else {
-					doSave(select.options[select.selectedIndex].text, val);
+			var addClip = add
+				? post('/register_voice_clip.php', { start: sel.a, end: sel.b, speaker_id: who.id, display_name: who.name })
+				: Promise.resolve();
+			addClip.then(function() {
+				return label ? post('/assign_speaker.php', { speaker_num: speakerNum, speaker_id: who.id, display_name: who.name }) : null;
+			}).then(function() {
+				if (!knownSpeakers.some(function(s) { return s.id === who.id; })) {
+					knownSpeakers.push({ id: who.id, name: who.name });
+					knownSpeakers.sort(function(a, b) { return a.name < b.name ? -1 : 1; });
 				}
-			});
-
-			saveBtn.addEventListener('click', function(e) {
-				e.stopPropagation();
-				var name = input.value.trim();
-				if (name) doSave(name, slugify(name));
-			});
-
-			cancelBtn.addEventListener('click', function(e) {
-				e.stopPropagation();
-				restore();
-			});
-
-			input.addEventListener('keydown', function(e) {
-				if (e.key === 'Escape') restore();
-				if (e.key === 'Enter') {
-					var name = input.value.trim();
-					if (name) doSave(name, slugify(name));
+				if (label) {
+					document.querySelectorAll('.ts-line[data-speaker="' + speakerNum + '"] .ts-speaker').forEach(function(node) {
+						node.textContent = who.name;
+						node.title = who.name;
+					});
+					lines = transcriptLines();
+					renderLines();
 				}
-			});
+				var done = [];
+				if (add) done.push('Added ' + clock(sel.a) + ' – ' + clock(sel.b) + ' to ' + who.name + "'s voice profile. It takes effect after the next deploy.");
+				if (label) done.push('Labeled Speaker ' + speakerNum + ' as ' + who.name + '.');
+				showResult(done.join(' '), 'success');
+			}).catch(function(err) {
+				showResult(err.message, 'danger');
+			}).finally(updateSave);
+		});
+
+		function open(lineNode) {
+			lines = transcriptLines();
+			var line = lines.filter(function(l) { return l.node === lineNode; })[0];
+			speakerNum = line.speaker;
+			fillPeople(line.name);
+			el('clip-add').checked = true;
+			el('clip-label').checked = false;
+			el('clip-label-text').textContent = 'Also label every "Speaker ' + speakerNum + '" line in this meeting as this person';
+			el('clip-result').hidden = true;
+
+			if (!modal) modal = new bootstrap.Modal(modalEl);
+			modal.show();
+			setSelection(line.start, Math.min(line.end, line.start + 30));
+			el('clip-zoom').value = '60';
+			setView(line.start - 10, 60);
 		}
+
+		// Bootstrap 4 sends these through jQuery only.
+		$(modalEl).on('shown.bs.modal', draw).on('hidden.bs.modal', stopPreview);
+		window.addEventListener('resize', function() { if (modalEl.classList.contains('show')) draw(); });
 
 		document.addEventListener('click', function(e) {
 			var label = e.target.closest('#transcript-root .ts-speaker');
-			if (!label) return;
-			openEditForm(label);
+			if (label) open(label.closest('.ts-line'));
 		});
 	})();
 	</script>
