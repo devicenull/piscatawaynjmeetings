@@ -476,7 +476,14 @@ class Meeting extends BaseDBObject
 		if ($this['metadata'] === '' || $this['metadata'] === null) {
 			return [];
 		}
-		return json_decode($this['metadata'], true) ?? [];
+		$cases = json_decode($this['metadata'], true) ?? [];
+		// Word's Symbol-font bullets come out of PDFs as private-use codepoints (U+F0B7 etc.), which render as boxes
+		array_walk_recursive($cases, function (&$v) {
+			if (is_string($v)) {
+				$v = preg_replace('/\p{Co}/u', ' ', str_replace("\u{F0B7}", '•', $v)) ?? $v;
+			}
+		});
+		return $cases;
 	}
 
 	public function hasHappened(): bool
