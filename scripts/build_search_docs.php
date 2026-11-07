@@ -295,6 +295,9 @@ function splitPages(string $text): array
 
 function normalizeText(string $text): string
 {
+	// Word's Symbol-font bullets come out of PDFs as private-use codepoints (U+F0B7 etc.), which render as boxes
+	$text = str_replace("\u{F0B7}", '•', $text);
+	$text = preg_replace('/\p{Co}/u', ' ', $text) ?? $text;
 	return trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
 }
 
