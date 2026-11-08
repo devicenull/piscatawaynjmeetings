@@ -63,6 +63,12 @@ def recording_path(board: str, date: str) -> str:
     raise FileNotFoundError(f'No recording found for {board}/{date}')
 
 
+def recording_duration(recording: str) -> float:
+    out = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', recording],
+                         capture_output=True, check=True, text=True).stdout
+    return float(out)
+
+
 def load_model(token: str):
     # CPU on purpose: this card also serves other things on the host and compute work has wedged it.
     import torch
@@ -115,7 +121,7 @@ def parse_txt_segments(txt_path: str) -> dict[int, list[tuple[float, float]]]:
     """Return {speaker_num: [(start, end), ...]} from a plain .txt transcript.
 
     Uses each line's timestamp as segment start; end = next line's timestamp.
-    The last segment gets a 60s window (ffmpeg clips at EOF regardless).
+    The last segment gets a 60s window; main() trims turns to the recording's length.
     Boundary imprecision (~1 word bleed) is acceptable for voice embeddings.
     """
     import re
@@ -257,7 +263,9 @@ def main():
         print(f'ERROR: No transcript found for {board}/{date}')
         sys.exit(1)
 
-    turns  = sorted((s, e, num) for num, segs in segments.items() for s, e in segs)
+    # Turns can run past the recording (the .txt fallback gives the last line 60s), and pieces past the end are empty audio
+    duration = recording_duration(recording_path(board, date))
+    turns  = sorted((s, min(e, duration), num) for num, segs in segments.items() for s, e in segs if s < duration)
     chunks = [(a, b, i) for i, (s, e, _) in enumerate(turns) for a, b in split_chunks(s, e)]
     print(f'{board}/{date}: {len(turns)} turn(s), {len(segments)} speaker number(s), {len(roster)} profile(s) [{source}]')
 
