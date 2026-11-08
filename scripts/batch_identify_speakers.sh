@@ -1,6 +1,7 @@
 #!/bin/bash
-# Run identify_speakers.py for all meetings that have a .revai.json (or .txt fallback),
-# a local recording, and no up-to-date .turns.json output.
+# Run identify_speakers.py for all 2026 meetings that have a transcript (identify_speakers.py
+# uses the .revai.json when present, else the .txt), a local recording, and no up-to-date
+# .turns.json output.
 #
 # Usage: batch_identify_speakers.sh [board ...]  (default: council planning zoning)
 #
@@ -28,18 +29,18 @@ for board in "${BOARDS[@]}"; do
 	board_output="$OUTPUT_DIR/$board"
 
 	shopt -s nullglob
-	revai_files=("$board_files"/*.revai.json)
+	transcripts=("$board_files"/2026-*.txt)
 	shopt -u nullglob
 
-	if [ ${#revai_files[@]} -eq 0 ]; then
-		echo "[$board] No .revai.json files found, skipping."
+	if [ ${#transcripts[@]} -eq 0 ]; then
+		echo "[$board] No 2026 transcripts found, skipping."
 		continue
 	fi
 
-	echo "[$board] Found ${#revai_files[@]} .revai.json file(s)."
+	echo "[$board] Found ${#transcripts[@]} 2026 transcript(s)."
 
-	for revai in "${revai_files[@]}"; do
-		date=$(basename "$revai" .revai.json)
+	for transcript in "${transcripts[@]}"; do
+		date=$(basename "$transcript" .txt)
 		speakers_file="$board_output/$date.speakers.json"
 		turns_file="$board_output/$date.turns.json"
 
