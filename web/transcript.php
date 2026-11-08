@@ -25,11 +25,20 @@ $known_speakers = [];
 if (hasEditAuth()) {
 	$profiles_path = __DIR__.'/../shared/speakers/profiles.json';
 	if (file_exists($profiles_path)) {
+		// How many meetings of this type each person was identified in, so regulars sort first
+		$appearances = [];
+		foreach (glob(__DIR__.'/../shared/speakers/'.basename($meeting['type']).'/*.speakers.json') as $file) {
+			$ids = array_column(array_filter(json_decode(file_get_contents($file), true) ?? []), 'speaker_id');
+			foreach (array_unique($ids) as $id) {
+				$appearances[$id] = ($appearances[$id] ?? 0) + 1;
+			}
+		}
+
 		$profiles = json_decode(file_get_contents($profiles_path), true) ?? [];
 		foreach ($profiles['speakers'] ?? [] as $id => $info) {
-			$known_speakers[] = ['id' => $id, 'name' => $info['name']];
+			$known_speakers[] = ['id' => $id, 'name' => $info['name'], 'count' => $appearances[$id] ?? 0];
 		}
-		usort($known_speakers, fn($a, $b) => strcmp($a['name'], $b['name']));
+		usort($known_speakers, fn($a, $b) => [$b['count'], $a['name']] <=> [$a['count'], $b['name']]);
 	}
 }
 
