@@ -33,6 +33,7 @@ class Meeting extends BaseDBObject
 		'council'    => 'Township Council',
 		're-warding' => 'Re-warding Commission',
 		'ems'        => 'EMS Advisory Council',
+		'ethics'     => 'Ethics Board',
 		'library'    => 'Library',
 	];
 

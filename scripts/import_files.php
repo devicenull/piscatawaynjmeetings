@@ -76,6 +76,7 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 		case 'zoning':
 		case 're-warding':
 		case 'ems':
+		case 'ethics':
 			if (preg_match('/\.(revai|whisperx|peaks)\.json$/', basename($cleanpath)))
 				continue 2;
 
