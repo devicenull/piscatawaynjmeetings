@@ -7,6 +7,7 @@
 {% block og_url %}https://piscatawaynjmeetings.com/campaign_files.php?year={{ campaign.year }}&amp;campaign={{ campaign.slug|url_encode }}{% endblock %}
 
 {% block maincontent %}
+	{% set csv_source %}<span class="badge bg-secondary" tabindex="0" data-bs-toggle="tooltip" title="Mirrored unmodified from NJ ELEC's eFile search (njelecefilesearch.com) contribution/expenditure data export. Re-downloaded as new reports are filed.">?</span>{% endset %}
 	<style>
 		.money { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
 		.campaign-stats { display:flex; flex-wrap:wrap; gap:.6rem; margin-bottom:1.5rem; }
@@ -66,7 +67,7 @@
 	{% if campaign.contributions is defined %}
 	<section class="campaign-section">
 		<p class="section-heading">Contributions</p>
-		<p class="doc-links"><a href="{{ campaign.data.contributions.getLink() }}">Download CSV</a></p>
+		<p class="doc-links"><a href="{{ campaign.data.contributions.getLink() }}">Download CSV</a> {{ csv_source }}</p>
 		<table class="table table-sm pnj-table campaign-data" style="width:100%">
 			<caption class="sr-only">Contributions to {{ campaign.name|name_case }}</caption>
 			<thead>
@@ -96,7 +97,7 @@
 	{% if campaign.expenditures is defined %}
 	<section class="campaign-section">
 		<p class="section-heading">Expenditures</p>
-		<p class="doc-links"><a href="{{ campaign.data.expenditures.getLink() }}">Download CSV</a></p>
+		<p class="doc-links"><a href="{{ campaign.data.expenditures.getLink() }}">Download CSV</a> {{ csv_source }}</p>
 		<table class="table table-sm pnj-table campaign-data" style="width:100%">
 			<caption class="sr-only">Expenditures by {{ campaign.name|name_case }}</caption>
 			<thead>
@@ -123,5 +124,6 @@
 
 	<script>
 		$('.campaign-data').DataTable({ order: [[0, 'desc']], pageLength: 25 });
+		document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
 	</script>
 {% endblock %}
