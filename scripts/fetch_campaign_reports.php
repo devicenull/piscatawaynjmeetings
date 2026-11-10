@@ -8,7 +8,8 @@
 *	For every entity this saves the filed report PDFs (ELEC only has these for 2021+) and the
 *	"Summary Data" contribution/expenditure CSVs (which go back much further).
 *	PDFs that already exist are skipped, CSVs are re-downloaded since they grow as reports are filed.
-*	Only election years given as arguments are fetched (default current year), older years are final:
+*	Only election years given as arguments are fetched, default is the last 3 years since
+*	committees keep filing late reports for a year well after it ends (ex: 2025 Q2 filed Jan 2026):
 *	php fetch_campaign_reports.php 2025 2026
 *	Run scripts/import_files.php afterwards to register everything.
 */
@@ -104,7 +105,7 @@ function cleanName(string $name): string
 // establishes the session cookie the API expects
 elec('/searchcandidatereports', []);
 
-$years = array_slice($argv, 1) ?: [date('Y')];
+$years = array_slice($argv, 1) ?: range(date('Y') - 2, date('Y'));
 $entities = array_filter(
 	array_merge(getEntities('NONPACOnly'), getEntities('PACOnly')),
 	fn($e) => in_array($e['ELECTIONYEAR'], $years)
