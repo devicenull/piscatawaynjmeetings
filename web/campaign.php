@@ -1,12 +1,17 @@
 <?php
 /**
-*	Get this data from https://www.elec.state.nj.us/ELECReport/searchcontributorsadvanced.aspx
-*	Click "Contribution" -> "SEARCH FOR CONTRIBUTION BY CONTRIBUTORS"
-*	Enter year/location, click search
-*	Click "Download data"
+*	Graph of who contributed to which Piscataway campaigns in a year, from the ELEC data loaded by
+*	scripts/fetch_campaign_reports.php + scripts/import_files.php
 */
-$year = 2020;
-$f = fopen(__DIR__.'/files/campaign/'.$year.'.csv', 'r');
+require_once(__DIR__.'/../init.php');
+
+$year = (int)($_GET['year'] ?? $db->GetOne('select max(f.year) from campaign_contributions c join campaign_files f using (CAMPAIGNFILEID)'));
+$rows = $db->GetAll('
+	select c.*
+	from campaign_contributions c
+	join campaign_files f using (CAMPAIGNFILEID)
+	where f.year=?
+', [$year]);
 $known_town_contractors = [
 	'chadwick',
 	'remington',
@@ -45,31 +50,26 @@ $known_town_developers = [
 	'tyler', // aka 	TYLER PROPERTIES LLC aka HARRIS REALTY COMPANY
 ];
 
-$header = fgets($f);
-//CONTRIBUTOR	ADDRESS	STREET1	CITY	STATE	ZIP	CONT AMT	CONT DATE	OCC EMP	OCC EMP ADDRESS	EMP NAME	OCCUPATION NAME	EMP STREET1	EMP CITY	EMP STATE	EMP ZIP	RECIPIENT NAME	RECIPIENT ELECTION TYPE	RECIPIENT ELECTION YEAR	RECIPIENT OFFICE	RECIPIENT LOCATION	RECIPIENT PARTY	CONTRIBUTOR TYPE	CONTRIBUTION SHORT TYPE
-
-$contributions = $employers = $campaigns = $people = $people_by_employer = $contributions_by_employer_campaign = $campaign_totals = [];
-while (!feof($f))
+$contributions = $employers = $campaigns = $people = $campaigns_by_employer = $contributions_by_employer_campaign = $campaign_totals = [];
+foreach ($rows as $row)
 {
-	$data = fgetcsv($f);
-	if (empty($data)) continue;
 	$cur = [
-		'name' => $data[0],
-		'amount' => $data[6],
-		'date' => strftime($data[7]),
-		'employer' => str_replace('  ', ' ', trim($data[10])),
-		'campaign' => $data[16],
+		'name'     => $row['NonIndName'] ?: implode(' ', array_filter([$row['FirstName'], $row['MI'], $row['LastName'], $row['Suffix']])),
+		'amount'   => $row['ContributionAmount'],
+		'employer' => str_replace('  ', ' ', trim($row['EmpName'])),
+		'campaign' => $row['EntityName'],
 	];
 	$contributions[] = $cur;
 
 	$people[$cur['name']] = 1;
 	$campaigns[$cur['campaign']] = 1;
-	$campaign_totals[$cur['campaign']] += $cur['amount'];
+	$campaign_totals[$cur['campaign']] = ($campaign_totals[$cur['campaign']] ?? 0) + $cur['amount'];
 	if (!empty($cur['employer']))
 	{
 		$employers[$cur['employer']] = 1;
 		$campaigns_by_employer[$cur['employer']][] = $cur['campaign'];
-		$contributions_by_employer_campaign[$cur['employer'].$cur['campaign']] += $cur['amount'];
+		$key = $cur['employer'].$cur['campaign'];
+		$contributions_by_employer_campaign[$key] = ($contributions_by_employer_campaign[$key] ?? 0) + $cur['amount'];
 	}
 }
 
@@ -141,7 +141,7 @@ $graphviz .= "}\n";
 $graphviz .= "graph legend {\ngraph [ranksep=1,rankdir=\"RL\"];
 		red [shape=box,color=red,style=filled,label=\"RED are companies/people that have been awarded contracts by the town\"];\n
 		yellow [shape=box,color=yellow,style=filled,label=\"YELLOW are developers seeking or granted zoning variances\"];\n
-		label = \"Generated ".strftime('%F')."\"
+		label = \"Generated ".date('Y-m-d')."\"
 }\n";
 
 //Header('Content-Type: text/plain'); echo $graphviz; die();

@@ -6,6 +6,22 @@ define('BASEURL', 'https://piscatawaynjmeetings.com');
 /**
 *	Import files into the relevant object types
 */
+// contribution/expenditure rows from campaign summary_data CSVs, see CampaignFile::importCSV()
+$db->Execute("CREATE TABLE IF NOT EXISTS campaign_contributions (
+	CAMPAIGNFILEID int(10) unsigned NOT NULL,
+	IsIndividual varchar(1), FirstName varchar(255), MI varchar(255), LastName varchar(255), Suffix varchar(255),
+	NonIndName varchar(255), EmpName varchar(255), OccupationName varchar(255), ContributorType varchar(255),
+	ContributionType varchar(255), ContributionDate date, ContributionAmount decimal(12,2), EntityName varchar(255),
+	KEY (CAMPAIGNFILEID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+$db->Execute("CREATE TABLE IF NOT EXISTS campaign_expenditures (
+	CAMPAIGNFILEID int(10) unsigned NOT NULL,
+	FirstName varchar(255), MI varchar(255), LastName varchar(255), Suffix varchar(255), NonIndName varchar(255),
+	ExpenseDesc varchar(255), PayeeType varchar(255), CheckNum varchar(255), ExpenseDate date, ExpenseAmount decimal(12,2),
+	EntityName varchar(255),
+	KEY (CAMPAIGNFILEID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
 foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 {
 	$cleanpath = str_replace(__DIR__.'/../web', '', $cur);
@@ -209,6 +225,11 @@ foreach (getDirContents(__DIR__.'/../web/files') as $cur)
 				}
 
 				IndexNow::submitURL(BASEURL.$campaignfile->getLink());
+			}
+			// fetch_campaign_reports.php re-downloads CSVs as new reports are filed, so always reload them
+			if ($extension == 'csv')
+			{
+				$campaignfile->importCSV($cur);
 			}
 		break;
 

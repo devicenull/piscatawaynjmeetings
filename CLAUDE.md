@@ -185,7 +185,7 @@ Located in `/scripts`, typically run via cron:
 - **import_files.php** - Scan `/web/files` directories, create DB records, OCR PDFs, inject EXIF metadata
 - **post_to_bluesky.php** - Auto-post meeting summaries to Bluesky
 - **cad_calls.php** - Parse CAD logs, generate CSV
-- **fetch_campaign_reports.php** - Download all Piscataway candidate, committee, and party org (PDO/PTRO) report PDFs (2021+) and contribution/expenditure CSVs (back to 1984) from the ELEC eFile search into `web/files/campaign/YEAR/`; run `import_files.php` afterwards
+- **fetch_campaign_reports.php** - Download Piscataway candidate, committee, and party org (PDO/PTRO) report PDFs and contribution/expenditure CSVs from the ELEC eFile search into `web/files/campaign/YEAR/` for the given election years (`php fetch_campaign_reports.php 2025 2026`, defaults to current year; older years are final and already downloaded). Run `import_files.php` afterwards: it loads the CSVs into the `campaign_contributions` / `campaign_expenditures` tables, which is what the site reads (prod has no copy of `web/files`)
 - **fetch_financial_disclosures.php** - Download Piscataway Township financial disclosure statements from the NJ DCA FDS search into `web/files/financial_disclosures/YEAR/` (`php fetch_financial_disclosures.php 2020 2021 ...`, defaults to current year; skips existing files)
 - **parse_campaign_expenses.php** - Generate Graphviz visualization of campaign contributions
 - **extract_budget_stats.php** - Extract financial figures from budget/debt statement/financial statement PDFs into `budget_stats` table (run manually when new PDFs added)

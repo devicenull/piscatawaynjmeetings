@@ -11,7 +11,7 @@ if (isset($_GET['year'], $_GET['campaign']))
 	}
 	foreach ($campaign['data'] as $kind => $file)
 	{
-		$campaign[$kind] = CampaignFile::readCSV($file);
+		$campaign[$kind] = $file->getRows();
 	}
 	displayPage('campaign_detail.html', ['campaign' => $campaign]);
 }

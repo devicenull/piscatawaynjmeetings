@@ -19,6 +19,17 @@ class CampaignFile extends BaseDBObject
 		'summary_data'      => 'Contribution/Expenditure Data (CSV)',
 	];
 
+	// summary_data CSV rows are loaded into these tables (prod has no copy of web/files),
+	// columns keep ELEC's CSV header names
+	const CSV_TABLES = [
+		'contributions' => 'campaign_contributions',
+		'expenditures'  => 'campaign_expenditures',
+	];
+	const CSV_COLUMNS = [
+		'contributions' => ['IsIndividual', 'FirstName', 'MI', 'LastName', 'Suffix', 'NonIndName', 'EmpName', 'OccupationName', 'ContributorType', 'ContributionType', 'ContributionDate', 'ContributionAmount', 'EntityName'],
+		'expenditures'  => ['FirstName', 'MI', 'LastName', 'Suffix', 'NonIndName', 'ExpenseDesc', 'PayeeType', 'CheckNum', 'ExpenseDate', 'ExpenseAmount', 'EntityName'],
+	];
+
 	// ELEC election types, in the order campaigns are listed
 	const ELECTION_DESCRIPTION = [
 		'PAC'                => 'Party Organization',
@@ -105,6 +116,14 @@ class CampaignFile extends BaseDBObject
 	*/
 	public static function getCampaigns(): array
 	{
+		global $db;
+		$totals = [];
+		foreach (self::CSV_TABLES as $kind => $table)
+		{
+			$amount = $kind == 'contributions' ? 'ContributionAmount' : 'ExpenseAmount';
+			$totals[$kind] = array_column($db->GetAll("select CAMPAIGNFILEID, sum($amount) total from $table group by CAMPAIGNFILEID"), 'total', 'CAMPAIGNFILEID');
+		}
+
 		$campaigns = [];
 		foreach (self::getAll() as $file)
 		{
@@ -132,11 +151,7 @@ class CampaignFile extends BaseDBObject
 			if ($info['kind'])
 			{
 				$campaign['data'][$info['kind']] = $file;
-				// ponytail: parses every CSV (~1MB total) per page load, cache the totals in the DB if it gets slow
-				$campaign[$info['kind'] == 'contributions' ? 'raised' : 'spent'] = array_sum(array_column(
-					self::readCSV($file),
-					$info['kind'] == 'contributions' ? 'ContributionAmount' : 'ExpenseAmount'
-				));
+				$campaign[$info['kind'] == 'contributions' ? 'raised' : 'spent'] = $totals[$info['kind']][$file['CAMPAIGNFILEID']] ?? 0;
 			}
 			else
 			{
@@ -159,26 +174,67 @@ class CampaignFile extends BaseDBObject
 	}
 
 	/**
-	*	Rows of an ELEC contribution/expenditure CSV, keyed by the header names
+	*	Rows of an ELEC contribution/expenditure CSV, keyed by the CSV header names
 	*/
-	public static function readCSV(CampaignFile $file): array
+	public function getRows(): array
 	{
-		$f = fopen(BASE_FILE_PATH.'campaign/'.$file['year'].'/'.$file['filename'], 'r');
-		if (!$f)
+		global $db;
+		$kind = self::parseFilename($this['filename'])['kind'] ?? '';
+		if (!isset(self::CSV_TABLES[$kind]))
 		{
 			return [];
 		}
+		return $db->GetAll('select * from '.self::CSV_TABLES[$kind].' where CAMPAIGNFILEID=?', [$this['CAMPAIGNFILEID']]);
+	}
+
+	/**
+	*	Replace this file's rows with the contents of an ELEC CSV (they're re-downloaded as reports are filed)
+	*/
+	public function importCSV(string $path): void
+	{
+		global $db;
+		$kind = self::parseFilename($this['filename'])['kind'] ?? '';
+		if (!isset(self::CSV_TABLES[$kind]))
+		{
+			throw new RuntimeException("Unknown CSV type: $path");
+		}
+		$columns = self::CSV_COLUMNS[$kind];
+		$insert = 'insert into '.self::CSV_TABLES[$kind].' (CAMPAIGNFILEID, '.implode(', ', $columns).') values (?'.str_repeat(', ?', count($columns)).')';
+
+		$f = fopen($path, 'r');
+		if (!$f)
+		{
+			throw new RuntimeException("Unable to read $path");
+		}
 		$header = fgetcsv($f);
-		$rows = [];
+		$db->StartTrans();
+		$db->Execute('delete from '.self::CSV_TABLES[$kind].' where CAMPAIGNFILEID=?', [$this['CAMPAIGNFILEID']]);
 		while (($row = fgetcsv($f)) !== false)
 		{
-			if (count($row) == count($header))
+			if (count($row) != count($header))
 			{
-				$rows[] = array_combine($header, $row);
+				continue;
 			}
+			$row = array_combine($header, $row);
+			$values = [$this['CAMPAIGNFILEID']];
+			foreach ($columns as $col)
+			{
+				$value = $row[$col] ?? '';
+				if (str_ends_with($col, 'Date'))
+				{
+					// ELEC dates are 05/19/2024
+					$date = DateTime::createFromFormat('!m/d/Y', $value);
+					$value = $date ? $date->format('Y-m-d') : null;
+				}
+				$values[] = $value;
+			}
+			$db->Execute($insert, $values);
 		}
 		fclose($f);
-		return $rows;
+		if (!$db->CompleteTrans())
+		{
+			throw new RuntimeException("Failed to import $path: ".$db->ErrorMsg());
+		}
 	}
 
 	/**
