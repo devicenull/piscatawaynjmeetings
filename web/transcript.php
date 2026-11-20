@@ -107,4 +107,5 @@ $vars = [
 		'@graph'   => [$event_schema, $breadcrumb_schema],
 	], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
 ];
+cacheFor(Meeting::cacheTtlFor($meeting['date'] ?? null));
 displayPage('transcript.html', $vars);

@@ -595,6 +595,44 @@ class Meeting extends BaseDBObject
 		return $meetings;
 	}
 
+	/**
+	*	Cache TTL for a page showing a meeting on $date: short within 24h either side of it,
+	*	otherwise the default, capped so the cache expires by the time the short window opens.
+	*/
+	public static function cacheTtlFor(?string $date): int
+	{
+		if (!$date)
+		{
+			return DEFAULT_CACHE_TTL;
+		}
+		$delta = strtotime($date) - time();
+		if ($delta <= -ONE_DAY)
+		{
+			return DEFAULT_CACHE_TTL;
+		}
+		if ($delta < ONE_DAY)
+		{
+			return SHORT_CACHE_TTL;
+		}
+		return max(SHORT_CACHE_TTL, min(DEFAULT_CACHE_TTL, $delta - ONE_DAY));
+	}
+
+	/**
+	*	Cache TTL for a listing page, based on the nearest meeting that isn't more than a day old.
+	*/
+	public static function cacheTtl(string $type = ''): int
+	{
+		global $db;
+		$sql = 'select min(date) from meeting where date > ?';
+		$params = [date('Y-m-d H:i:s', time() - ONE_DAY)];
+		if ($type != '')
+		{
+			$sql .= ' and type = ?';
+			$params[] = $type;
+		}
+		return self::cacheTtlFor($db->GetOne($sql, $params) ?: null);
+	}
+
 	public static function getFutureAndToday(): iterable
 	{
 		global $db;

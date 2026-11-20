@@ -21,4 +21,5 @@ $vars = [
 	],
 	'meetings' => Meeting::getUpcomingAndOlderByType('zoning'),
 ];
+cacheFor(Meeting::cacheTtl('zoning'));
 displayPage('board.html', $vars);

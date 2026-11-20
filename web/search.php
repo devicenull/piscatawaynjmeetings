@@ -12,6 +12,8 @@ $sort = ($_GET['sort'] ?? '') == 'newest' ? 'newest' : 'relevance';
 $page = max(1, (int)($_GET['page'] ?? 1));
 $json = ($_GET['format'] ?? '') == 'json';
 
+cacheFor(0);
+
 $results = null;
 $error = '';
 if ($q !== '')

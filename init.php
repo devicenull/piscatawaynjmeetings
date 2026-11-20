@@ -34,11 +34,34 @@ require_once(__DIR__.'/vendor/adodb/adodb-php/adodb.inc.php');
 $db = newAdoConnection('mysqli');
 $db->connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
-session_start();
+define('DEFAULT_CACHE_TTL', 8 * ONE_HOUR);
+define('SHORT_CACHE_TTL', 10 * 60);
+
+// Sessions only carry flash messages, so only start one when a cookie exists or a message is set.
+// Otherwise every response gets Set-Cookie + no-store and nothing can be cached.
+session_cache_limiter('');
+if (isset($_COOKIE[session_name()]))
+{
+	session_start();
+}
 
 function hasEditAuth(): bool
 {
 	return stripos($_SERVER['REMOTE_ADDR'], '192.168.5.') !== false;
+}
+
+/**
+*	Send cache headers. Anything per-user (edit UI, flash messages) or $ttl <= 0 is never cached.
+*/
+function cacheFor(int $ttl)
+{
+	if ($ttl <= 0 || hasEditAuth() || session_status() == PHP_SESSION_ACTIVE)
+	{
+		header('Cache-Control: private, no-store');
+		return;
+	}
+	header('Cache-Control: public, max-age='.$ttl);
+	header('Expires: '.gmdate('D, d M Y H:i:s', time() + $ttl).' GMT');
 }
 
 function displayPage($template, $vars=[])
@@ -59,11 +82,20 @@ function displayPage($template, $vars=[])
 		unset($_SESSION['error_message']);
 	}
 
+	if (!preg_grep('/^Cache-Control:/i', headers_list()))
+	{
+		cacheFor(DEFAULT_CACHE_TTL);
+	}
+
 	echo $twig->render($template, $vars);
 }
 
 function displaySuccess(string $message, string $redirect='')
 {
+	if (session_status() != PHP_SESSION_ACTIVE)
+	{
+		session_start();
+	}
 	if ($redirect != '')
 	{
 		$_SESSION['success_message'] = $message;
@@ -76,6 +108,10 @@ function displaySuccess(string $message, string $redirect='')
 
 function displayError(string $message, string $redirect='')
 {
+	if (session_status() != PHP_SESSION_ACTIVE)
+	{
+		session_start();
+	}
 	if ($redirect != '')
 	{
 		$_SESSION['error_message'] = $message;

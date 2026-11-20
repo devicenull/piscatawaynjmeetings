@@ -36,6 +36,7 @@ foreach (Meeting::getFutureAndToday() as $cur)
 
 $calendar = new \Eluceo\iCal\Domain\Entity\Calendar($events);
 
+cacheFor(Meeting::cacheTtl());
 header('Content-Type: text/calendar; charset=utf-8');
 header('Content-Disposition: attachment; filename="piscatawaymeetings.ics"');
 echo (new \Eluceo\iCal\Presentation\Factory\CalendarFactory())->createCalendar($calendar);

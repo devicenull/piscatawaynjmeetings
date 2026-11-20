@@ -18,4 +18,5 @@ $vars = [
 	],
 	'meetings' => Meeting::getUpcomingAndOlderByType('council'),
 ];
+cacheFor(Meeting::cacheTtl('council'));
 displayPage('board.html', $vars);
