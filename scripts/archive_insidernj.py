@@ -101,6 +101,7 @@ def main():
             if e.code == 404:  # past the last page
                 break
             raise
+        body = re.sub(rb'<script\b.*?</script>', b'', body, flags=re.S)  # site injects unescaped <script> junk that breaks the XML
         items = ET.fromstring(body).findall('channel/item')
         if not items:
             break
