@@ -32,7 +32,7 @@
 			<textarea class="form-control" id="request" name="request" rows="6" required>{{ fields.request|default('') }}</textarea>
 		</div>
 		<div class="row">
-			{{ _self.text(fields, 'request_address', 'Property address (if any)') }}
+			{{ _self.text(fields, 'request_address', 'Property address that request is about (if any)') }}
 			{{ _self.text(fields, 'block', 'Block') }}
 			{{ _self.text(fields, 'lot', 'Lot') }}
 			{{ _self.text(fields, 'qualifier', 'Qualifier') }}
