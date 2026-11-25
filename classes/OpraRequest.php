@@ -52,17 +52,15 @@ class OpraRequest extends BaseDBObject
 	// per-person details, from OPRA_REQUESTORS in config.php (kept out of git)
 	const REQUESTOR_FIELDS = ['first_name', 'last_name', 'company', 'address', 'city', 'state', 'zip', 'phone', 'fax', 'email'];
 
-	const REQUIRED = ['delivery', 'first_name', 'last_name', 'phone', 'email', 'request', 'common_law', 'commercial', 'legal', 'convict'];
+	const REQUIRED = ['first_name', 'last_name', 'phone', 'email', 'request', 'common_law', 'commercial', 'legal', 'convict'];
 
 	// fields the public form's masked inputs send as raw digits
 	const DIGITS_ONLY = ['zip', 'phone', 'fax'];
 
 	// select fields and their allowed values
 	const CHOICES = [
-		'delivery'           => ['Email', 'Fax', 'On-Site Inspect', 'Pick Up', 'U.S. Mail'],
 		'common_law'         => ['No', 'Yes'],
 		'commercial'         => ['Will Not', 'Will'],
-		'commercial_upgrade' => ['No', 'Yes'],
 		'legal'              => ['I Am Not', 'I Am'],
 		'convict'            => ['Have Not', 'Have'],
 	];
@@ -124,6 +122,9 @@ class OpraRequest extends BaseDBObject
 			$fields[$key] = trim($post[$key] ?? '');
 		}
 		$fields['signature'] = $fields['first_name'].' '.$fields['last_name'];
+		// always email; GovPilot doesn't allow the paid commercial deadline reduction for email delivery
+		$fields['delivery'] = 'Email';
+		$fields['commercial_upgrade'] = 'No';
 		foreach (self::DIGITS_ONLY as $key)
 		{
 			$fields[$key] = preg_replace('/\D/', '', $fields[$key]);
@@ -136,10 +137,6 @@ class OpraRequest extends BaseDBObject
 			}
 		}
 		// mirrors the form's logic rules
-		if ($fields['commercial'] != 'Will' || $fields['delivery'] == 'Email')
-		{
-			$fields['commercial_upgrade'] = 'No';
-		}
 		if ($fields['common_law'] != 'Yes')
 		{
 			$fields['interest'] = '';
@@ -150,8 +147,6 @@ class OpraRequest extends BaseDBObject
 		}
 
 		$required = self::REQUIRED;
-		if ($fields['delivery'] == 'U.S. Mail') $required = array_merge($required, ['address', 'city', 'state', 'zip']);
-		if ($fields['delivery'] == 'Fax') $required[] = 'fax';
 		if ($fields['common_law'] == 'Yes') $required[] = 'interest';
 		if ($fields['legal'] == 'I Am') $required[] = 'legal_proceeding';
 

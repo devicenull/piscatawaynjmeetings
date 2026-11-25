@@ -47,7 +47,6 @@
 					{% endfor %}
 				</select>
 			</div>
-			{{ _self.select(fields, choices, 'delivery', 'Delivery') }}
 		</div>
 
 		<details class="mt-3">
@@ -55,7 +54,6 @@
 			<div class="row mt-2">
 				{{ _self.select(fields, choices, 'common_law', 'Common law request?') }}
 				{{ _self.select(fields, choices, 'commercial', 'I ___ use for a commercial purpose') }}
-				{{ _self.select(fields, choices, 'commercial_upgrade', 'Pay to reduce commercial deadline?') }}
 				{{ _self.select(fields, choices, 'legal', 'I ___ seeking records for a legal proceeding') }}
 				{{ _self.select(fields, choices, 'convict', 'I ___ been convicted of an indictable offense') }}
 			</div>
