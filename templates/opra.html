@@ -1,0 +1,103 @@
+{% extends 'layout.html' %}
+
+{% macro text(fields, name, label, required=false) %}
+	<div class="col-md mb-2">
+		<label class="form-label" for="{{ name }}">{{ label }}{% if required %} *{% endif %}</label>
+		<input type="text" class="form-control" id="{{ name }}" name="{{ name }}" value="{{ fields[name]|default('') }}"{% if required %} required{% endif %}>
+	</div>
+{% endmacro %}
+
+{% macro select(fields, choices, name, label) %}
+	<div class="col-md mb-2">
+		<label class="form-label" for="{{ name }}">{{ label }}</label>
+		<select class="form-control" id="{{ name }}" name="{{ name }}">
+			{% for c in choices[name] %}
+				<option{% if fields[name]|default('') == c %} selected{% endif %}>{{ c }}</option>
+			{% endfor %}
+		</select>
+	</div>
+{% endmacro %}
+
+{% block maincontent %}
+	<h1 class="mt-4">OPRA Request</h1>
+	<p class="text-muted">Submits to the township's <a href="https://main.govpilot.com/web/public/5039c59f-406_Open-Records-Request-Township-of-Piscataway?uid=7213&amp;ust=NJ&amp;pu=1&amp;id=1">GovPilot form</a>. Requestor details are prefilled from the last submission.</p>
+
+	<form method="POST" id="opra_form">
+		<input type="hidden" name="action" value="submit">
+		<input type="hidden" name="signature_image" id="signature_image">
+
+		<h4 class="mt-3">Request</h4>
+		<div class="mb-2">
+			<label class="form-label" for="request">Records requested *</label>
+			<textarea class="form-control" id="request" name="request" rows="6" required>{{ fields.request|default('') }}</textarea>
+		</div>
+		<div class="row">
+			{{ _self.text(fields, 'request_address', 'Property address (if any)') }}
+			{{ _self.text(fields, 'block', 'Block') }}
+			{{ _self.text(fields, 'lot', 'Lot') }}
+			{{ _self.text(fields, 'qualifier', 'Qualifier') }}
+		</div>
+
+		<div class="row mt-3">
+			<div class="col-md mb-2">
+				<label class="form-label" for="requestor">Requestor (signs with full name)</label>
+				<select class="form-control" id="requestor" name="requestor">
+					{% for key, name in requestors %}
+						<option value="{{ key }}"{% if fields.requestor|default('') == key %} selected{% endif %}>{{ name }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			{{ _self.select(fields, choices, 'delivery', 'Delivery') }}
+		</div>
+
+		<details class="mt-3">
+			<summary><h4 class="d-inline">Certifications</h4></summary>
+			<div class="row mt-2">
+				{{ _self.select(fields, choices, 'common_law', 'Common law request?') }}
+				{{ _self.select(fields, choices, 'commercial', 'I ___ use for a commercial purpose') }}
+				{{ _self.select(fields, choices, 'commercial_upgrade', 'Pay to reduce commercial deadline?') }}
+				{{ _self.select(fields, choices, 'legal', 'I ___ seeking records for a legal proceeding') }}
+				{{ _self.select(fields, choices, 'convict', 'I ___ been convicted of an indictable offense') }}
+			</div>
+			<div class="row">
+				{{ _self.text(fields, 'interest', 'Common law interest (if Yes)') }}
+				{{ _self.text(fields, 'legal_proceeding', 'Legal proceeding (if I Am)') }}
+			</div>
+		</details>
+
+		<button class="btn btn-primary mt-3" onclick="return confirm('Submit this OPRA request to the township?')">Submit</button>
+	</form>
+
+	<h4 class="mt-5">Submitted requests</h4>
+	<table class="table table-sm">
+		<thead><tr><th>Submitted</th><th>Requestor</th><th>Reference #</th><th>Request ID</th><th>Request</th></tr></thead>
+		<tbody>
+			{% for r in requests %}
+				<tr>
+					<td class="text-nowrap">{{ r.submitted_at }}</td>
+					<td>{{ r.requestor_name }}</td>
+					<td>{{ r.reference_number|default('') }}</td>
+					<td>{{ r.request_id|default('failed') }}</td>
+					<td style="white-space: pre-wrap">{{ r.request }}</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<script>
+	// GovPilot stores a typed signature as a PNG of the name, the way its own form renders one.
+	document.getElementById('opra_form').addEventListener('submit', function () {
+		var c = document.createElement('canvas');
+		c.width = 400; c.height = 100;
+		var ctx = c.getContext('2d');
+		ctx.font = "italic 25px 'Segoe Script', cursive";
+		ctx.textAlign = 'center';
+		var r = document.getElementById('requestor');
+		ctx.fillText(r.options[r.selectedIndex].text, c.width / 2, c.height / 2);
+		ctx.font = '10px Arial';
+		ctx.textAlign = 'right';
+		ctx.fillText(new Date().toLocaleString('en-US'), c.width, c.height - 1);
+		document.getElementById('signature_image').value = c.toDataURL('image/png');
+	});
+	</script>
+{% endblock %}
