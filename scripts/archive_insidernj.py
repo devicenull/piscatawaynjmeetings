@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Archive InsiderNJ posts matching a search term (text, metadata, images) to disk.
+"""Archive InsiderNJ posts matching a search term (text, metadata, images) from the site's search RSS feed.
 
-Usage: archive_insidernj.py [term] [outdir]   (defaults: piscataway, data/insidernj)
-Writes outdir/<date>_<slug>/{meta.json,article.html,article.txt,<images>}. Re-runs skip existing files.
+Usage: archive_insidernj.py [term] [outdir] [max_pages]   (defaults: piscataway, web/files/insidernj, 1)
+Writes outdir/<date>_<slug>/{meta.json,article.html,article.txt,<images>}; posts already on disk are skipped.
+Uses the search feed rather than the REST API: REST search misses press releases (post type not exposed in REST).
 """
-import html.parser, json, os, re, sys, time, urllib.parse, urllib.request
+import html, html.parser, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
+import xml.etree.ElementTree as ET
+from email.utils import parsedate_to_datetime
+from zoneinfo import ZoneInfo
 
 UA = {'User-Agent': 'Mozilla/5.0'}
-API = 'https://www.insidernj.com/wp-json/wp/v2/posts'
+SEARCH_FEED = 'https://www.insidernj.com/'
+NS = {'content': 'http://purl.org/rss/1.0/modules/content/', 'dc': 'http://purl.org/dc/elements/1.1/'}
 
 
 def get(url, headers=UA):
@@ -86,40 +91,47 @@ def write_post(d, meta, content):
 
 def main():
     term = sys.argv[1] if len(sys.argv) > 1 else 'piscataway'
-    out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.dirname(__file__), '..', 'data', 'insidernj')
-    posts, page = [], 1
-    while True:
-        q = urllib.parse.urlencode({'search': term, 'per_page': 100, 'page': page, '_embed': 1})
-        body, hdr = get(f'{API}?{q}')
-        s = body.decode('utf-8')
-        posts += json.loads(s[s.index('[{"id"'):])  # site injects <script> junk before the JSON
-        if page >= int(hdr.get('X-WP-TotalPages', 1)):
+    out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.dirname(__file__), '..', 'web', 'files', 'insidernj')
+    max_pages = int(sys.argv[3]) if len(sys.argv) > 3 else 1  # 10 items/page; 1 is plenty for a daily run
+    for page in range(1, max_pages + 1):
+        q = urllib.parse.urlencode({'s': term, 'feed': 'rss2', 'paged': page})
+        try:
+            body, _ = get(f'{SEARCH_FEED}?{q}')
+        except urllib.error.HTTPError as e:
+            if e.code == 404:  # past the last page
+                break
+            raise
+        items = ET.fromstring(body).findall('channel/item')
+        if not items:
             break
-        page += 1
-    print(f'{len(posts)} posts')
+        for i in items:
+            save_item(i, out)
+        time.sleep(1)
 
-    for p in posts:
-        d = os.path.join(out, f"{p['date'][:10]}_{p['slug']}")
-        os.makedirs(d, exist_ok=True)
-        emb = p.get('_embedded', {})
-        content = p['content']['rendered']
-        fm = (emb.get('wp:featuredmedia') or [{}])[0]
-        terms = {}
-        for g in emb.get('wp:term', []):
-            for t in g:
-                terms.setdefault(t['taxonomy'], []).append(t['name'])
-        meta = {
-            'id': p['id'], 'url': p['link'], 'title': parse(p['title']['rendered']).text().strip(),
-            'date': p['date'], 'date_gmt': p['date_gmt'], 'modified': p['modified'],
-            'author': [a.get('name') for a in emb.get('author', [])],
-            'terms': terms,
-            'excerpt': parse(p['excerpt']['rendered']).text().strip(),
-            'featured_image': {'url': fm.get('source_url'), 'caption': parse(fm.get('caption', {}).get('rendered', '')).text().strip(),
-                               'alt': fm.get('alt_text')} if fm.get('source_url') else None,
-        }
-        meta['images'] = save_images(d, p['link'], ([fm['source_url']] if fm.get('source_url') else []) + parse(content).imgs)
-        write_post(d, meta, content)
-        print(d)
+
+def save_item(i, out):
+    url = i.findtext('link')
+    date = parsedate_to_datetime(i.findtext('pubDate')).astimezone(ZoneInfo('America/New_York'))
+    d = os.path.join(out, f"{date:%Y-%m-%d}_{url.rstrip('/').split('/')[-1]}")
+    if os.path.exists(os.path.join(d, 'meta.json')):
+        return
+    os.makedirs(d, exist_ok=True)
+    guid = urllib.parse.parse_qs(urllib.parse.urlparse(i.findtext('guid')).query)
+    content = i.findtext(f'{{{NS["content"]}}}encoded', '')
+    page, _ = get(url)  # feed has no featured image; take it from og:image
+    og = re.search(rb'<meta property="og:image" content="([^"]+)"', page)
+    featured = html.unescape(og.group(1).decode()) if og else None
+    meta = {
+        'id': int(guid['p'][0]) if 'p' in guid else None, 'post_type': guid.get('post_type', ['post'])[0],
+        'url': url, 'title': parse(i.findtext('title', '')).text().strip(),
+        'date': date.isoformat(), 'author': [i.findtext(f'{{{NS["dc"]}}}creator', '')],
+        'categories': [c.text for c in i.findall('category')],
+        'excerpt': parse(i.findtext('description', '')).text().strip(),
+        'featured_image': {'url': featured} if featured else None,
+    }
+    meta['images'] = save_images(d, url, ([featured] if featured else []) + parse(content).imgs)
+    write_post(d, meta, content)
+    print(d)
 
 
 if __name__ == '__main__':

@@ -15,7 +15,7 @@ NS = {'a': 'http://www.w3.org/2005/Atom', 'm': 'http://search.yahoo.com/mrss/'}
 
 
 def main():
-    out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), '..', 'data', 'tapinto')
+    out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), '..', 'web', 'files', 'tapinto')
     body, _ = get(FEED, UA)
     for e in ET.fromstring(body).findall('a:entry', NS):
         url = e.find('a:link', NS).get('href')
